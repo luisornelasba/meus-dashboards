@@ -1183,7 +1183,7 @@
     <div class="chart-card">
       <div class="chart-header">
         <div>
-          <div class="chart-title">Meta Mensal por Consultor · Mai-Set</div>
+          <div class="chart-title">Meta Mensal por Consultor · Jan-Set</div>
           <div class="chart-subtitle">Distribuição da meta restante por vendedor</div>
         </div>
         <div class="chart-tag yellow">Plano</div>
@@ -1715,6 +1715,19 @@ function applyFiltersExceptDate(startStr, endStr){
 /* ========= Charts ========= */
 const charts = {};
 
+/* Utilitários seguros para atualização do DOM — evitam quebra na importação caso algum card/tabela esteja oculto/removido. */
+function setTextSafe(id, value){
+  const el = document.getElementById(id);
+  if(el) el.textContent = value;
+  return el;
+}
+function setHtmlSafe(id, value){
+  const el = document.getElementById(id);
+  if(el) el.innerHTML = value;
+  return el;
+}
+
+
 /* ========= Renderização principal ========= */
 function render(){
   const data = applyFilters();
@@ -1751,13 +1764,13 @@ function renderKPIs(data){
   const projecao = aceitas + Math.round(desenv * 0.5);
   const gap = Math.max(0, meta - ytdAceitas);
 
-  document.getElementById('kpiTotal').textContent = fmtNum(total);
-  document.getElementById('kpiAceitas').textContent = fmtNum(aceitas);
-  document.getElementById('kpiMeta').textContent = fmtNum(meta);
-  document.getElementById('kpiMetaSub').textContent = `Janeiro a ${monthLabelLong(ytd.currentMonth)} · ${fmtNum(meta)} prop.`;
-  document.getElementById('kpiAtingPct').textContent = fmtPct(atingPct);
-  document.getElementById('kpiGap').textContent = fmtNum(gap);
-  document.getElementById('kpiGapSub').textContent = gap === 0 ? 'Meta atingida ✓' : `vs Meta YTD (${meta})`;
+  setTextSafe('kpiTotal', fmtNum(total));
+  setTextSafe('kpiAceitas', fmtNum(aceitas));
+  setTextSafe('kpiMeta', fmtNum(meta));
+  setTextSafe('kpiMetaSub', `Janeiro a ${monthLabelLong(ytd.currentMonth)} · ${fmtNum(meta)} prop.`);
+  setTextSafe('kpiAtingPct', fmtPct(atingPct));
+  setTextSafe('kpiGap', fmtNum(gap));
+  setTextSafe('kpiGapSub', gap === 0 ? 'Meta atingida ✓' : `vs Meta YTD (${meta})`);
 
   // Variações vs período anterior (mesmo intervalo recuado, baseado no FILTRO)
   const start = new Date(STATE.filters.dateStart);
@@ -1792,11 +1805,12 @@ function renderKPIs(data){
     atingDelta = Math.round((lastPct - prevPct)*100);
   }
   const atingTrend = document.getElementById('kpiAtingTrend');
-  atingTrend.textContent = (atingDelta>=0?'+':'')+atingDelta+'pp';
-  atingTrend.className = 'kpi-trend ' + (atingDelta>=0?'up':'down');
+  if(atingTrend) atingTrend.textContent = (atingDelta>=0?'+':'')+atingDelta+'pp';
+  if(atingTrend) atingTrend.className = 'kpi-trend ' + (atingDelta>=0?'up':'down');
 }
 function setTrend(id, current, prev){
   const el = document.getElementById(id);
+  if(!el) return;
   if(prev === 0){ el.textContent = current>0 ? 'NEW' : '0%'; el.className='kpi-trend neutral'; return; }
   const diff = ((current-prev)/prev)*100;
   el.textContent = (diff>=0?'+':'') + diff.toFixed(0) + '%';
@@ -1815,6 +1829,48 @@ function aggByMonth(data){
   return out;
 }
 
+
+/* ========= Meta mensal oficial Jan-Set para gráficos e tabela ========= */
+function getMetaMensalConsultorJanSetTotals(){
+  const META_GERAL = 167;
+  const mesesHistoricos = ['2026-01','2026-02','2026-03','2026-04'];
+  const mesesRestantes = [
+    {key:'2026-05', valor:24},
+    {key:'2026-06', valor:24},
+    {key:'2026-07', valor:23},
+    {key:'2026-08', valor:20},
+    {key:'2026-09', valor:18},
+  ];
+
+  const countAceitasMes = (monthKey) => RAW_DATA_REF.data.filter(r =>
+    r.Status === 'ACEITA' && r.Data && r.Data.startsWith(monthKey)
+  ).length;
+
+  const out = {};
+  mesesHistoricos.forEach(key => { out[key] = countAceitasMes(key); });
+
+  // Regra solicitada: maio a setembro seguem os valores definidos para o saldo até a meta total.
+  // Caso o realizado histórico mude e ultrapasse a meta, zera o saldo futuro para não gerar meta negativa.
+  const realizadoHistorico = mesesHistoricos.reduce((acc, key) => acc + (Number(out[key]) || 0), 0);
+  const saldo = Math.max(0, META_GERAL - realizadoHistorico);
+  const somaBase = mesesRestantes.reduce((acc, item) => acc + item.valor, 0) || 1;
+
+  if(saldo === somaBase){
+    mesesRestantes.forEach(item => { out[item.key] = item.valor; });
+  }else{
+    const calculados = mesesRestantes.map((item, idx) => {
+      const exato = saldo * (item.valor / somaBase);
+      const base = Math.floor(exato);
+      return {idx, key:item.key, base, resto:exato-base};
+    });
+    let sobra = saldo - calculados.reduce((acc, item) => acc + item.base, 0);
+    calculados.sort((a,b)=>b.resto-a.resto || a.idx-b.idx);
+    for(let i=0; i<calculados.length && sobra>0; i++, sobra--) calculados[i].base += 1;
+    calculados.sort((a,b)=>a.idx-b.idx).forEach(item => { out[item.key] = item.base; });
+  }
+  return out;
+}
+
 /* ========= Evolução Mensal ========= */
 function renderEvolucao(data){
   const agg = aggByMonth(data);
@@ -1824,7 +1880,8 @@ function renderEvolucao(data){
   });
   const aceitas = keys.map(k=>agg[k].aceitas);
   const totais = keys.map(k=>agg[k].total);
-  const meta = keys.map(()=>META.mensal);
+  const metaMensalJanSet = getMetaMensalConsultorJanSetTotals();
+  const meta = keys.map(k=> metaMensalJanSet[k] ?? META.mensal);
 
   if(charts.evolucao) charts.evolucao.destroy();
   const ctx = document.getElementById('chartEvolucao').getContext('2d');
@@ -1877,7 +1934,7 @@ function renderGauge(){
   const aceitas = ytdData.filter(d=>d.Status==='ACEITA').length;
   const pct = meta>0 ? aceitas/meta : 0;
   const restante = Math.max(0, meta - aceitas);
-  document.getElementById('gaugePct').textContent = (pct*100).toFixed(1).replace('.', ',')+'%';
+  setTextSafe('gaugePct', (pct*100).toFixed(1).replace('.', ',')+'%');
 
   if(charts.gauge) charts.gauge.destroy();
   const ctx = document.getElementById('chartGauge').getContext('2d');
@@ -1955,7 +2012,7 @@ function renderConsultores(data){
     document.getElementById('consultoresInsight').innerHTML = 
       `<strong>${top[0]}</strong> lidera com <strong>${top[1]}</strong> aceitas (${(share*100).toFixed(0)}% do total).`;
   } else {
-    document.getElementById('consultoresInsight').textContent = 'Sem dados no período selecionado.';
+    setTextSafe('consultoresInsight', 'Sem dados no período selecionado.');
   }
 }
 
@@ -2161,7 +2218,7 @@ function renderConsultorStatus(data){
 }
 
 
-/* ========= Meta Mensal por Consultor · Mai-Set ========= */
+/* ========= Meta Mensal por Consultor · Jan-Set ========= */
 function renderConsultorMeta(){
   const tbody = document.getElementById('consultorMetaTableBody');
   if(!tbody) return;
@@ -2176,13 +2233,12 @@ function renderConsultorMeta(){
   ];
 
   const mesesRestantes = [
-    // Pesos oficiais solicitados para distribuição dinâmica do saldo restante:
-    // Mai 24 (14,37%) · Jun 24 (14,37%) · Jul 24 (14,37%) · Ago 21 (12,57%) · Set 18 (10,78%).
-    // O TOTAL de cada mês é recalculado dinamicamente sobre o saldo restante da meta total de 167.
+    // Distribuição solicitada para o saldo entre maio e setembro.
+    // Quando Jan-Abr realizado somar 58, os totais ficam exatamente: 24, 24, 23, 20 e 18.
     {key:'2026-05', mes:'Maio/26', peso:24},
     {key:'2026-06', mes:'Junho/26', peso:24},
-    {key:'2026-07', mes:'Julho/26', peso:24},
-    {key:'2026-08', mes:'Agosto/26', peso:21},
+    {key:'2026-07', mes:'Julho/26', peso:23},
+    {key:'2026-08', mes:'Agosto/26', peso:20},
     {key:'2026-09', mes:'Setembro/26', peso:18},
   ];
 
@@ -2204,12 +2260,6 @@ function renderConsultorMeta(){
     }
     return true;
   }).length;
-
-  // Realizado acumulado Jan-Set. Sempre que os dados mudarem, o saldo restante muda automaticamente.
-  const totalAceitasJanSet = RAW_DATA_REF.data.filter(r =>
-    r.Status === 'ACEITA' && r.Data && r.Data >= '2026-01-01' && r.Data <= '2026-09-30'
-  ).length;
-  const restanteMeta = Math.max(0, META_GERAL - totalAceitasJanSet);
 
   function distribuirPorPeso(total, itens){
     const somaPesos = itens.reduce((acc, item) => acc + (Number(item.peso) || 0), 0) || 1;
@@ -2235,7 +2285,7 @@ function renderConsultorMeta(){
     return {claudia, dyego, ana, fernando};
   }
 
-  // Jan-Abr: coluna TOTAL = coluna REALIZADO do mês.
+  // Janeiro a Abril: coluna TOTAL deve ser igual à coluna REALIZADO do próprio mês.
   const planoHistorico = mesesHistoricos.map(m => {
     const totalRealizadoMes = countReal(m.key);
     return {
@@ -2248,8 +2298,12 @@ function renderConsultorMeta(){
     };
   });
 
-  // Mai-Set: mantém a regra dinâmica de saldo restante e rateio 30%/30%/20%/20%.
-  const totaisMensaisRestantes = distribuirPorPeso(restanteMeta, mesesRestantes);
+  // Maio a Setembro: distribui o saldo que falta para atingir a meta total de 167.
+  // A base do saldo considera Jan-Abr já realizado, para preservar a regra dos meses antigos.
+  const realizadoJanAbr = planoHistorico.reduce((acc, item) => acc + (Number(item.total) || 0), 0);
+  const saldoMaiSet = Math.max(0, META_GERAL - realizadoJanAbr);
+  const totaisMensaisRestantes = distribuirPorPeso(saldoMaiSet, mesesRestantes);
+
   const planoRestante = mesesRestantes.map((m, idx) => {
     const total = totaisMensaisRestantes[idx];
     return {...m, total, ...distribuirConsultores(total)};
@@ -2625,8 +2679,8 @@ function renderMap(data){
   document.getElementById('mapValueTotal').textContent = totalValue > 0
     ? new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0}).format(totalValue)
     : 'R$ 0';
-  document.getElementById('mapPlotted').textContent = fmtNum(geo.length);
-  document.getElementById('mapUniqueClients').textContent = fmtNum(uniqueClientsAll.size);
+  setTextSafe('mapPlotted', fmtNum(geo.length));
+  setTextSafe('mapUniqueClients', fmtNum(uniqueClientsAll.size));
   const regCountEl = document.getElementById('mapRegionsCount');
   if(regCountEl) regCountEl.textContent = fmtNum(grouped.length);
 
@@ -2689,6 +2743,7 @@ function renderMonthlyTable(data){
   const agg = aggByMonth(data);
   const keys = Object.keys(agg).sort();
   const tbody = document.getElementById('monthlyTableBody');
+  if(!tbody) return;
   tbody.innerHTML = keys.map(k=>{
     const [y,m] = k.split('-');
     const v = agg[k];
@@ -2763,7 +2818,7 @@ function renderDataTable(data){
     if(av > bv) return STATE.sortDir==='asc'?1:-1;
     return 0;
   });
-  document.getElementById('tableCount').textContent = fmtNum(sorted.length);
+  setTextSafe('tableCount', fmtNum(sorted.length));
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / STATE.perPage));
   if(STATE.page > totalPages) STATE.page = totalPages;
@@ -2794,7 +2849,7 @@ function renderDataTable(data){
     tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-3);padding:48px">Nenhum registro encontrado com os filtros aplicados.</td></tr>';
   }
 
-  document.getElementById('paginationInfo').textContent = `Página ${STATE.page} de ${totalPages} · ${fmtNum(sorted.length)} registros`;
+  setTextSafe('paginationInfo', `Página ${STATE.page} de ${totalPages} · ${fmtNum(sorted.length)} registros`);
   const ctrls = document.getElementById('paginationControls');
   ctrls.innerHTML = '';
   const mkBtn = (txt,disabled,onclick,active)=>{
@@ -2895,9 +2950,18 @@ function exportToExcel(){
 }
 
 function showToast(msg, success=true){
-  const t = document.getElementById('toast');
-  document.getElementById('toastMsg').textContent = msg;
-  t.querySelector('svg').style.color = success ? 'var(--green)' : 'var(--red)';
+  let t = document.getElementById('toast');
+  if(!t){
+    t = document.createElement('div');
+    t.id = 'toast';
+    t.className = 'toast';
+    t.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span id="toastMsg"></span>';
+    document.body.appendChild(t);
+  }
+  const msgEl = document.getElementById('toastMsg') || t.querySelector('span');
+  if(msgEl) msgEl.textContent = msg;
+  const icon = t.querySelector('svg');
+  if(icon) icon.style.color = success ? 'var(--green)' : 'var(--red)';
   t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'), 3500);
 }
@@ -3797,8 +3861,7 @@ function bindEvents(){
   });
 }
 function updatePeriodLabel(){
-  document.getElementById('periodLabel').textContent = 
-    `Período: ${fmtDate(STATE.filters.dateStart)} a ${fmtDate(STATE.filters.dateEnd)} · Sistema FIBRA · IST`;
+  setTextSafe('periodLabel', `Período: ${fmtDate(STATE.filters.dateStart)} a ${fmtDate(STATE.filters.dateEnd)} · Sistema FIBRA · IST`);
 }
 
 
@@ -3966,5 +4029,10 @@ bindEvents();
 render();
 startChartFullscreenFeature();
 </script>
+
+<div id="toast" class="toast">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+  <span id="toastMsg"></span>
+</div>
 </body>
 </html>
