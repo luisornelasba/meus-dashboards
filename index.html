@@ -1696,6 +1696,133 @@ html, body {
   background: linear-gradient(135deg, #52AE32 0%, #3F8C26 100%); color: #fff;
   font-size: 13px; font-weight: 700; box-shadow: 0 10px 30px rgba(82, 174, 50, 0.40);
 }
+
+
+/* === INDICADORES 2026 — tabela estática harmonizada ao dashboard === */
+.indicadores2026-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(253, 254, 255, 0.94));
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 16px;
+  padding: 18px 20px 20px;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.95) inset,
+    0 0 0 1px rgba(225, 232, 240, 0.5),
+    var(--elev-1);
+  margin-bottom: 24px;
+  animation: fadeUp 0.5s ease backwards;
+  animation-delay: 0.28s;
+}
+.indicadores2026-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 12px;
+}
+.indicadores2026-board {
+  min-width: 880px;
+  background: transparent;
+  padding: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.indicadores2026-top {
+  display: grid;
+  grid-template-columns: 1fr 150px;
+  align-items: start;
+  column-gap: 16px;
+  margin-bottom: 12px;
+}
+.indicadores2026-title {
+  color: var(--fibra-azul-escuro);
+  font-size: 22px;
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  border-bottom: 2px solid var(--fibra-verde);
+  padding: 0 0 6px 2px;
+}
+.indicadores2026-logo {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 5px;
+  color: var(--fibra-azul-escuro);
+  padding-right: 4px;
+}
+.indicadores2026-logo .logo-main {
+  font-size: 32px;
+  font-style: italic;
+  font-weight: 900;
+  letter-spacing: -0.08em;
+  line-height: 0.9;
+}
+.indicadores2026-logo .logo-sub {
+  font-size: 8.5px;
+  color: #475569;
+  line-height: 1.05;
+  font-weight: 600;
+  margin-top: 3px;
+}
+.indicadores2026-grid {
+  display: grid;
+  grid-template-columns: 0.85fr 1.65fr 1.25fr 1.25fr 1.25fr;
+  gap: 8px;
+}
+.indicadores2026-cell {
+  min-height: 72px;
+  background: linear-gradient(180deg, #ffffff 0%, #eef2f7 100%);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #050b33;
+  padding: 10px 12px;
+  font-weight: 750;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.75);
+}
+.indicadores2026-head {
+  min-height: 52px;
+  color: var(--fibra-azul-escuro);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+}
+.indicadores2026-head.percent {
+  flex-direction: column;
+  gap: 1px;
+}
+.indicadores2026-num {
+  font-size: 20px;
+  color: #050b33;
+}
+.indicadores2026-text {
+  font-size: 11.5px;
+  line-height: 1.22;
+  letter-spacing: 0.01em;
+}
+.indicadores2026-big {
+  font-size: 25px;
+  letter-spacing: -0.03em;
+}
+.indicadores2026-realizado {
+  color: var(--fibra-azul-escuro);
+  font-size: 25px;
+  letter-spacing: -0.03em;
+}
+.indicadores2026-pct {
+  color: #e00000;
+  font-size: 25px;
+  letter-spacing: -0.03em;
+}
+@media (max-width: 700px) {
+  .indicadores2026-card { padding: 16px; }
+  .indicadores2026-title { font-size: 18px; }
+  .indicadores2026-board { min-width: 760px; }
+}
+
 </style>
 </head>
 <body>
@@ -1813,12 +1940,14 @@ html, body {
     <div class="status-legend" id="status-legend"></div>
   </div>
 
+
+
   <!-- GRÁFICOS PRINCIPAIS -->
   <div class="charts-grid">
     <div class="chart-card">
       <div class="chart-header">
         <div class="chart-title">Evolução Mensal da Receita Contratada</div>
-        <div class="chart-insight" id="insight-receita">Receita acumulada mês a mês, considerando somente propostas com status Aceita.</div>
+        <div class="chart-insight" id="insight-receita">Tendência da receita contratada por mês — respeita o filtro de Status.</div>
       </div>
       <div class="chart-canvas-wrap"><canvas id="chart-receita"></canvas></div>
     </div>
@@ -1826,7 +1955,7 @@ html, body {
     <div class="chart-card">
       <div class="chart-header">
         <div class="chart-title">Evolução Mensal da Quantidade de Propostas</div>
-        <div class="chart-insight" id="insight-qtd">Quantidade acumulada de propostas Aceitas no período selecionado.</div>
+        <div class="chart-insight" id="insight-qtd">Volume total de propostas por mês, em todos os status.</div>
       </div>
       <div class="chart-canvas-wrap"><canvas id="chart-qtd"></canvas></div>
     </div>
@@ -1924,6 +2053,47 @@ html, body {
       <div class="chart-canvas-wrap xtall"><canvas id="chart-prop-valor"></canvas></div>
     </div>
   </div>
+
+  <!-- INDICADORES 2026 — quadro estático solicitado -->
+  <div class="indicadores2026-card">
+    <div class="indicadores2026-wrap" aria-label="Resultado dos Indicadores 2026">
+      <div class="indicadores2026-board">
+        <div class="indicadores2026-top">
+          <div class="indicadores2026-title">Resultado dos INDICADORES 2026</div>
+          <div class="indicadores2026-logo" aria-label="SESI Serviço Social da Indústria">
+            <div class="logo-main">SESI</div>
+            <div class="logo-sub">Serviço<br>Social<br>da Indústria</div>
+          </div>
+        </div>
+        <div class="indicadores2026-grid">
+          <div class="indicadores2026-cell indicadores2026-head">Indicador</div>
+          <div class="indicadores2026-cell indicadores2026-head">Status Indicadores</div>
+          <div class="indicadores2026-cell indicadores2026-head">Previsto 2026</div>
+          <div class="indicadores2026-cell indicadores2026-head">Realizado</div>
+          <div class="indicadores2026-cell indicadores2026-head percent"><span>%</span><span>Atingimento</span></div>
+
+          <div class="indicadores2026-cell indicadores2026-num">12</div>
+          <div class="indicadores2026-cell indicadores2026-text">Expansão de<br>atendimento às<br>empresas com saúde.</div>
+          <div class="indicadores2026-cell indicadores2026-big">393</div>
+          <div class="indicadores2026-cell indicadores2026-realizado">183</div>
+          <div class="indicadores2026-cell indicadores2026-pct">46,6%</div>
+
+          <div class="indicadores2026-cell indicadores2026-num">11</div>
+          <div class="indicadores2026-cell indicadores2026-text">Trabalhadores atendidos<br>em contratos de saúde.</div>
+          <div class="indicadores2026-cell indicadores2026-big">29.364</div>
+          <div class="indicadores2026-cell indicadores2026-realizado">14.494</div>
+          <div class="indicadores2026-cell indicadores2026-pct">49,4%</div>
+
+          <div class="indicadores2026-cell indicadores2026-num">6</div>
+          <div class="indicadores2026-cell indicadores2026-text">Número de<br>trabalhadores na<br>plataforma de saúde e<br>segurança.</div>
+          <div class="indicadores2026-cell indicadores2026-big">28.160</div>
+          <div class="indicadores2026-cell indicadores2026-realizado">14.194</div>
+          <div class="indicadores2026-cell indicadores2026-pct">50,4%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 
   <!-- MAPA DE CLIENTES POR REGIÃO -->
   <div class="chart-card map-card">
@@ -2242,17 +2412,23 @@ class Chart {
     const col = ds.backgroundColor && typeof ds.backgroundColor === 'string' ? ds.backgroundColor : FIBRA_COLORS.azulClaro;
 
     let bars = '';
+    const labelData = ds.valueLabels || null;
+    const tooltipRows = ds.tooltipRows || null;
     labels.forEach((lbl, i) => {
       const v = data[i] || 0;
       const h = (v / max) * innerH;
       const x = pad.l + i * (innerW / labels.length) + gap/2;
       const y = pad.t + innerH - h;
       const valTxtV = Number(v).toLocaleString('pt-BR');
-      const ttDataV = encodeURIComponent(JSON.stringify({label: lbl, color: col, metricLabel: 'Quantidade', valueText: valTxtV}));
+      const extraRows = Array.isArray(tooltipRows) ? (tooltipRows[i] || []) : [];
+      const ttDataV = encodeURIComponent(JSON.stringify({label: lbl, color: col, metricLabel: (ds.tooltipMetricLabel || 'Quantidade'), valueText: ds.tooltipValueTexts ? ds.tooltipValueTexts[i] : valTxtV, extraRows: extraRows}));
       bars += `<rect x="${x}" y="${y}" width="${bw}" height="${h}" rx="4" fill="${col}" opacity="0.85"
         onmouseover="window.__showSimpleTooltip(this,'${ttDataV}')"
         onmousemove="window.__moveSimpleTooltip(event)"
         onmouseout="window.__hideSimpleTooltip()"/>`;
+      if (labelData && labelData[i]) {
+        bars += `<text x="${x + bw/2}" y="${Math.max(10, y - 6)}" text-anchor="middle" font-size="10" fill="#0a1729" font-weight="800">${labelData[i]}</text>`;
+      }
     });
 
     let xLbls = '';
@@ -2291,16 +2467,18 @@ class Chart {
     const cursorAttr = isClickable ? 'style="cursor:pointer;"' : '';
 
     let bars = '', txts = '', vals = '';
+    const labelData = ds.valueLabels || null;
+    const tooltipRows = ds.tooltipRows || null;
     labels.forEach((lbl, i) => {
       const v = data[i] || 0;
       const w = (v / max) * innerW;
       const y = pad.t + i * step + (step - bh) / 2;
       const fillCol = Array.isArray(ds.backgroundColor) ? (ds.backgroundColor[i] || FIBRA_COLORS.azulClaro) : col;
-      const _ttValTxt = (typeof v === 'number' && v >= 1000)
+      const _ttValTxt = ds.tooltipValueTexts ? ds.tooltipValueTexts[i] : ((typeof v === 'number' && v >= 1000)
         ? (v >= 1e6 ? 'R$ ' + (v/1e6).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' Mi' : 'R$ ' + Math.round(v).toLocaleString('pt-BR'))
-        : Number(v).toLocaleString('pt-BR');
-      const ttExtra = isClickable ? ', extraText: "↳ Clique para filtrar"' : '';
-      const _ttData = encodeURIComponent(JSON.stringify({label: lbl, color: fillCol, metricLabel: (ds.label || 'Valor'), valueText: _ttValTxt, extraText: isClickable ? '↳ Clique para filtrar' : null}));
+        : Number(v).toLocaleString('pt-BR'));
+      const extraRows = Array.isArray(tooltipRows) ? (tooltipRows[i] || []) : [];
+      const _ttData = encodeURIComponent(JSON.stringify({label: lbl, color: fillCol, metricLabel: (ds.tooltipMetricLabel || ds.label || 'Valor'), valueText: _ttValTxt, extraRows: extraRows, extraText: isClickable ? '↳ Clique para filtrar' : null}));
       const clickAttr = isClickable ? `onclick="window.__rankingClick(${clickableProps[i]})" data-prop-idx="${clickableProps[i]}"` : '';
       bars += `<rect x="${pad.l}" y="${y}" width="${w}" height="${bh}" rx="4" fill="${fillCol}" opacity="0.92"
         ${cursorAttr} ${clickAttr}
@@ -2309,9 +2487,8 @@ class Chart {
         onmouseout="window.__hideSimpleTooltip()"/>`;
       const lblTxt = String(lbl).length > 28 ? String(lbl).substring(0,28) + '…' : lbl;
       txts += `<text x="${pad.l - 8}" y="${y + bh/2 + 4}" text-anchor="end" font-size="10.5" fill="#475569" font-weight="500" ${cursorAttr} ${clickAttr}>${lblTxt}</text>`;
-      // Valor à direita da barra
-      const valTxt = v >= 1000 ? _fmtBRLshort(v).replace('R$ ','') : _fmtNum(v);
-      vals += `<text x="${pad.l + w + 4}" y="${y + bh/2 + 4}" font-size="10" fill="#475569" font-weight="600">${valTxt}</text>`;
+      const valTxt = labelData && labelData[i] ? labelData[i] : (v >= 1000 ? _fmtBRLshort(v).replace('R$ ','') : _fmtNum(v));
+      vals += `<text x="${pad.l + w + 4}" y="${y + bh/2 + 4}" font-size="10" fill="#475569" font-weight="700">${valTxt}</text>`;
     });
 
     this.svgWrapper.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:100%;font-family:Inter,sans-serif;" preserveAspectRatio="xMidYMid meet">${bars}${txts}${vals}</svg>`;
@@ -2412,9 +2589,19 @@ class Chart {
       const dash = d.borderDash ? `stroke-dasharray="${d.borderDash.join(',')}"` : '';
       allPaths += `<path d="${linePath}" fill="none" stroke="${color}" stroke-width="2.6" ${dash} stroke-linejoin="round" stroke-linecap="round" filter="drop-shadow(0 1px 2px rgba(0,0,0,0.08))"/>`;
 
+      // Rótulos opcionais de valores — usados apenas nos gráficos solicitados.
+      if (Array.isArray(d.valueLabels)) {
+        pts.forEach((pnt, i) => {
+          if (!d.valueLabels[i]) return;
+          const dy = dsIdx === 0 ? -8 : 14;
+          const anchorY = Math.max(10, Math.min(H - 8, pnt.y + dy));
+          allPaths += `<text x="${pnt.x}" y="${anchorY}" text-anchor="middle" font-size="10" fill="${color}" font-weight="800">${d.valueLabels[i]}</text>`;
+        });
+      }
+
       // Pontos foram removidos (linha mais limpa, conforme referência visual)
 
-      seriesData.push({color, label: d.label || '', pts, dt});
+      seriesData.push({color, label: d.label || '', pts, dt, valueTexts: d.tooltipValueTexts || null, tooltipRows: d.tooltipRows || null});
     });
 
     // Legenda no topo
@@ -2439,7 +2626,7 @@ class Chart {
       // Linha vertical guia
       hovers += `<line class="hov-guide-${i}" x1="${cx}" y1="${pad.t}" x2="${cx}" y2="${pad.t + innerH}" stroke="${FIBRA_COLORS.azulEscuro}" stroke-width="1" stroke-dasharray="3,3" opacity="0" pointer-events="none"/>`;
       // Hotspot transparente
-      const tooltipData = seriesData.map(s => ({color: s.color, label: s.label, value: s.dt[i] || 0}));
+      const tooltipData = seriesData.map(s => ({color: s.color, label: s.label, value: s.dt[i] || 0, valueText: s.valueTexts ? s.valueTexts[i] : null, extraRows: s.tooltipRows ? (s.tooltipRows[i] || []) : []}));
       const dataAttr = encodeURIComponent(JSON.stringify({lbl: labels[i], series: tooltipData}));
       hovers += `<rect x="${x}" y="${pad.t}" width="${colW}" height="${innerH}" fill="transparent"
         onmouseover="window.__showLineTooltip(this,'${tooltipId}','${dataAttr}',${i})"
@@ -2516,9 +2703,15 @@ window.__showLineTooltip = function(rect, tooltipId, dataEnc, colIdx) {
   d.series.forEach(s => {
     const v = s.value;
     let valTxt;
-    if (v >= 1000) valTxt = (v >= 1e6 ? 'R$ ' + (v/1e6).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' Mi' : Number(v).toLocaleString('pt-BR'));
+    if (s.valueText) valTxt = s.valueText;
+    else if (v >= 1000) valTxt = (v >= 1e6 ? 'R$ ' + (v/1e6).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' Mi' : Number(v).toLocaleString('pt-BR'));
     else valTxt = Number(v).toLocaleString('pt-BR', {minimumFractionDigits: v % 1 ? 2 : 0, maximumFractionDigits: 2});
     html += '<div class="tt-row"><span class="tt-bullet" style="background:' + s.color + '"></span><span class="tt-label">' + (s.label || 'Valor') + ':</span><span class="tt-val">' + valTxt + '</span></div>';
+    if (Array.isArray(s.extraRows)) {
+      s.extraRows.forEach(function(row) {
+        html += '<div class="tt-row"><span class="tt-label" style="margin-left:18px;">' + row.label + ':</span><span class="tt-val">' + row.value + '</span></div>';
+      });
+    }
   });
   tt.innerHTML = html;
   tt.style.display = 'block';
@@ -2562,6 +2755,11 @@ window.__showSimpleTooltip = function(el, dataEnc) {
   html += '<div class="tt-row"><span class="tt-bullet" style="background:' + (d.color || '#008BD2') + '"></span>';
   html += '<span class="tt-label">' + (d.metricLabel || 'Valor') + ':</span><span class="tt-val">' + d.valueText + '</span></div>';
   if (d.pctText) html += '<div class="tt-row"><span class="tt-label" style="margin-left:18px;">Participação:</span><span class="tt-val">' + d.pctText + '</span></div>';
+  if (Array.isArray(d.extraRows)) {
+    d.extraRows.forEach(function(row) {
+      html += '<div class="tt-row"><span class="tt-label" style="margin-left:18px;">' + row.label + ':</span><span class="tt-val">' + row.value + '</span></div>';
+    });
+  }
   if (d.extraText) html += '<div class="tt-row" style="margin-top:6px;padding-top:5px;border-top:1px solid rgba(255,255,255,0.13);"><span class="tt-label" style="font-size:10.5px;font-style:italic;color:rgba(255,255,255,0.85);">' + d.extraText + '</span></div>';
   tt.innerHTML = html;
   tt.style.display = 'block';
@@ -2875,51 +3073,51 @@ function aplicaFiltrosSemStatus(ini, fim) {
   return out;
 }
 
+function aplicaItensSemStatus(ini, fim) {
+  const idsOK = new Set();
+  for (let i = 0; i < PROPOSTAS.length; i++) {
+    const p = PROPOSTAS[i];
+    if (p[0] < ini || p[0] > fim) continue;
+    if (!passaFiltrosSemStatus(p)) continue;
+    idsOK.add(i);
+  }
+  return ITENS.filter(it => idsOK.has(it[0]));
+}
+
 // ============================================================
 // AGREGADORES
 // ============================================================
 function calculaKPIs(propostas, propostasSemStatus) {
-  // REGRA CORRIGIDA DOS CARDS:
-  // 1) TOTAL DE PROPOSTAS = quantidade de propostas do recorte atual,
-  //    respeitando TODOS os filtros selecionados, inclusive Status.
-  //    Quando nenhum Status está selecionado, naturalmente soma Aceita,
-  //    Concluída, Em Desenvolvimento e Recusada.
-  // 2) TOTAL DE PROP. ACEITAS = quantidade de propostas Aceitas no mesmo
-  //    recorte de data/unidade/proprietário/produto, com Status fixo = Aceita.
-  //    Isso impede que outro Status selecionado zere ou contamine o card.
-  // 3) RECEITA CONTRATADA = soma de Valor Total somente das Aceitas.
-  const baseTodosFiltros = propostas || [];
-  const baseSemStatus = propostasSemStatus || baseTodosFiltros;
-
-  let totalPropostas = 0;
-  for (const p of baseTodosFiltros) {
-    if (p[1] >= 0 && p[1] <= 3) totalPropostas++;
-  }
-
+  // KPIs que RESPEITAM todos os filtros (incluindo Status):
+  // - total_propostas: COUNT DISTINCT ID da Proposta
+  // - receita_total: SUM Valor Total apenas de propostas com Status=Aceita
+  const total = propostas.length;
   let receita = 0;
-  let aceitas = 0;
-  let concluidas = 0;
-  const dist = [0, 0, 0, 0];
-
-  for (const p of baseSemStatus) {
-    if (p[1] < 0 || p[1] > 3) continue;
-    dist[p[1]]++;
-    if (p[1] === 0) {
-      aceitas++;
-      receita += p[2];
-    } else if (p[1] === 1) {
-      concluidas++;
-    }
+  for (const p of propostas) {
+    if (p[1] === 0) receita += p[2];  // somente Aceita
   }
 
-  const totalBaseConversao = dist[0] + dist[1] + dist[2] + dist[3];
-  const fechadas = aceitas + concluidas;
+  // KPIs que IGNORAM o filtro de Status (respeitam apenas data, unidade, proprietário, produto):
+  // - aceitas: COUNT DISTINCT onde Status = "Aceita"
+  // - taxa_conversao: (Aceitas + Concluídas) / Total × 100, considerando os 4 status
+  // - status_dist: distribuição completa entre os 4 status
+  let aceitasSemStatus = 0, concluidasSemStatus = 0;
+  const dist = [0, 0, 0, 0];
+  const baseSemStatus = propostasSemStatus || propostas;
+  for (const p of baseSemStatus) {
+    if (p[1] < 0 || p[1] > 3) continue;  // só os 4 status válidos
+    dist[p[1]]++;
+    if (p[1] === 0) aceitasSemStatus++;
+    else if (p[1] === 1) concluidasSemStatus++;
+  }
+  const totalSemStatus = dist[0] + dist[1] + dist[2] + dist[3];
+  const fechadas = aceitasSemStatus + concluidasSemStatus;
 
   return {
-    total_propostas: totalPropostas,
+    total_propostas: total,
     receita_total: receita,
-    aceitas: aceitas,
-    taxa_conversao: totalBaseConversao > 0 ? (fechadas / totalBaseConversao * 100) : 0,
+    aceitas: aceitasSemStatus,
+    taxa_conversao: totalSemStatus > 0 ? (fechadas / totalSemStatus * 100) : 0,
     status_dist: {
       'Aceita': dist[0],
       'Concluída': dist[1],
@@ -2929,60 +3127,32 @@ function calculaKPIs(propostas, propostasSemStatus) {
   };
 }
 
-function mesesNoIntervalo(iniDias, fimDias) {
-  const ini = diasParaData(iniDias);
-  const fim = diasParaData(fimDias);
-  const meses = [];
-  let y = ini.getFullYear();
-  let m = ini.getMonth();
-  const yFim = fim.getFullYear();
-  const mFim = fim.getMonth();
-  while (y < yFim || (y === yFim && m <= mFim)) {
-    meses.push(y + '-' + String(m + 1).padStart(2, '0'));
-    m++;
-    if (m > 11) { m = 0; y++; }
-  }
-  return meses;
-}
-
-function agregaReceitaMensalAceitasAcumulada(propostasSemStatus, iniDias, fimDias) {
-  // Regra fixa do gráfico "Evolução Mensal da Receita Contratada":
-  // 1) sempre considera SOMENTE propostas com Status = Aceita;
-  // 2) ignora qualquer seleção do filtro Status;
-  // 3) no padrão abre em YTD do ano atual;
-  // 4) no Personalizado recalcula pelo intervalo escolhido;
-  // 5) exibe a curva acumulada mês a mês dentro do intervalo ativo.
+function agregaReceitaMensal(propostasSemStatus) {
+  // Soma Valor Total por mês considerando SOMENTE propostas com Razão do Status = Aceita.
+  // Ignora o filtro de Status para manter a leitura fixa em Aceitas, respeitando os demais filtros.
   const map = {};
   for (const p of propostasSemStatus) {
     if (p[1] !== 0) continue;
     const am = anoMesDe(p[0]);
-    map[am] = (map[am] || 0) + p[2];
+    if (!map[am]) map[am] = { valor: 0, qtd: 0 };
+    map[am].valor += p[2];
+    map[am].qtd += 1;
   }
-  let acumulado = 0;
-  return mesesNoIntervalo(iniDias, fimDias).map(mes => {
-    acumulado += (map[mes] || 0);
-    return { mes, valor: acumulado };
-  }).filter(x => x.valor > 0 || Object.keys(map).length > 0);
+  return Object.entries(map).sort(([a],[b]) => a.localeCompare(b)).map(([mes, v]) => ({mes, valor: v.valor, qtd: v.qtd}));
 }
 
-function agregaQtdMensalAceitasAcumulada(propostasSemStatus, iniDias, fimDias) {
-  // Regra fixa do gráfico "Evolução Mensal da Quantidade de Propostas":
-  // 1) sempre considera SOMENTE propostas com Status = Aceita;
-  // 2) ignora qualquer seleção do filtro Status;
-  // 3) no padrão abre em YTD do ano atual;
-  // 4) no Personalizado recalcula pelo intervalo escolhido;
-  // 5) exibe a curva acumulada mês a mês dentro do intervalo ativo.
+function agregaQtdMensal(propostasSemStatus) {
+  // Quantidade mensal considerando SOMENTE propostas com Razão do Status = Aceita.
+  // Também mantém o valor total aceito para tooltip executivo.
   const map = {};
   for (const p of propostasSemStatus) {
     if (p[1] !== 0) continue;
     const am = anoMesDe(p[0]);
-    map[am] = (map[am] || 0) + 1;
+    if (!map[am]) map[am] = { qtd: 0, valor: 0 };
+    map[am].qtd += 1;
+    map[am].valor += p[2];
   }
-  let acumulado = 0;
-  return mesesNoIntervalo(iniDias, fimDias).map(mes => {
-    acumulado += (map[mes] || 0);
-    return { mes, qtd: acumulado };
-  }).filter(x => x.qtd > 0 || Object.keys(map).length > 0);
+  return Object.entries(map).sort(([a],[b]) => a.localeCompare(b)).map(([mes, v]) => ({mes, qtd: v.qtd, valor: v.valor}));
 }
 
 function agregaAceitaRecusada(propostasSemStatus) {
@@ -3023,16 +3193,18 @@ function agregaPorte(propostas) {
     .sort((a,b) => b.ValorTotal - a.ValorTotal);
 }
 
-function agregaTopEmpresas(propostas) {
-  // Soma Valor Total por Cliente, SOMENTE Aceitas (statusIdx = 0). Top 10.
+function agregaTopEmpresas(propostasSemStatus) {
+  // Soma Valor Total e quantidade por Cliente, SOMENTE Aceitas (statusIdx = 0). Top 10.
   const map = {};
-  for (const p of propostas) {
+  for (const p of propostasSemStatus) {
     if (p[1] !== 0) continue;
     if (p[5] < 0) continue;
     const c = CLIENTES[p[5]];
-    map[c] = (map[c] || 0) + p[2];
+    if (!map[c]) map[c] = { ValorTotal: 0, qtd: 0 };
+    map[c].ValorTotal += p[2];
+    map[c].qtd += 1;
   }
-  return Object.entries(map).map(([Cliente, ValorTotal]) => ({Cliente, ValorTotal}))
+  return Object.entries(map).map(([Cliente, v]) => ({Cliente, ValorTotal: v.ValorTotal, qtd: v.qtd}))
     .sort((a,b) => b.ValorTotal - a.ValorTotal).slice(0, 10);
 }
 
@@ -3048,39 +3220,47 @@ function agregaCategoria(itens) {
     .filter(x => x.valor > 0).sort((a,b) => b.valor - a.valor);
 }
 
-function agregaTopProdutos(itens) {
-  // Soma Valor Total por Produto, SOMENTE de propostas Aceitas (statusIdx = 0).
+function agregaTopProdutos(itensSemStatus) {
+  // Soma Valor Total e quantidade por Produto, SOMENTE de propostas Aceitas (statusIdx = 0).
   const map = {};
-  for (const it of itens) {
+  for (const it of itensSemStatus) {
     if (it[4] !== 0) continue;
-    map[it[1]] = (map[it[1]] || 0) + it[3];
+    if (!map[it[1]]) map[it[1]] = { valor: 0, qtd: 0 };
+    map[it[1]].valor += it[3];
+    map[it[1]].qtd += 1;
   }
-  return Object.entries(map).map(([idx, valor]) => ({produto: PRODUTOS[idx], valor}))
+  return Object.entries(map).map(([idx, v]) => ({produto: PRODUTOS[idx], valor: v.valor, qtd: v.qtd}))
     .sort((a,b) => b.valor - a.valor).slice(0, 10);
 }
 
 // === Top 10 Produtos por QUANTIDADE de propostas (deduplicado por ID da Proposta) ===
-function agregaTopProdutosQtd(propostas) {
-  // Cada proposta única é contada uma vez para cada produto distinto que ela contém.
+function agregaTopProdutosQtd(itensSemStatus) {
+  // Cada proposta Aceita é contada uma vez para cada produto distinto que ela contém.
+  // O valor total usa a soma dos itens aceitos do produto, evitando inflar a receita da proposta inteira.
   const map = {};
-  for (const p of propostas) {
-    for (const prodIdx of p[9]) {
-      map[prodIdx] = (map[prodIdx] || 0) + 1;
-    }
+  for (const it of itensSemStatus) {
+    if (it[4] !== 0) continue;
+    const prodIdx = it[1];
+    if (!map[prodIdx]) map[prodIdx] = { ids: new Set(), valor: 0 };
+    map[prodIdx].ids.add(it[0]);
+    map[prodIdx].valor += it[3];
   }
-  return Object.entries(map).map(([idx, qtd]) => ({produto: PRODUTOS[idx], qtd}))
+  return Object.entries(map).map(([idx, v]) => ({produto: PRODUTOS[idx], qtd: v.ids.size, valor: v.valor}))
     .sort((a,b) => b.qtd - a.qtd).slice(0, 10);
 }
 
 // === Top 10 Clientes por QUANTIDADE de propostas (deduplicado por ID da Proposta) ===
-function agregaTopEmpresasQtd(propostas) {
+function agregaTopEmpresasQtd(propostasSemStatus) {
   const map = {};
-  for (const p of propostas) {
+  for (const p of propostasSemStatus) {
+    if (p[1] !== 0) continue;
     if (p[5] < 0) continue;
     const c = CLIENTES[p[5]];
-    map[c] = (map[c] || 0) + 1;
+    if (!map[c]) map[c] = { qtd: 0, valor: 0 };
+    map[c].qtd += 1;
+    map[c].valor += p[2];
   }
-  return Object.entries(map).map(([Cliente, qtd]) => ({Cliente, qtd}))
+  return Object.entries(map).map(([Cliente, v]) => ({Cliente, qtd: v.qtd, valor: v.valor}))
     .sort((a,b) => b.qtd - a.qtd).slice(0, 10);
 }
 
@@ -3190,22 +3370,20 @@ function destruir(key) { if (charts[key]) { charts[key].destroy(); delete charts
 // RENDERIZADORES
 // ============================================================
 function renderKPIs(kpis, kpisAnt) {
-  // KPIs com comportamento corrigido:
-  // Receita preserva a regra anterior: YTD fixo quando não há período personalizado.
-  // Total de Propostas é dinâmico e respeita todos os filtros, inclusive Status.
-  // Total de Prop. Aceitas usa Status fixo = Aceita e respeita os demais filtros.
+  // KPIs Receita e Total: estáticos no ano 2026 quando filtro NÃO é Personalizado;
+  // dinâmicos (respeitando datas escolhidas) quando o usuário usar o Personalizado.
   let receitaExibida, totalExibido, kpiSubReceita, kpiSubTotal;
+  // Receita varia conforme modo (estático/personalizado); Total NUNCA varia (sempre YTD)
   const est = calculaEstaticoAnoAtual();
-  totalExibido = kpis.total_propostas;
-  kpiSubTotal = isPersonalizado ? 'no período personalizado · filtros aplicados' : 'período atual · filtros aplicados';
-
-  // REGRA CORRIGIDA — CARD RECEITA CONTRATADA:
-  // deve somar somente propostas com Razão do Status = Aceita,
-  // respeitando o recorte de data atual e os filtros selecionados de
-  // Unidade, Proprietário e Produto. O filtro visual de Status é ignorado
-  // para não contaminar uma métrica que é conceitualmente fixa em Aceita.
-  receitaExibida = kpis.receita_total;
-  kpiSubReceita = isPersonalizado ? 'Aceitas · período personalizado · filtros aplicados' : 'Aceitas · período atual · filtros aplicados';
+  totalExibido = est.total;
+  kpiSubTotal = 'ano de ' + est.anoAtual + ' · valor fixo';
+  if (isPersonalizado) {
+    receitaExibida = kpis.receita_total;
+    kpiSubReceita = 'no período personalizado';
+  } else {
+    receitaExibida = est.receita;
+    kpiSubReceita = 'ano de ' + est.anoAtual + ' · valor fixo';
+  }
   // Count-up animations (somente em transições — não dispara em repaint sem mudança)
   const elR = document.getElementById('kpi-receita');
   const elT = document.getElementById('kpi-total');
@@ -3239,23 +3417,21 @@ function renderKPIs(kpis, kpisAnt) {
   if (elSubR) elSubR.textContent = kpiSubReceita;
   if (elSubT) elSubT.textContent = kpiSubTotal;
 
-  // Delta: Total, Receita e Aceitas comparam contra período anterior quando disponível.
+  // Delta: Total NUNCA varia (sempre fixo · ano); Receita varia somente no Personalizado.
   const _anoAtual = calculaEstaticoAnoAtual().anoAtual;
+  // Total: badge sempre "fixo · ano"
   const elTotalDelta = document.getElementById('kpi-total-delta');
   if (elTotalDelta) {
-    if (kpisAnt) aplicaDelta('kpi-total-delta', kpis.total_propostas, kpisAnt.total_propostas);
-    else {
-      elTotalDelta.textContent = 'sem comparativo';
-      elTotalDelta.className = 'kpi-delta neutral';
-    }
+    elTotalDelta.textContent = 'fixo · ' + _anoAtual;
+    elTotalDelta.className = 'kpi-delta neutral';
   }
-  // Receita: sempre baseada em Aceitas e interativa com filtros/período.
-  if (kpisAnt) {
+  // Receita: delta apenas no modo Personalizado
+  if (isPersonalizado && kpisAnt) {
     aplicaDelta('kpi-receita-delta', kpis.receita_total, kpisAnt.receita_total);
   } else {
     const elR = document.getElementById('kpi-receita-delta');
     if (elR) {
-      elR.textContent = 'sem comparativo';
+      elR.textContent = isPersonalizado ? 'sem comparativo' : ('fixo · ' + _anoAtual);
       elR.className = 'kpi-delta neutral';
     }
   }
@@ -3304,12 +3480,13 @@ function renderEvolReceita(serie) {
   const ctx = document.getElementById('chart-receita').getContext('2d');
   if (serie.length === 0) {
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    document.getElementById('insight-receita').textContent = 'Sem propostas Aceitas no período.';
+    document.getElementById('insight-receita').textContent = 'Sem dados de receita no período.';
     return;
   }
   const labels = serie.map(x => fmtMes(x.mes));
   const labelsFull = serie.map(x => fmtMesLong(x.mes));
   const valores = serie.map(x => x.valor);
+  const qtds = serie.map(x => x.qtd || 0);
   const grad = ctx.createLinearGradient(0, 0, 0, 280);
   grad.addColorStop(0, 'rgba(0, 139, 210, 0.45)');
   grad.addColorStop(0.5, 'rgba(0, 139, 210, 0.15)');
@@ -3317,7 +3494,10 @@ function renderEvolReceita(serie) {
   charts.receita = new Chart(ctx, {
     type: 'line',
     data: { labels, datasets: [{
-      label: 'Receita acumulada · Aceita', data: valores,
+      label: 'Valor total aceito', data: valores,
+      valueLabels: qtds.map(q => fmtNum(q)),
+      tooltipValueTexts: valores.map(v => fmtBRL(v)),
+      tooltipRows: qtds.map((q, i) => [{label: 'Qtd. propostas aceitas', value: fmtNum(q)}]),
       borderColor: FIBRA.azulEscuro, backgroundColor: grad,
       borderWidth: 3, fill: true, tension: 0.35,
       pointRadius: 0, pointHoverRadius: 6,
@@ -3328,7 +3508,7 @@ function renderEvolReceita(serie) {
       interaction: { mode: 'index', intersect: false },
       plugins: {
         legend: { display: false },
-        tooltip: { callbacks: { title: it => labelsFull[it[0].dataIndex], label: c => 'Receita acumulada: ' + fmtBRL(c.parsed.y) } }
+        tooltip: { callbacks: { title: it => labelsFull[it[0].dataIndex], label: c => 'Valor total aceito: ' + fmtBRL(c.parsed.y) } }
       },
       scales: {
         x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 12 } },
@@ -3343,10 +3523,10 @@ function renderEvolReceita(serie) {
     const ult = valores[valores.length-1], pen = valores[valores.length-2];
     const var_ = pen > 0 ? ((ult-pen)/pen*100) : 0;
     document.getElementById('insight-receita').textContent =
-      'Receita acumulada de propostas Aceitas: ' + fmtBRLshort(ult) +
-      '. Maior ponto da curva em ' + labelsFull[idxMax] + ': ' + fmtBRLshort(max) + '.';
+      'Pico de ' + fmtBRLshort(max) + ' em ' + labelsFull[idxMax] +
+      '. Variação no último mês: ' + (var_>=0?'+':'') + var_.toFixed(1) + '%.';
   } else if (valores.length === 1) {
-    document.getElementById('insight-receita').textContent = 'Receita acumulada de propostas Aceitas no período: ' + fmtBRLshort(valores[0]) + '.';
+    document.getElementById('insight-receita').textContent = 'Receita única do mês: ' + fmtBRLshort(valores[0]) + '.';
   }
 }
 
@@ -3356,10 +3536,15 @@ function renderEvolQtd(serie) {
   const labels = serie.map(x => fmtMes(x.mes));
   const labelsFull = serie.map(x => fmtMesLong(x.mes));
   const valores = serie.map(x => x.qtd);
+  const valoresReceita = serie.map(x => x.valor || 0);
   charts.qtd = new Chart(document.getElementById('chart-qtd'), {
     type: 'bar',
     data: { labels, datasets: [{
       data: valores,
+      valueLabels: valores.map(v => fmtNum(v)),
+      tooltipMetricLabel: 'Qtd. propostas aceitas',
+      tooltipValueTexts: valores.map(v => fmtNum(v)),
+      tooltipRows: valoresReceita.map(v => [{label: 'Valor total aceito', value: fmtBRL(v)}]),
       backgroundColor: ctx2 => {
         const chart = ctx2.chart;
         const {ctx, chartArea} = chart;
@@ -3376,7 +3561,7 @@ function renderEvolQtd(serie) {
       responsive: true, maintainAspectRatio: false,
       plugins: {
         legend: { display: false },
-        tooltip: { callbacks: { title: it => labelsFull[it[0].dataIndex], label: c => 'Propostas: ' + fmtNum(c.parsed.y) } }
+        tooltip: { callbacks: { title: it => labelsFull[it[0].dataIndex], label: c => 'Qtd. propostas aceitas: ' + fmtNum(c.parsed.y) } }
       },
       scales: {
         x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 12 } },
@@ -3399,10 +3584,10 @@ function renderAR(serie) {
   charts.ar = new Chart(document.getElementById('chart-ar'), {
     type: 'line',
     data: { labels, datasets: [
-      { label: 'Aceitas', data: serie.map(x=>x.aceita), borderColor: FIBRA.verde,
+      { label: 'Aceitas', data: serie.map(x=>x.aceita), valueLabels: serie.map(x=>fmtNum(x.aceita)), borderColor: FIBRA.verde,
         backgroundColor: FIBRA.verde, borderWidth: 3, tension: 0.35,
         pointRadius: 0, pointHoverRadius: 5, fill: false },
-      { label: 'Recusadas', data: serie.map(x=>x.recusada), borderColor: FIBRA.laranja,
+      { label: 'Recusadas', data: serie.map(x=>x.recusada), valueLabels: serie.map(x=>fmtNum(x.recusada)), borderColor: FIBRA.laranja,
         backgroundColor: FIBRA.laranja, borderWidth: 3, tension: 0.35,
         pointRadius: 0, pointHoverRadius: 5, fill: false, borderDash: [4,4] }
     ]},
@@ -3520,6 +3705,10 @@ function renderProdutos(dados) {
     type: 'bar',
     data: { labels: labelsCurtos, datasets: [{
       data: dados.map(x=>x.valor),
+      valueLabels: dados.map(x => fmtNum(x.qtd || 0) + ' · ' + fmtBRLshort(x.valor)),
+      tooltipMetricLabel: 'Valor total aceito',
+      tooltipValueTexts: dados.map(x => fmtBRL(x.valor)),
+      tooltipRows: dados.map(x => [{label: 'Qtd. propostas aceitas', value: fmtNum(x.qtd || 0)}]),
       backgroundColor: 'rgba(22, 65, 148, 0.85)',
       hoverBackgroundColor: FIBRA.azulEscuro,
       borderRadius: 4, borderSkipped: false,
@@ -3548,6 +3737,10 @@ function renderEmpresas(dados) {
     type: 'bar',
     data: { labels: labelsCurtos, datasets: [{
       data: dados.map(x=>x.ValorTotal),
+      valueLabels: dados.map(x => fmtNum(x.qtd || 0) + ' · ' + fmtBRLshort(x.ValorTotal)),
+      tooltipMetricLabel: 'Valor total aceito',
+      tooltipValueTexts: dados.map(x => fmtBRL(x.ValorTotal)),
+      tooltipRows: dados.map(x => [{label: 'Qtd. propostas aceitas', value: fmtNum(x.qtd || 0)}]),
       backgroundColor: 'rgba(232, 73, 16, 0.85)',
       hoverBackgroundColor: FIBRA.laranja,
       borderRadius: 4, borderSkipped: false,
@@ -3577,6 +3770,10 @@ function renderProdutosQtd(dados) {
     type: 'bar',
     data: { labels: labelsCurtos, datasets: [{
       data: dados.map(x => x.qtd),
+      valueLabels: dados.map(x => fmtNum(x.qtd) + ' · ' + fmtBRLshort(x.valor || 0)),
+      tooltipMetricLabel: 'Qtd. propostas aceitas',
+      tooltipValueTexts: dados.map(x => fmtNum(x.qtd)),
+      tooltipRows: dados.map(x => [{label: 'Valor total aceito', value: fmtBRL(x.valor || 0)}]),
       backgroundColor: 'rgba(108, 194, 186, 0.85)',
       hoverBackgroundColor: FIBRA.verdeAgua,
       borderRadius: 4, borderSkipped: false,
@@ -3612,6 +3809,10 @@ function renderEmpresasQtd(dados) {
     type: 'bar',
     data: { labels: labelsCurtos, datasets: [{
       data: dados.map(x => x.qtd),
+      valueLabels: dados.map(x => fmtNum(x.qtd) + ' · ' + fmtBRLshort(x.valor || 0)),
+      tooltipMetricLabel: 'Qtd. propostas aceitas',
+      tooltipValueTexts: dados.map(x => fmtNum(x.qtd)),
+      tooltipRows: dados.map(x => [{label: 'Valor total aceito', value: fmtBRL(x.valor || 0)}]),
       backgroundColor: 'rgba(99, 102, 241, 0.78)',
       hoverBackgroundColor: FIBRA.indigo,
       borderRadius: 4, borderSkipped: false,
@@ -4538,6 +4739,7 @@ function renderTudo(iniDias, fimDias, label) {
   // Usado por componentes que mostram distribuição entre status, ou que têm
   // status fixo (KPI Aceitas, Taxa Conversão, Distribuição por Status, Receita por Sistema S).
   const propsSemStatus = aplicaFiltrosSemStatus(iniDias, fimDias);
+  const itensSemStatus = aplicaItensSemStatus(iniDias, fimDias);
 
   // Comparativo (período anterior de mesma duração)
   const ant = calculaPeriodoAnterior(iniDias, fimDias);
@@ -4549,20 +4751,20 @@ function renderTudo(iniDias, fimDias, label) {
   }
 
   const kpis = calculaKPIs(props, propsSemStatus);
-  const kpisAnt = propsAnt ? calculaKPIs(propsAnt, propsAntSemStatus) : null;
+  const kpisAnt = propsAnt && propsAnt.length > 0 ? calculaKPIs(propsAnt, propsAntSemStatus) : null;
 
   renderKPIs(kpis, kpisAnt);
   renderStatusBar(kpis);
-  renderEvolReceita(agregaReceitaMensalAceitasAcumulada(propsSemStatus, iniDias, fimDias));
-  renderEvolQtd(agregaQtdMensalAceitasAcumulada(propsSemStatus, iniDias, fimDias));
+  renderEvolReceita(agregaReceitaMensal(propsSemStatus));
+  renderEvolQtd(agregaQtdMensal(propsSemStatus));
   renderAR(agregaAceitaRecusada(propsSemStatus));
   renderSistema(agregaSistema(propsSemStatus));
   renderCategoria(agregaCategoria(itens));
   renderPorte(agregaPorte(props));
-  renderProdutos(agregaTopProdutos(itens));
-  renderEmpresas(agregaTopEmpresas(props));
-  renderProdutosQtd(agregaTopProdutosQtd(props));
-  renderEmpresasQtd(agregaTopEmpresasQtd(props));
+  renderProdutos(agregaTopProdutos(itensSemStatus));
+  renderEmpresas(agregaTopEmpresas(propsSemStatus));
+  renderProdutosQtd(agregaTopProdutosQtd(itensSemStatus));
+  renderEmpresasQtd(agregaTopEmpresasQtd(propsSemStatus));
   // Rankings respeitam todos os filtros (incluindo proprietário)
   renderPropQtd(agregaPropQtdAceitas(props));
   renderPropValor(agregaPropValor(props));
