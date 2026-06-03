@@ -1823,6 +1823,73 @@ html, body {
   .indicadores2026-board { min-width: 760px; }
 }
 
+
+
+/* === MAPA GEOGRÁFICO PREMIUM — resumo visível integrado === */
+.map-card.premium-geo-card { position: relative; overflow: hidden; }
+.map-card.premium-geo-card .chart-header {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 18px;
+}
+.geo-map-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+.geo-map-label { font-size: 10px; font-weight: 800; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: .08em; }
+.geo-map-select {
+  appearance: none; -webkit-appearance: none;
+  background: #fff; border: 1px solid var(--border); border-radius: 9px;
+  padding: 8px 34px 8px 12px; min-width: 190px;
+  font-family: inherit; font-size: 11.5px; font-weight: 700; color: var(--text-primary);
+  box-shadow: var(--elev-1); outline: none; cursor: pointer;
+  background-image: linear-gradient(45deg, transparent 50%, var(--text-tertiary) 50%), linear-gradient(135deg, var(--text-tertiary) 50%, transparent 50%);
+  background-position: calc(100% - 16px) 50%, calc(100% - 11px) 50%;
+  background-size: 5px 5px, 5px 5px; background-repeat: no-repeat;
+}
+.geo-map-premium {
+  display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px;
+  border-radius: 999px; background: rgba(34,197,94,.10); color: #16a34a;
+  font-size: 10px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase;
+}
+.map-wrap.geo-premium-wrap { height: 560px; border-radius: 16px; position: relative; }
+.geo-summary-panel {
+  position: absolute; left: 16px; top: 16px; width: 282px; z-index: 800;
+  background: rgba(255,255,255,.94); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(226,232,240,.95); border-radius: 16px; padding: 16px;
+  box-shadow: 0 18px 42px -18px rgba(15,23,42,.35), 0 4px 14px rgba(15,23,42,.08);
+}
+.geo-summary-title { font-size: 14px; font-weight: 900; color: var(--text-primary); letter-spacing: -.02em; margin-bottom: 2px; }
+.geo-summary-subtitle { font-size: 11px; color: var(--text-secondary); font-weight: 600; margin-bottom: 12px; line-height: 1.35; }
+.geo-summary-kpis { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; }
+.geo-summary-kpi { background: linear-gradient(135deg,#fff,#f8fafc); border: 1px solid var(--border-soft); border-radius: 10px; padding: 10px 11px; }
+.geo-summary-kpi .label { display: block; font-size: 9px; color: var(--text-tertiary); font-weight: 900; text-transform: uppercase; letter-spacing: .07em; margin-bottom: 4px; }
+.geo-summary-kpi .value { display: block; font-size: 13px; color: var(--text-primary); font-weight: 900; font-variant-numeric: tabular-nums; }
+.geo-top-title { font-size: 10px; font-weight: 900; color: var(--text-primary); text-transform: uppercase; letter-spacing: .07em; margin: 8px 0 7px; }
+.geo-top-list { display: flex; flex-direction: column; gap: 5px; max-height: 208px; overflow: hidden; }
+.geo-top-item { display: grid; grid-template-columns: 20px 1fr auto; align-items: center; gap: 7px; padding: 5px 0; border-bottom: 1px solid rgba(226,232,240,.85); }
+.geo-top-rank { width: 18px; height: 18px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: linear-gradient(135deg,var(--fibra-azul-escuro),#2563eb); color:#fff; font-size: 10px; font-weight: 900; box-shadow: 0 3px 8px rgba(22,65,148,.25); }
+.geo-top-name { font-size: 10.5px; font-weight: 800; color: var(--text-primary); line-height: 1.15; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.geo-top-value { font-size: 10.5px; font-weight: 900; color:#1d4ed8; font-variant-numeric: tabular-nums; }
+.geo-summary-foot { margin-top: 10px; font-size: 10px; color: var(--text-tertiary); font-weight: 600; line-height: 1.35; font-style: italic; }
+.geo-scale-panel {
+  position: absolute; right: 16px; top: 16px; width: 198px; z-index: 800;
+  background: rgba(255,255,255,.94); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(226,232,240,.95); border-radius: 14px; padding: 12px 14px;
+  box-shadow: 0 12px 32px -18px rgba(15,23,42,.32);
+}
+.geo-scale-title { font-size: 9.5px; color: var(--text-primary); font-weight: 900; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 8px; }
+.geo-scale-bar { height: 6px; border-radius: 999px; background: linear-gradient(90deg,#7dd3fc 0%,#2563eb 50%,#0f172a 100%); margin-bottom: 8px; }
+.geo-scale-labels { display: flex; justify-content: space-between; font-size: 9.5px; font-weight: 700; color: var(--text-tertiary); }
+.geo-bottom-cards { position: absolute; left: 312px; right: 16px; bottom: 16px; z-index: 800; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.geo-bottom-card { background: rgba(255,255,255,.94); border: 1px solid rgba(226,232,240,.95); border-radius: 13px; padding: 11px 13px; box-shadow: 0 12px 30px -20px rgba(15,23,42,.35); min-height: 54px; }
+.geo-bottom-card .label { font-size: 9px; font-weight: 900; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 4px; }
+.geo-bottom-card .value { font-size: 13px; font-weight: 900; color: var(--text-primary); font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.map-footnote.geo-status-line { text-align: left; padding: 10px 2px 0; font-style: normal; color: var(--text-secondary); }
+.geo-status-dot { display:inline-block; width:7px; height:7px; border-radius:50%; background:#22c55e; margin-right:7px; box-shadow:0 0 0 3px rgba(34,197,94,.12); }
+@media (max-width: 900px) {
+  .map-card.premium-geo-card .chart-header { flex-direction: column; }
+  .geo-summary-panel, .geo-scale-panel, .geo-bottom-cards { position: static; width: auto; margin: 10px; }
+  .geo-bottom-cards { grid-template-columns: 1fr 1fr; }
+  .map-wrap.geo-premium-wrap { height: auto; padding-top: 0; }
+  #map-leaflet { height: 440px; }
+}
+
 </style>
 </head>
 <body>
@@ -2096,30 +2163,54 @@ html, body {
 
 
   <!-- MAPA DE CLIENTES POR REGIÃO -->
-  <div class="chart-card map-card">
+  <div class="chart-card map-card premium-geo-card">
     <div class="chart-header">
-      <div class="chart-title">Distribuição Geográfica de Clientes — Distrito Federal e Entorno</div>
-      <div class="chart-insight" id="insight-map">Pontos por região administrativa, dimensionados pelo valor total das propostas. Hover para detalhes.</div>
-    </div>
-    <div class="map-toolbar">
-      <div class="map-stats">
-        <span class="map-stat"><strong id="map-stat-clientes">0</strong> clientes</span>
-        <span class="map-stat-sep">·</span>
-        <span class="map-stat"><strong id="map-stat-regioes">0</strong> regiões</span>
-        <span class="map-stat-sep">·</span>
-        <span class="map-stat"><strong id="map-stat-receita">R$ 0,00</strong> em propostas</span>
+      <div>
+        <div class="chart-title">Distribuição Geográfica de Clientes — Distrito Federal e Entorno</div>
+        <div class="chart-insight" id="insight-map">Visão executiva por CEP/região, com bolhas dimensionadas por valor e resumo geográfico visível.</div>
       </div>
-      <div class="map-legend">
-        <span class="map-legend-item"><span class="dot small"></span> menor valor</span>
-        <span class="map-legend-item"><span class="dot medium"></span> médio</span>
-        <span class="map-legend-item"><span class="dot large"></span> maior valor</span>
+      <div class="geo-map-actions">
+        <span class="geo-map-label">Visualizar por</span>
+        <select class="geo-map-select" id="geo-map-mode" aria-label="Visualizar mapa por">
+          <option value="propostas" selected>Quantidade de Propostas</option>
+          <option value="valor">Valor Total</option>
+          <option value="clientes">Clientes Únicos</option>
+        </select>
+        <span class="geo-map-premium">Geo Premium</span>
       </div>
     </div>
-    <div class="map-wrap">
+    <div class="map-wrap geo-premium-wrap">
       <div id="map-leaflet"></div>
+
+      <div class="geo-summary-panel">
+        <div class="geo-summary-title">Resumo geográfico</div>
+        <div class="geo-summary-subtitle">Concentração por região, propostas e clientes</div>
+        <div class="geo-summary-kpis">
+          <div class="geo-summary-kpi"><span class="label">Valor total</span><span class="value" id="geo-summary-valor">R$ 0</span></div>
+          <div class="geo-summary-kpi"><span class="label">Propostas</span><span class="value" id="geo-summary-propostas">0</span></div>
+          <div class="geo-summary-kpi"><span class="label">Clientes</span><span class="value" id="geo-summary-clientes">0</span></div>
+          <div class="geo-summary-kpi"><span class="label">Regiões</span><span class="value" id="geo-summary-regioes">0</span></div>
+        </div>
+        <div class="geo-top-title">Top regiões</div>
+        <div class="geo-top-list" id="geo-top-regioes"></div>
+        <div class="geo-summary-foot" id="geo-summary-foot">CEP consolidado: 0 · Sem geocode: 0 · Cobertura: 0%</div>
+      </div>
+
+      <div class="geo-scale-panel">
+        <div class="geo-scale-title">Escala da bolha</div>
+        <div class="geo-scale-bar"></div>
+        <div class="geo-scale-labels"><span>Menor</span><span>Maior</span></div>
+      </div>
+
+      <div class="geo-bottom-cards">
+        <div class="geo-bottom-card"><div class="label">Região líder</div><div class="value" id="geo-card-lider">—</div></div>
+        <div class="geo-bottom-card"><div class="label">Região com mais propostas</div><div class="value" id="geo-card-propostas">—</div></div>
+        <div class="geo-bottom-card"><div class="label">Maior volume</div><div class="value" id="geo-card-volume">—</div></div>
+        <div class="geo-bottom-card"><div class="label">Cobertura geo</div><div class="value" id="geo-card-cobertura">—</div></div>
+      </div>
     </div>
-    <div class="map-footnote">
-      Geocoding por faixa de CEP · Apenas regiões do DF e entorno próximo são exibidas · CEPs incompletos/inválidos são ignorados no mapa mas mantidos nos demais gráficos.
+    <div class="map-footnote geo-status-line" id="geo-status-line">
+      <span class="geo-status-dot"></span>0 regiões consolidadas · 0 propostas com localização · maior concentração em —
     </div>
   </div>
 
@@ -4638,19 +4729,34 @@ function renderMapa(dadosRegioes) {
     d.lng >= -48.50 && d.lng <= -47.30;
   const dadosFiltrados = dadosRegioes.filter(dentroDF);
 
-  // Estatísticas no topo
+  // Estatísticas do resumo geográfico premium
   const totalRegioes = dadosFiltrados.length;
   const totalClientes = dadosFiltrados.reduce((s, r) => s + r.qtdClientes, 0);
   const totalValor = dadosFiltrados.reduce((s, r) => s + r.valor, 0);
-  document.getElementById('map-stat-clientes').textContent = fmtNum(totalClientes);
-  document.getElementById('map-stat-regioes').textContent = fmtNum(totalRegioes);
-  document.getElementById('map-stat-receita').textContent = fmtBRL(totalValor);
+  const totalPropostasGeo = dadosFiltrados.reduce((s, r) => s + r.qtdPropostas, 0);
+  const totalPropostasBase = Array.isArray(dadosRegioes) ? dadosRegioes.reduce((s, r) => s + (r.qtdPropostas || 0), 0) : totalPropostasGeo;
+  const semGeo = Math.max(0, totalPropostasBase - totalPropostasGeo);
+  const coberturaGeo = totalPropostasBase > 0 ? Math.round((totalPropostasGeo / totalPropostasBase) * 100) : 0;
+
+  const setText = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value; };
+  setText('geo-summary-clientes', fmtNum(totalClientes));
+  setText('geo-summary-regioes', fmtNum(totalRegioes));
+  setText('geo-summary-valor', fmtBRL(totalValor).replace(',00',''));
+  setText('geo-summary-propostas', fmtNum(totalPropostasGeo));
+  setText('geo-summary-foot', 'CEP consolidado: ' + fmtNum(totalRegioes) + ' · Sem geocode: ' + fmtNum(semGeo) + ' · Cobertura: ' + coberturaGeo + '%');
+  setText('geo-card-cobertura', coberturaGeo + '%');
 
   // Limpa marcadores anteriores
   _leafletLayer.clearLayers();
 
   if (dadosFiltrados.length === 0) {
     document.getElementById('insight-map').textContent = 'Sem clientes geolocalizados no recorte filtrado.';
+    const listaVazia = document.getElementById('geo-top-regioes');
+    if (listaVazia) listaVazia.innerHTML = '<div class="geo-top-item"><span class="geo-top-rank">—</span><span class="geo-top-name">Sem regiões no recorte</span><span class="geo-top-value">0</span></div>';
+    setText('geo-card-lider', '—');
+    setText('geo-card-propostas', '—');
+    setText('geo-card-volume', 'R$ 0');
+    setText('geo-status-line', '0 regiões consolidadas · 0 propostas com localização · maior concentração em —');
     return;
   }
 
@@ -4665,10 +4771,38 @@ function renderMapa(dadosRegioes) {
   };
 
   // Ordenar por valor decrescente (maiores primeiro = ficam atrás; menores ficam clicáveis)
-  const dadosOrdenados = [...dadosFiltrados].sort((a, b) => b.valor - a.valor);
+  const modoEl = document.getElementById('geo-map-mode');
+  const modoMapa = modoEl ? modoEl.value : 'propostas';
+  const metricaMapa = d => modoMapa === 'valor' ? d.valor : (modoMapa === 'clientes' ? d.qtdClientes : d.qtdPropostas);
+  const dadosOrdenados = [...dadosFiltrados].sort((a, b) => metricaMapa(b) - metricaMapa(a));
+  const maxMetric = Math.max(...dadosFiltrados.map(metricaMapa));
+  const minMetric = Math.min(...dadosFiltrados.map(metricaMapa));
+  const escalaMetrica = v => {
+    if (maxMetric === minMetric) return (minR + maxR) / 2;
+    const t = Math.sqrt((v - minMetric) / (maxMetric - minMetric));
+    return minR + (maxR - minR) * t;
+  };
+
+  const topLista = dadosOrdenados.slice(0, 7);
+  const topBox = document.getElementById('geo-top-regioes');
+  if (topBox) {
+    topBox.innerHTML = topLista.map((r, i) => {
+      const valorExibido = modoMapa === 'valor' ? fmtBRLshort(r.valor) : fmtNum(metricaMapa(r));
+      return '<div class="geo-top-item" title="' + r.regiao + '">' +
+        '<span class="geo-top-rank">' + (i + 1) + '</span>' +
+        '<span class="geo-top-name">' + truncar(r.regiao, 32) + '</span>' +
+        '<span class="geo-top-value">' + valorExibido + '</span>' +
+        '</div>';
+    }).join('');
+  }
+  const top = dadosOrdenados[0];
+  setText('geo-card-lider', top ? truncar(top.regiao, 28) : '—');
+  setText('geo-card-propostas', top ? fmtNum(top.qtdPropostas) + ' propostas' : '—');
+  setText('geo-card-volume', top ? fmtBRLshort(top.valor) : 'R$ 0');
+  setText('geo-status-line', (totalRegioes > 0 ? (fmtNum(totalRegioes) + ' regiões consolidadas · ' + fmtNum(totalPropostasGeo) + ' propostas com localização · maior concentração em ' + top.regiao + ' com ' + fmtNum(top.qtdPropostas) + ' proposta(s) · ' + fmtNum(semGeo) + ' sem geocode') : '0 regiões consolidadas · 0 propostas com localização · maior concentração em —'));
 
   dadosOrdenados.forEach((d, idx) => {
-    const radius = escala(d.valor);
+    const radius = escalaMetrica(metricaMapa(d));
 
     const marker = L.circleMarker([d.lat, d.lng], {
       radius,
@@ -4712,12 +4846,20 @@ function renderMapa(dadosRegioes) {
   }
 
   // Insight
-  const top = dadosOrdenados[0];
   document.getElementById('insight-map').innerHTML =
     'Líder: <strong>' + top.regiao + '</strong> com ' + fmtBRL(top.valor) +
     ' em ' + fmtNum(top.qtdPropostas) + ' propostas (' + fmtNum(top.qtdClientes) + ' clientes únicos). ' +
-    'Pontos com área proporcional ao valor.';
+    'Bolhas dimensionadas por ' + (modoMapa === 'valor' ? 'valor total' : (modoMapa === 'clientes' ? 'clientes únicos' : 'quantidade de propostas')) + '.';
 }
+
+
+
+// Recalcula o mapa quando o modo de visualização é alterado, mantendo todos os filtros atuais.
+document.addEventListener('change', function(ev) {
+  if (ev.target && ev.target.id === 'geo-map-mode') {
+    recalcular();
+  }
+});
 
 // ============================================================
 // ORQUESTRADOR
@@ -4781,7 +4923,24 @@ function renderTudo(iniDias, fimDias, label) {
 // ============================================================
 // FILTROS DE DATA
 // ============================================================
-const HOJE_DIAS = RAW.meta.data_max_dias;  // Atualiza automaticamente com a base
+// Usa a data atual do navegador como limite do período vigente quando a base importada
+// ainda não possui registros no dia de hoje. Isso permite selecionar a data atual
+// no filtro Personalizado sem alterar os demais componentes do dashboard.
+function getHojeIsoLocal() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const dia = String(d.getDate()).padStart(2, '0');
+  return y + '-' + m + '-' + dia;
+}
+const DATA_ATUAL_ISO = getHojeIsoLocal();
+const DATA_ATUAL_DIAS = isoParaDias(DATA_ATUAL_ISO);
+const RAW_DATA_MAX_ANO = diasParaData(RAW.meta.data_max_dias).getFullYear();
+const ANO_ATUAL_NAVEGADOR = new Date().getFullYear();
+const HOJE_DIAS = (ANO_ATUAL_NAVEGADOR === RAW_DATA_MAX_ANO && DATA_ATUAL_DIAS > RAW.meta.data_max_dias)
+  ? DATA_ATUAL_DIAS
+  : RAW.meta.data_max_dias;
+const DATA_FIM_PADRAO_ISO = (HOJE_DIAS === DATA_ATUAL_DIAS) ? DATA_ATUAL_ISO : RAW.meta.data_max_iso;
 
 function clearActive() {
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -4819,11 +4978,11 @@ RAW.meta.anos.forEach(ano => {
 const dateIni = document.getElementById('date-ini');
 const dateFim = document.getElementById('date-fim');
 dateIni.min = RAW.meta.data_min_iso;
-dateIni.max = RAW.meta.data_max_iso;
+dateIni.max = DATA_FIM_PADRAO_ISO;
 dateFim.min = RAW.meta.data_min_iso;
-dateFim.max = RAW.meta.data_max_iso;
+dateFim.max = DATA_FIM_PADRAO_ISO;
 dateIni.value = RAW.meta.data_min_iso;
-dateFim.value = RAW.meta.data_max_iso;
+dateFim.value = DATA_FIM_PADRAO_ISO;
 
 document.getElementById('btn-apply').addEventListener('click', () => {
   const v1 = dateIni.value, v2 = dateFim.value;
@@ -5156,7 +5315,9 @@ function _initImportador() {
       propMap[pid].ValorTotal += Number(r['Valor Total']) || 0;
     });
 
-    var limiteData = new Date(Date.UTC(2026, 4, 31));
+    // Limite dinâmico: processa dados até a data atual do navegador, removendo a trava fixa antiga de 31/05/2026.
+    var hojeImport = new Date();
+    var limiteData = new Date(Date.UTC(hojeImport.getFullYear(), hojeImport.getMonth(), hojeImport.getDate(), 23, 59, 59, 999));
     var propostas = Object.values(propMap).filter(function(p) { return p.DataRef <= limiteData; });
     propostas.sort(function(a, b) { return a.DataRef - b.DataRef; });
     if (propostas.length === 0) throw new Error('Nenhuma proposta válida encontrada após filtros.');
