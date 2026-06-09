@@ -5055,7 +5055,45 @@ function exportFilteredTableToExcel() {
     alert('A biblioteca de exportação ainda está carregando. Tente novamente em alguns segundos.');
     return;
   }
-  var dados = (typeof detailSorted !== 'undefined' && Array.isArray(detailSorted)) ? detailSorted : [];
+  // Recalcula a fonte da exportação no momento do clique para garantir que o Excel
+  // respeite exatamente o recorte ativo do dashboard: período, status, unidade,
+  // proprietário, produto, drill-down e busca da tabela. Exporta TODAS as linhas
+  // filtradas, não apenas a página visível.
+  var dados = [];
+  try {
+    if (typeof currentRange !== 'undefined' && currentRange && typeof aplicaFiltros === 'function' && typeof montaDetalhe === 'function') {
+      var recorteAtual = aplicaFiltros(currentRange.ini, currentRange.fim);
+      dados = montaDetalhe(recorteAtual.detalhe || []);
+
+      var termoExport = (typeof detailSearchTerm !== 'undefined' ? (detailSearchTerm || '') : '').trim().toLowerCase();
+      if (termoExport) {
+        dados = dados.filter(function(r) {
+          return (r.proprietario || '').toLowerCase().includes(termoExport) ||
+                 (r.propId || '').toLowerCase().includes(termoExport) ||
+                 (r.cnpj || '').toLowerCase().includes(termoExport) ||
+                 (r.cliente || '').toLowerCase().includes(termoExport) ||
+                 (r.unidade || '').toLowerCase().includes(termoExport) ||
+                 (r.produto || '').toLowerCase().includes(termoExport) ||
+                 (r.status || '').toLowerCase().includes(termoExport);
+        });
+      }
+
+      if (typeof detailSortState !== 'undefined' && detailSortState && detailSortState.key) {
+        var kExport = detailSortState.key, ascExport = detailSortState.asc;
+        dados.sort(function(a, b) {
+          var va = (a[kExport] || '').toString();
+          var vb = (b[kExport] || '').toString();
+          return ascExport ? va.localeCompare(vb, 'pt-BR') : vb.localeCompare(va, 'pt-BR');
+        });
+      }
+    } else {
+      dados = (typeof detailSorted !== 'undefined' && Array.isArray(detailSorted)) ? detailSorted : [];
+    }
+  } catch(e) {
+    console.warn('Fallback de exportação usando detailSorted:', e);
+    dados = (typeof detailSorted !== 'undefined' && Array.isArray(detailSorted)) ? detailSorted : [];
+  }
+
   if (dados.length === 0) {
     alert('Não há linhas para exportar com os filtros atuais.');
     return;
