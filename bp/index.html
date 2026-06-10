@@ -927,6 +927,34 @@
   .chart-fullscreen-body > .chart-card .chart-body{flex:1;min-height:0;height:100%}
   .chart-fullscreen-body > .chart-card canvas{width:100% !important;height:100% !important}
 
+
+  /* ===== ANÁLISE EXECUTIVA DINÂMICA ===== */
+  .sec-title{
+    font-family:'Manrope',sans-serif;font-weight:800;font-size:17px;
+    color:var(--graphite);letter-spacing:-0.015em;margin-bottom:14px;
+  }
+  .g2{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  @media (max-width:1280px){.g2{grid-template-columns:repeat(2,1fr)}}
+  @media (max-width:768px){.g2{grid-template-columns:1fr}}
+  .insight{
+    background:var(--bg-card);border:1px solid var(--border);border-radius:14px;
+    padding:16px 18px;box-shadow:var(--shadow-sm);position:relative;overflow:hidden;
+  }
+  .insight::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:var(--ins-color,var(--blue));border-radius:0 2px 2px 0}
+  .insight h4{font-family:'Manrope',sans-serif;font-size:13.5px;font-weight:800;color:var(--graphite);letter-spacing:-0.01em;margin-bottom:8px}
+  .insight p{font-size:12.5px;color:var(--text-2);line-height:1.55}
+  .insight p strong{color:var(--graphite);font-weight:800}
+  .ins-ok{--ins-color:var(--green)}
+  .ins-warn{--ins-color:var(--yellow)}
+  .ins-danger{--ins-color:var(--red)}
+  .ins-info{--ins-color:var(--violet)}
+  .narr{
+    background:var(--bg-card);border:1px solid var(--border);border-radius:14px;
+    padding:20px 22px;box-shadow:var(--shadow-sm);font-size:13.5px;
+    color:var(--text-1);line-height:1.7;
+  }
+  .narr strong{font-weight:800;color:var(--graphite)}
+
 </style>
 </head>
 <body>
@@ -1221,6 +1249,25 @@
     </div>
   </section>
 
+
+
+  <!-- ═══════ ANÁLISE EXECUTIVA & INSIGHTS DINÂMICOS ═══════ -->
+  <section class="charts-grid row-1" id="executiveInsightsSection">
+    <div class="chart-card">
+      <div class="sec-title">💡 Análise Executiva & Insights Estratégicos</div>
+      <div class="g2" id="executiveInsightsGrid"></div>
+    </div>
+  </section>
+
+  <!-- ═══════ RESUMO EXECUTIVO DINÂMICO ═══════ -->
+  <section class="charts-grid row-1" id="executiveSummarySection">
+    <div class="chart-card">
+      <div class="sec-title" id="executiveSummaryTitle">📝 Resumo Executivo — Fechamento</div>
+      <div class="narr" id="executiveSummaryBody">Carregando análise executiva…</div>
+    </div>
+  </section>
+
+
   <!-- MAPA DAS EMPRESAS -->
   <section class="charts-grid row-1">
     <div class="chart-card">
@@ -1304,7 +1351,7 @@
           <div class="chart-subtitle"><span id="tableCount">0</span> registros · busca em tempo real</div>
         </div>
         <div class="table-toolbar">
-          <input type="text" class="search-input" id="tableSearch" placeholder="Buscar por cliente, CNPJ, ID...">
+          <input type="text" class="search-input" id="tableSearch" placeholder="Buscar por cliente, CNPJ, CNAE, ID...">
           <button class="btn btn-primary" id="exportExcelBtn">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -1322,6 +1369,7 @@
               <th data-sort="Consultor">Consultor</th>
               <th data-sort="IDProposta">ID Proposta</th>
               <th data-sort="CNPJ">CNPJ</th>
+              <th data-sort="CNAE">CNAE</th>
               <th data-sort="Cliente">Cliente</th>
               <th data-sort="Porte">Porte</th>
               <th data-sort="Produto">Produto</th>
@@ -1691,7 +1739,7 @@ function applyFilters(){
     if(!passesMulti(f.cliente, r.Cliente)) return false;
     if(f.search){
       const q = f.search.toLowerCase();
-      const text = (r.Consultor+' '+r.CNPJ+' '+(r.CNPJfmt||'')+' '+r.Cliente+' '+r.IDProposta+' '+r.Produto+' '+r.Status).toLowerCase();
+      const text = (r.Consultor+' '+r.CNPJ+' '+(r.CNPJfmt||'')+' '+(r.CNAE||'')+' '+r.Cliente+' '+r.IDProposta+' '+r.Produto+' '+r.Status).toLowerCase();
       if(!text.includes(q)) return false;
     }
     return true;
@@ -1742,6 +1790,7 @@ function render(){
   renderConsultorMeta();
   renderMilestones();
   renderStrategyCards();
+  renderExecutiveInsights(data);
   renderMap(data);
   renderPorteTable(data);
   renderDataTable(data);
@@ -2486,6 +2535,127 @@ function renderStrategyCards(){
   }).join('');
 }
 
+
+
+/* ========= Análise Executiva & Insights Estratégicos · Dinâmico ========= */
+function renderExecutiveInsights(data){
+  const grid = document.getElementById('executiveInsightsGrid');
+  const summary = document.getElementById('executiveSummaryBody');
+  const title = document.getElementById('executiveSummaryTitle');
+  if(!grid || !summary) return;
+
+  const META_FINAL = 167;
+  const META_INTERMEDIARIA = 100;
+  const arr = Array.isArray(data) ? data : [];
+  const total = arr.length;
+  const aceitas = arr.filter(d=>d.Status==='ACEITA').length;
+  const desenvolvimento = arr.filter(d=>d.Status==='EM DESENVOLVIMENTO').length;
+  const recusadas = arr.filter(d=>d.Status==='RECUSADA').length;
+  const conversao = total ? (aceitas/total)*100 : 0;
+  const pctMetaFinal = META_FINAL ? (aceitas/META_FINAL)*100 : 0;
+  const gapIntermediario = Math.max(0, META_INTERMEDIARIA - aceitas);
+  const gapFinal = Math.max(0, META_FINAL - aceitas);
+
+  const fmtPct = (v, casas=1) => Number.isFinite(v) ? v.toLocaleString('pt-BR',{minimumFractionDigits:casas, maximumFractionDigits:casas}) + '%' : '0,0%';
+  const fmtInt = (v) => (Number(v)||0).toLocaleString('pt-BR');
+  const escapeHtml = (v) => String(v ?? '').replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+  const norm = (v) => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toUpperCase();
+  const monthNames = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+  const dates = arr.map(d=>d.Data).filter(Boolean).sort();
+  const lastDate = dates.length ? dates[dates.length-1] : '';
+  const currentMonthKey = lastDate ? lastDate.slice(0,7) : '';
+  const currentMonthIndex = currentMonthKey ? Number(currentMonthKey.slice(5,7))-1 : -1;
+  const currentMonthName = currentMonthIndex >= 0 ? monthNames[currentMonthIndex] : 'período atual';
+  const currentYear = currentMonthKey ? currentMonthKey.slice(0,4) : '';
+  const currentAccepted = currentMonthKey ? arr.filter(d=>d.Status==='ACEITA' && d.Data && d.Data.startsWith(currentMonthKey)).length : 0;
+  const monthlyTargetMap = {'2026-05':24,'2026-06':24,'2026-07':23,'2026-08':20,'2026-09':18};
+  const historicalTarget = currentMonthKey ? arr.filter(d=>d.Status==='ACEITA' && d.Data && d.Data.startsWith(currentMonthKey)).length : 0;
+  const currentTarget = monthlyTargetMap[currentMonthKey] ?? historicalTarget;
+  const currentPct = currentTarget ? (currentAccepted/currentTarget)*100 : 0;
+
+  const byConsultor = {};
+  for(const r of arr){
+    const c = r.Consultor || 'Sem consultor';
+    if(!byConsultor[c]) byConsultor[c] = {total:0, aceitas:0, recusadas:0, desenvolvimento:0, mesAtual:0};
+    byConsultor[c].total++;
+    if(r.Status==='ACEITA') byConsultor[c].aceitas++;
+    if(r.Status==='RECUSADA') byConsultor[c].recusadas++;
+    if(r.Status==='EM DESENVOLVIMENTO') byConsultor[c].desenvolvimento++;
+    if(r.Status==='ACEITA' && currentMonthKey && r.Data && r.Data.startsWith(currentMonthKey)) byConsultor[c].mesAtual++;
+  }
+  const consultores = Object.entries(byConsultor).map(([nome,v])=>({nome, ...v, conversao:v.total ? (v.aceitas/v.total)*100 : 0, taxaRecusa:v.total ? (v.recusadas/v.total)*100 : 0}));
+  const lider = consultores.slice().sort((a,b)=>b.aceitas-a.aceitas || b.conversao-a.conversao)[0] || {nome:'-', aceitas:0, conversao:0, desenvolvimento:0};
+  const eficiente = consultores.filter(c=>c.total>0).sort((a,b)=>b.conversao-a.conversao || b.aceitas-a.aceitas)[0] || lider;
+  const critico = consultores.filter(c=>c.total>0).sort((a,b)=>b.recusadas-a.recusadas || b.taxaRecusa-a.taxaRecusa)[0] || {nome:'-', recusadas:0, taxaRecusa:0};
+  const destaqueMes = consultores.slice().sort((a,b)=>b.mesAtual-a.mesAtual || b.aceitas-a.aceitas)[0] || lider;
+
+  const countCat = (nome, testFn) => {
+    const aceitasCat = arr.filter(r=>r.Status==='ACEITA' && testFn(r)).length;
+    const meta = META.categorias[nome] || 0;
+    return {nome, realizado:aceitasCat, meta, gap:Math.max(0, meta-aceitasCat), pct:meta ? (aceitasCat/meta)*100 : 0};
+  };
+  const categorias = [
+    countCat('Médias empresas', isMediaEmpresa),
+    countCat('Construção civil', isConstrucaoCivil),
+    countCat('Eficiência energética', isEficienciaEnergetica),
+    countCat('Outros setores', isOutrosSetores)
+  ];
+  const categoriaCritica = categorias.slice().sort((a,b)=>b.gap-a.gap || a.pct-b.pct)[0] || {nome:'-', realizado:0, meta:0, gap:0, pct:0};
+
+  const aceitasArr = arr.filter(r=>r.Status==='ACEITA');
+  const produtoCounts = {};
+  for(const r of aceitasArr){ produtoCounts[r.Produto || 'Não informado'] = (produtoCounts[r.Produto || 'Não informado'] || 0) + 1; }
+  const produtoTop = Object.entries(produtoCounts).sort((a,b)=>b[1]-a[1])[0] || ['Sem produto',0];
+  const produtoShare = aceitas ? (produtoTop[1]/aceitas)*100 : 0;
+  const porteCounts = {};
+  for(const r of aceitasArr){
+    const p = norm(r.Porte).includes('DEMAIS') || norm(r.Porte).includes('MEDIA') ? 'Média' : (r.Porte || 'Não informado');
+    porteCounts[p] = (porteCounts[p] || 0) + 1;
+  }
+  const porteTop = Object.entries(porteCounts).sort((a,b)=>b[1]-a[1])[0] || ['Sem porte',0];
+  const porteShare = aceitas ? (porteTop[1]/aceitas)*100 : 0;
+
+  const statusMeta = currentPct >= 100 ? 'ins-ok' : currentPct >= 75 ? 'ins-warn' : 'ins-danger';
+  const pipelineRatio = aceitas ? (desenvolvimento/aceitas)*100 : 0;
+  const pipelineClass = desenvolvimento > 0 ? 'ins-info' : 'ins-warn';
+  const recusaClass = critico.recusadas >= 5 || critico.taxaRecusa >= 25 ? 'ins-danger' : 'ins-warn';
+  const catClass = categoriaCritica.pct < 30 ? 'ins-danger' : 'ins-warn';
+
+  const cards = [
+    {cls:statusMeta, title:'📈 Ritmo do mês atual', text:`Em <strong>${escapeHtml(currentMonthName)}/${escapeHtml(currentYear)}</strong>, o painel registra <strong>${fmtInt(currentAccepted)} aceitas</strong> para uma referência/meta de <strong>${fmtInt(currentTarget)}</strong>, equivalente a <strong>${fmtPct(currentPct)}</strong> do alvo mensal.`},
+    {cls:'ins-ok', title:'🏆 Consultor líder', text:`<strong>${escapeHtml(lider.nome)}</strong> lidera a operação com <strong>${fmtInt(lider.aceitas)} propostas aceitas</strong>, concentrando <strong>${fmtPct(aceitas ? (lider.aceitas/aceitas)*100 : 0)}</strong> das conversões do período filtrado.`},
+    {cls:'ins-ok', title:'⚡ Melhor conversão', text:`<strong>${escapeHtml(eficiente.nome)}</strong> apresenta a melhor eficiência, com taxa de conversão de <strong>${fmtPct(eficiente.conversao)}</strong> sobre <strong>${fmtInt(eficiente.total)}</strong> propostas analisadas no painel.`},
+    {cls:gapIntermediario === 0 ? 'ins-ok' : 'ins-warn', title:'🎯 Gap até Junho', text:`Para alcançar o marco intermediário de <strong>${fmtInt(META_INTERMEDIARIA)} aceitas</strong>, ainda faltam <strong>${fmtInt(gapIntermediario)}</strong> conversões. O resultado atual é de <strong>${fmtInt(aceitas)}</strong> aceitas.`},
+    {cls:pipelineClass, title:'🧩 Pipeline futuro', text:`Existem <strong>${fmtInt(desenvolvimento)} propostas em desenvolvimento</strong>, volume equivalente a <strong>${fmtPct(pipelineRatio)}</strong> das aceitas atuais. Esse estoque é a principal alavanca para acelerar o fechamento.`},
+    {cls:recusaClass, title:'🚨 Atenção em recusas', text:`<strong>${escapeHtml(critico.nome)}</strong> concentra <strong>${fmtInt(critico.recusadas)}</strong> recusadas, com taxa de recusa de <strong>${fmtPct(critico.taxaRecusa)}</strong>. O ponto exige leitura comercial e revisão de abordagem.`},
+    {cls:catClass, title:'🏗️ Categoria crítica', text:`<strong>${escapeHtml(categoriaCritica.nome)}</strong> tem o maior gap absoluto: <strong>${fmtInt(categoriaCritica.gap)}</strong> abaixo da meta, com <strong>${fmtInt(categoriaCritica.realizado)}</strong> de <strong>${fmtInt(categoriaCritica.meta)}</strong> realizados.`},
+    {cls:'ins-info', title:'🏭 Mix de produto e porte', text:`O mix de aceitas é liderado por <strong>${escapeHtml(produtoTop[0])}</strong>, com <strong>${fmtInt(produtoTop[1])}</strong> registros (<strong>${fmtPct(produtoShare)}</strong>). No porte, predomina <strong>${escapeHtml(porteTop[0])}</strong> com <strong>${fmtPct(porteShare)}</strong>.`}
+  ];
+
+  grid.innerHTML = cards.map(c => `
+    <div class="insight ${c.cls}">
+      <h4>${c.title}</h4>
+      <p>${c.text}</p>
+    </div>
+  `).join('');
+
+  if(title){
+    const fechamento = currentMonthKey ? `${currentMonthName}/${currentYear}` : 'Período atual';
+    title.textContent = `📝 Resumo Executivo — Fechamento ${fechamento}`;
+  }
+
+  summary.innerHTML = `
+    O programa registra <strong>${fmtInt(aceitas)} propostas aceitas</strong> em um universo de <strong>${fmtInt(total)} propostas</strong>, com conversão geral de <strong>${fmtPct(conversao)}</strong> e atingimento de <strong>${fmtPct(pctMetaFinal)}</strong> da meta final de <strong>${fmtInt(META_FINAL)}</strong> aceitas até Setembro/2026.
+    <br><br>
+    Na leitura por consultores, <strong>${escapeHtml(lider.nome)}</strong> lidera em volume absoluto com <strong>${fmtInt(lider.aceitas)}</strong> aceitas. A melhor eficiência está com <strong>${escapeHtml(eficiente.nome)}</strong>, com conversão de <strong>${fmtPct(eficiente.conversao)}</strong>, enquanto <strong>${escapeHtml(destaqueMes.nome)}</strong> lidera o mês atual com <strong>${fmtInt(destaqueMes.mesAtual)}</strong> aceitas.
+    <br><br>
+    O principal risco está em <strong>${escapeHtml(categoriaCritica.nome)}</strong>, categoria com maior gap absoluto de <strong>${fmtInt(categoriaCritica.gap)}</strong> frente à meta. No acompanhamento individual, <strong>${escapeHtml(critico.nome)}</strong> exige atenção por concentrar <strong>${fmtInt(critico.recusadas)}</strong> recusadas.
+    <br><br>
+    Para atingir a meta final, ainda faltam <strong>${fmtInt(gapFinal)}</strong> propostas aceitas. O pipeline de <strong>${fmtInt(desenvolvimento)}</strong> propostas em desenvolvimento precisa ser convertido com prioridade, especialmente nas categorias com maior distância da meta.
+  `;
+}
+
 /* ========= MAPA DE EMPRESAS · PREMIUM ========= */
 let _mapInstance = null;
 let _mapLayer = null;
@@ -2807,6 +2977,13 @@ function renderPorteTable(data){
   }).join('');
 }
 
+
+function formatCNAEDrilldown(cnae){
+  if(cnae === null || cnae === undefined || cnae === '') return '';
+  const digits = String(cnae).replace(/\D/g,'');
+  return digits ? digits.padStart(7,'0').slice(-7) : String(cnae);
+}
+
 /* ========= Tabela Drill-down ========= */
 function renderDataTable(data){
   const sorted = [...data].sort((a,b)=>{
@@ -2837,6 +3014,7 @@ function renderDataTable(data){
         <td style="color:var(--graphite);font-weight:600">${r.Consultor}</td>
         <td class="num">${r.IDProposta}</td>
         <td class="num">${r.CNPJfmt || r.CNPJ}</td>
+        <td class="num">${formatCNAEDrilldown(r.CNAE)}</td>
         <td class="cliente-cell" title="${r.Cliente}">${r.Cliente}</td>
         <td><span class="porte-tag ${porteCls}">${porteLabel}</span></td>
         <td>${prodLabel}</td>
@@ -2846,7 +3024,7 @@ function renderDataTable(data){
     `;
   }).join('');
   if(pageData.length===0){
-    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-3);padding:48px">Nenhum registro encontrado com os filtros aplicados.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text-3);padding:48px">Nenhum registro encontrado com os filtros aplicados.</td></tr>';
   }
 
   setTextSafe('paginationInfo', `Página ${STATE.page} de ${totalPages} · ${fmtNum(sorted.length)} registros`);
@@ -2894,6 +3072,7 @@ function exportToExcel(){
     'Consultor': r.Consultor,
     'ID da Proposta': r.IDProposta,
     'CNPJ': r.CNPJfmt || r.CNPJ,
+    'CNAE': formatCNAEDrilldown(r.CNAE),
     'Cliente': r.Cliente,
     'Porte': r.Porte,
     'Produto': r.Produto,
@@ -2911,6 +3090,7 @@ function exportToExcel(){
     {wch:15}, // Consultor
     {wch:18}, // ID
     {wch:20}, // CNPJ
+    {wch:12}, // CNAE
     {wch:48}, // Cliente
     {wch:24}, // Porte
     {wch:34}, // Produto
