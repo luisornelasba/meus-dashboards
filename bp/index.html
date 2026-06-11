@@ -1029,6 +1029,25 @@
       </div>
     </div>
     <div class="filter-group" style="position:relative">
+      <span class="filter-label">CNAE</span>
+      <button class="cliente-trigger" id="cnaeTrigger" type="button" aria-label="Filtrar por CNAE" aria-expanded="false">
+        <span id="cnaeTriggerLabel">Todos</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="chevron">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
+      <div class="cliente-dropdown" id="cnaeDropdown" aria-hidden="true" style="left:0;right:auto;width:260px;">
+        <div class="cliente-search-wrap">
+          <input type="text" class="cliente-search" id="cnaeSearch" placeholder="Buscar CNAE...">
+        </div>
+        <div class="cliente-list" id="cnaeList"></div>
+        <div class="cliente-footer">
+          <span class="cliente-count" id="cnaeCount">0 disponíveis</span>
+          <button class="cliente-action-btn" id="cnaeClearBtn" type="button">Limpar</button>
+        </div>
+      </div>
+    </div>
+    <div class="filter-group" style="position:relative">
       <span class="filter-label">Cliente</span>
       <button class="cliente-trigger" id="clienteTrigger" type="button">
         <span id="clienteTriggerLabel">Todos</span>
@@ -1683,6 +1702,7 @@ const STATE = {
     consultor:[],
     porte:[],
     produto:[],
+    cnae:[],
     cliente:[],
     search:'',
   },
@@ -1726,6 +1746,12 @@ const RAW_DATA_REF = {data: RAW_DATA};
 function passesMulti(arr, val){
   return !arr || arr.length === 0 || arr.indexOf(val) !== -1;
 }
+function getCnaePrefix2(cnae){
+  if(cnae === null || cnae === undefined || cnae === '') return '';
+  const digits = String(cnae).replace(/\D/g,'');
+  if(!digits) return '';
+  return digits.padStart(7,'0').substring(0,2);
+}
 
 /* Aplicar filtros do painel */
 function applyFilters(){
@@ -1736,6 +1762,7 @@ function applyFilters(){
     if(!passesMulti(f.consultor, r.Consultor)) return false;
     if(!passesMulti(f.porte, r.Porte)) return false;
     if(!passesMulti(f.produto, r.Produto)) return false;
+    if(!passesMulti(f.cnae, getCnaePrefix2(r.CNAE))) return false;
     if(!passesMulti(f.cliente, r.Cliente)) return false;
     if(f.search){
       const q = f.search.toLowerCase();
@@ -1755,6 +1782,7 @@ function applyFiltersExceptDate(startStr, endStr){
     if(!passesMulti(f.consultor, r.Consultor)) return false;
     if(!passesMulti(f.porte, r.Porte)) return false;
     if(!passesMulti(f.produto, r.Produto)) return false;
+    if(!passesMulti(f.cnae, getCnaePrefix2(r.CNAE))) return false;
     if(!passesMulti(f.cliente, r.Cliente)) return false;
     return true;
   });
@@ -1836,6 +1864,7 @@ function renderKPIs(data){
     if(!passesMulti(f.consultor, r.Consultor)) return false;
     if(!passesMulti(f.porte, r.Porte)) return false;
     if(!passesMulti(f.produto, r.Produto)) return false;
+    if(!passesMulti(f.cnae, getCnaePrefix2(r.CNAE))) return false;
     if(!passesMulti(f.cliente, r.Cliente)) return false;
     return true;
   });
@@ -1978,7 +2007,7 @@ function renderEvolucao(data){
 /* ========= Gauge (YTD FIXO até último dia do mês corrente) ========= */
 function renderGauge(){
   const ytd = getYTDFixedRange();
-  const meta = metaYTDMeses() * META.mensal;
+  const meta = META.total || 167;
   const ytdData = applyFiltersExceptDate(ytd.startStr, ytd.endStr);
   const aceitas = ytdData.filter(d=>d.Status==='ACEITA').length;
   const pct = meta>0 ? aceitas/meta : 0;
@@ -1986,7 +2015,9 @@ function renderGauge(){
   setTextSafe('gaugePct', (pct*100).toFixed(1).replace('.', ',')+'%');
 
   if(charts.gauge) charts.gauge.destroy();
-  const ctx = document.getElementById('chartGauge').getContext('2d');
+  const canvas = document.getElementById('chartGauge');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
   charts.gauge = new Chart(ctx,{
     type:'doughnut',
     data:{
@@ -2005,9 +2036,12 @@ function renderGauge(){
     }
   });
 
-  document.getElementById('gaugeInsight').innerHTML = 
-    `Realizado: <strong>${aceitas}</strong> · Meta YTD: <strong>${meta}</strong> ` +
-    `(Jan a ${monthLabelLong(ytd.currentMonth)}). Restam <strong>${restante}</strong> propostas.`;
+  const gaugeInsight = document.getElementById('gaugeInsight');
+  if(gaugeInsight){
+    gaugeInsight.innerHTML = 
+      `Realizado: <strong>${aceitas}</strong> · Meta total: <strong>${meta}</strong> propostas. ` +
+      `Restam <strong>${restante}</strong> propostas para atingir a meta final.`;
+  }
 }
 
 /* ========= Consultores ========= */
@@ -2449,7 +2483,7 @@ function renderMilestones(){
 
    Regras (independentes):
    • Médias empresas:        Porte == 'DEMAIS'
-   • Construção civil:       CNAE começa com 41, 42 ou 43 (ex.: 4110700, 4221901, 4311801)
+   • Construção civil:       CNAE começa com 23, 41, 42 ou 43 (ex.: 4110700, 4221901, 4311801)
    • Eficiência energética:  Produto == 'NOVO B P EFICIENCIA ENERGETICA'
    • Outros setores:         NÃO atende nenhum dos 3 critérios acima
    Conta CNPJs únicos com status ACEITA. */
@@ -2464,7 +2498,7 @@ function isConstrucaoCivil(r){
   // Se vier menos de 7, paddeamos à esquerda para preservar o significado.
   const padded = cnae.padStart(7,'0');
   const prefix = padded.substring(0,2);
-  return prefix === '41' || prefix === '42' || prefix === '43';
+  return prefix === '23' || prefix === '41' || prefix === '42' || prefix === '43';
 }
 function isEficienciaEnergetica(r){
   return r.Produto === 'NOVO B P EFICIENCIA ENERGETICA';
@@ -2619,7 +2653,8 @@ function renderExecutiveInsights(data){
   const statusMeta = currentPct >= 100 ? 'ins-ok' : currentPct >= 75 ? 'ins-warn' : 'ins-danger';
   const pipelineRatio = aceitas ? (desenvolvimento/aceitas)*100 : 0;
   const pipelineClass = desenvolvimento > 0 ? 'ins-info' : 'ins-warn';
-  const recusaClass = critico.recusadas >= 5 || critico.taxaRecusa >= 25 ? 'ins-danger' : 'ins-warn';
+  const taxaRecusaGeral = total ? (recusadas/total)*100 : 0;
+  const recusaClass = recusadas >= 5 || taxaRecusaGeral >= 10 ? 'ins-danger' : (recusadas > 0 ? 'ins-warn' : 'ins-ok');
   const catClass = categoriaCritica.pct < 30 ? 'ins-danger' : 'ins-warn';
 
   const cards = [
@@ -2628,7 +2663,7 @@ function renderExecutiveInsights(data){
     {cls:'ins-ok', title:'⚡ Melhor conversão', text:`<strong>${escapeHtml(eficiente.nome)}</strong> apresenta a melhor eficiência, com taxa de conversão de <strong>${fmtPct(eficiente.conversao)}</strong> sobre <strong>${fmtInt(eficiente.total)}</strong> propostas analisadas no painel.`},
     {cls:gapIntermediario === 0 ? 'ins-ok' : 'ins-warn', title:'🎯 Gap até Junho', text:`Para alcançar o marco intermediário de <strong>${fmtInt(META_INTERMEDIARIA)} aceitas</strong>, ainda faltam <strong>${fmtInt(gapIntermediario)}</strong> conversões. O resultado atual é de <strong>${fmtInt(aceitas)}</strong> aceitas.`},
     {cls:pipelineClass, title:'🧩 Pipeline futuro', text:`Existem <strong>${fmtInt(desenvolvimento)} propostas em desenvolvimento</strong>, volume equivalente a <strong>${fmtPct(pipelineRatio)}</strong> das aceitas atuais. Esse estoque é a principal alavanca para acelerar o fechamento.`},
-    {cls:recusaClass, title:'🚨 Atenção em recusas', text:`<strong>${escapeHtml(critico.nome)}</strong> concentra <strong>${fmtInt(critico.recusadas)}</strong> recusadas, com taxa de recusa de <strong>${fmtPct(critico.taxaRecusa)}</strong>. O ponto exige leitura comercial e revisão de abordagem.`},
+    {cls:recusaClass, title:'🚨 Atenção em recusas', text:`O painel registra <strong>${fmtInt(recusadas)}</strong> recusadas no período filtrado, com taxa geral de recusa de <strong>${fmtPct(taxaRecusaGeral)}</strong>. O ponto exige leitura comercial ampla e revisão das abordagens com maior perda.`},
     {cls:catClass, title:'🏗️ Categoria crítica', text:`<strong>${escapeHtml(categoriaCritica.nome)}</strong> tem o maior gap absoluto: <strong>${fmtInt(categoriaCritica.gap)}</strong> abaixo da meta, com <strong>${fmtInt(categoriaCritica.realizado)}</strong> de <strong>${fmtInt(categoriaCritica.meta)}</strong> realizados.`},
     {cls:'ins-info', title:'🏭 Mix de produto e porte', text:`O mix de aceitas é liderado por <strong>${escapeHtml(produtoTop[0])}</strong>, com <strong>${fmtInt(produtoTop[1])}</strong> registros (<strong>${fmtPct(produtoShare)}</strong>). No porte, predomina <strong>${escapeHtml(porteTop[0])}</strong> com <strong>${fmtPct(porteShare)}</strong>.`}
   ];
@@ -2648,9 +2683,9 @@ function renderExecutiveInsights(data){
   summary.innerHTML = `
     O programa registra <strong>${fmtInt(aceitas)} propostas aceitas</strong> em um universo de <strong>${fmtInt(total)} propostas</strong>, com conversão geral de <strong>${fmtPct(conversao)}</strong> e atingimento de <strong>${fmtPct(pctMetaFinal)}</strong> da meta final de <strong>${fmtInt(META_FINAL)}</strong> aceitas até Setembro/2026.
     <br><br>
-    Na leitura por consultores, <strong>${escapeHtml(lider.nome)}</strong> lidera em volume absoluto com <strong>${fmtInt(lider.aceitas)}</strong> aceitas. A melhor eficiência está com <strong>${escapeHtml(eficiente.nome)}</strong>, com conversão de <strong>${fmtPct(eficiente.conversao)}</strong>, enquanto <strong>${escapeHtml(destaqueMes.nome)}</strong> lidera o mês atual com <strong>${fmtInt(destaqueMes.mesAtual)}</strong> aceitas.
+    Na leitura por consultores, <strong>${escapeHtml(lider.nome)}</strong> lidera em volume absoluto com <strong>${fmtInt(lider.aceitas)}</strong> aceitas. No mês atual, <strong>${escapeHtml(destaqueMes.nome)}</strong> aparece com <strong>${fmtInt(destaqueMes.mesAtual)}</strong> aceitas no período filtrado.
     <br><br>
-    O principal risco está em <strong>${escapeHtml(categoriaCritica.nome)}</strong>, categoria com maior gap absoluto de <strong>${fmtInt(categoriaCritica.gap)}</strong> frente à meta. No acompanhamento individual, <strong>${escapeHtml(critico.nome)}</strong> exige atenção por concentrar <strong>${fmtInt(critico.recusadas)}</strong> recusadas.
+    O principal risco está em <strong>${escapeHtml(categoriaCritica.nome)}</strong>, categoria com maior gap absoluto de <strong>${fmtInt(categoriaCritica.gap)}</strong> frente à meta. No acompanhamento geral, o painel registra <strong>${fmtInt(recusadas)}</strong> recusadas, com taxa geral de recusa de <strong>${fmtPct(taxaRecusaGeral)}</strong>.
     <br><br>
     Para atingir a meta final, ainda faltam <strong>${fmtInt(gapFinal)}</strong> propostas aceitas. O pipeline de <strong>${fmtInt(desenvolvimento)}</strong> propostas em desenvolvimento precisa ser convertido com prioridade, especialmente nas categorias com maior distância da meta.
   `;
@@ -3114,6 +3149,7 @@ function exportToExcel(){
     ['Consultor', fmtMulti(STATE.filters.consultor)],
     ['Porte', fmtMulti(STATE.filters.porte)],
     ['Produto', fmtMulti(STATE.filters.produto)],
+    ['CNAE', fmtMulti(STATE.filters.cnae)],
     ['Cliente', fmtMulti(STATE.filters.cliente)],
     ['Busca textual', STATE.filters.search || '—'],
     ['Total de registros', sorted.length],
@@ -3729,6 +3765,16 @@ function rebuildDynamicFilters(dataset){
   }
   bindMultiSelectPills('produtoFilter','produto');
 
+  // CNAE (2 primeiros dígitos, preservando zero à esquerda) — caixa suspensa multi-seleção
+  const cnaes = [...new Set(dataset.map(r=>getCnaePrefix2(r.CNAE)).filter(Boolean))].sort();
+  CNAE_DROPDOWN.allOptions = cnaes;
+  if(Array.isArray(STATE.filters.cnae)){
+    STATE.filters.cnae = STATE.filters.cnae.filter(v=>cnaes.indexOf(v) !== -1);
+  } else {
+    STATE.filters.cnae = [];
+  }
+  renderCnaeDropdown();
+
   // Clientes (lista populada para o multi-select com busca)
   const clientes = [...new Set(dataset.map(r=>r.Cliente).filter(Boolean))].sort();
   CLIENTE_DROPDOWN.allOptions = clientes;
@@ -3779,6 +3825,148 @@ function bindMultiSelectPills(filterId, key){
    mas agora delega ao multi-select. */
 function rebindFilterPills(filterId, key){
   bindMultiSelectPills(filterId, key);
+}
+
+/* === Dropdown CNAE (multi-select com busca, usando os 2 primeiros dígitos) === */
+const CNAE_DROPDOWN = {
+  allOptions: [],
+  searchTerm: '',
+  open: false,
+  visibleLimit: 200,
+};
+
+function getCnaeOptions(){
+  return [...new Set(RAW_DATA_REF.data.map(r=>getCnaePrefix2(r.CNAE)).filter(Boolean))].sort();
+}
+
+function openCnaeDropdown(){
+  const dd = document.getElementById('cnaeDropdown');
+  const tr = document.getElementById('cnaeTrigger');
+  if(!dd || !tr) return;
+  CNAE_DROPDOWN.open = true;
+  dd.classList.add('show');
+  dd.setAttribute('aria-hidden','false');
+  tr.classList.add('open');
+  tr.setAttribute('aria-expanded','true');
+  setTimeout(()=>{ const s = document.getElementById('cnaeSearch'); if(s) s.focus(); }, 50);
+  renderCnaeList();
+}
+function closeCnaeDropdown(){
+  const dd = document.getElementById('cnaeDropdown');
+  const tr = document.getElementById('cnaeTrigger');
+  if(!dd || !tr) return;
+  CNAE_DROPDOWN.open = false;
+  dd.classList.remove('show');
+  dd.setAttribute('aria-hidden','true');
+  tr.classList.remove('open');
+  tr.setAttribute('aria-expanded','false');
+}
+function toggleCnaeDropdown(){
+  if(CNAE_DROPDOWN.open) closeCnaeDropdown();
+  else openCnaeDropdown();
+}
+
+function renderCnaeDropdown(){
+  const sel = STATE.filters.cnae || [];
+  const trigger = document.getElementById('cnaeTrigger');
+  const label = document.getElementById('cnaeTriggerLabel');
+  if(!trigger || !label) return;
+  if(sel.length === 0){
+    label.textContent = 'Todos';
+    trigger.classList.remove('active');
+  } else if(sel.length === 1){
+    label.textContent = sel[0];
+    trigger.classList.add('active');
+  } else {
+    label.textContent = `${sel.length} selecionados`;
+    trigger.classList.add('active');
+  }
+  if(CNAE_DROPDOWN.open) renderCnaeList();
+}
+
+function renderCnaeList(){
+  const list = document.getElementById('cnaeList');
+  if(!list) return;
+  const search = (CNAE_DROPDOWN.searchTerm || '').toLowerCase();
+  const sel = STATE.filters.cnae || [];
+  const all = CNAE_DROPDOWN.allOptions.length ? CNAE_DROPDOWN.allOptions : getCnaeOptions();
+  const filtered = search ? all.filter(c => c.toLowerCase().indexOf(search) !== -1) : all;
+  const sorted = [...filtered].sort((a,b)=>{
+    const aSel = sel.indexOf(a) !== -1, bSel = sel.indexOf(b) !== -1;
+    if(aSel !== bSel) return aSel ? -1 : 1;
+    return a.localeCompare(b);
+  });
+  const visible = sorted.slice(0, CNAE_DROPDOWN.visibleLimit);
+  const checkSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+  if(visible.length === 0){
+    list.innerHTML = `<div class="cliente-list-empty">Nenhum CNAE encontrado</div>`;
+  } else {
+    list.innerHTML = visible.map(c=>{
+      const isSel = sel.indexOf(c) !== -1;
+      const safe = String(c).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      return `<div class="cliente-option ${isSel?'selected':''}" data-val="${safe}" title="${safe}">
+        <span class="cliente-option-check">${checkSvg}</span>
+        <span class="cliente-option-label">${safe}</span>
+      </div>`;
+    }).join('');
+    list.querySelectorAll('.cliente-option').forEach(opt=>{
+      opt.onclick = ()=>{
+        const val = opt.dataset.val
+          .replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"');
+        if(!Array.isArray(STATE.filters.cnae)) STATE.filters.cnae = [];
+        const idx = STATE.filters.cnae.indexOf(val);
+        if(idx === -1) STATE.filters.cnae.push(val);
+        else STATE.filters.cnae.splice(idx, 1);
+        STATE.page = 1;
+        renderCnaeDropdown();
+        render();
+      };
+    });
+  }
+  const count = document.getElementById('cnaeCount');
+  if(count){
+    count.textContent = sel.length === 0
+      ? `${all.length} disponíveis · 0 selecionados`
+      : `${sel.length} selecionado${sel.length>1?'s':''} de ${all.length}`;
+  }
+}
+
+function bindCnaeDropdown(){
+  const trigger = document.getElementById('cnaeTrigger');
+  const search = document.getElementById('cnaeSearch');
+  const clear = document.getElementById('cnaeClearBtn');
+  if(!trigger) return;
+  trigger.onclick = (e)=>{
+    e.stopPropagation();
+    toggleCnaeDropdown();
+  };
+  let searchT;
+  if(search){
+    search.oninput = (e)=>{
+      clearTimeout(searchT);
+      CNAE_DROPDOWN.searchTerm = e.target.value;
+      searchT = setTimeout(()=>renderCnaeList(), 120);
+    };
+  }
+  if(clear){
+    clear.onclick = ()=>{
+      STATE.filters.cnae = [];
+      STATE.page = 1;
+      renderCnaeDropdown();
+      render();
+    };
+  }
+  document.addEventListener('click', (e)=>{
+    if(!CNAE_DROPDOWN.open) return;
+    const dd = document.getElementById('cnaeDropdown');
+    const tr = document.getElementById('cnaeTrigger');
+    if(dd && tr && !dd.contains(e.target) && !tr.contains(e.target)) closeCnaeDropdown();
+  });
+  document.addEventListener('keydown', (e)=>{
+    if(e.key === 'Escape' && CNAE_DROPDOWN.open) closeCnaeDropdown();
+  });
+  CNAE_DROPDOWN.allOptions = getCnaeOptions();
+  renderCnaeDropdown();
 }
 
 /* === Dropdown Cliente (multi-select com busca) === */
@@ -3928,6 +4116,9 @@ function bindEvents(){
     const filterKey = filterId.replace('Filter','');
     bindMultiSelectPills(filterId, filterKey);
   });
+
+  // CNAE: caixa suspensa multi-seleção, usando os 2 primeiros dígitos do CNAE
+  bindCnaeDropdown();
 
   // Cliente: dropdown multi-select com busca
   bindClienteDropdown();
