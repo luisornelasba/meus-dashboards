@@ -2142,20 +2142,20 @@ html, body {
           <div class="indicadores2026-cell indicadores2026-num">12</div>
           <div class="indicadores2026-cell indicadores2026-text">Expansão de<br>atendimento às<br>empresas com saúde.</div>
           <div class="indicadores2026-cell indicadores2026-big">393</div>
-          <div class="indicadores2026-cell indicadores2026-realizado">183</div>
-          <div class="indicadores2026-cell indicadores2026-pct">46,6%</div>
+          <div class="indicadores2026-cell indicadores2026-realizado">208</div>
+          <div class="indicadores2026-cell indicadores2026-pct">52,9%</div>
 
           <div class="indicadores2026-cell indicadores2026-num">11</div>
           <div class="indicadores2026-cell indicadores2026-text">Trabalhadores atendidos<br>em contratos de saúde.</div>
           <div class="indicadores2026-cell indicadores2026-big">29.364</div>
-          <div class="indicadores2026-cell indicadores2026-realizado">14.494</div>
-          <div class="indicadores2026-cell indicadores2026-pct">49,4%</div>
+          <div class="indicadores2026-cell indicadores2026-realizado">16.781</div>
+          <div class="indicadores2026-cell indicadores2026-pct">57,1%</div>
 
           <div class="indicadores2026-cell indicadores2026-num">6</div>
           <div class="indicadores2026-cell indicadores2026-text">Número de<br>trabalhadores na<br>plataforma de saúde e<br>segurança.</div>
           <div class="indicadores2026-cell indicadores2026-big">28.160</div>
-          <div class="indicadores2026-cell indicadores2026-realizado">14.194</div>
-          <div class="indicadores2026-cell indicadores2026-pct">50,4%</div>
+          <div class="indicadores2026-cell indicadores2026-realizado">15.977</div>
+          <div class="indicadores2026-cell indicadores2026-pct">56,7%</div>
         </div>
       </div>
     </div>
@@ -4935,12 +4935,19 @@ function getHojeIsoLocal() {
 }
 const DATA_ATUAL_ISO = getHojeIsoLocal();
 const DATA_ATUAL_DIAS = isoParaDias(DATA_ATUAL_ISO);
-const RAW_DATA_MAX_ANO = diasParaData(RAW.meta.data_max_dias).getFullYear();
-const ANO_ATUAL_NAVEGADOR = new Date().getFullYear();
-const HOJE_DIAS = (ANO_ATUAL_NAVEGADOR === RAW_DATA_MAX_ANO && DATA_ATUAL_DIAS > RAW.meta.data_max_dias)
-  ? DATA_ATUAL_DIAS
-  : RAW.meta.data_max_dias;
+// Correção: após importar Excel, o último registro da base pode estar antes da data atual.
+// O filtro Personalizado e o YTD passam a aceitar a data de hoje como limite superior,
+// mantendo os dados filtrados normalmente dentro do período selecionado.
+const HOJE_DIAS = Math.max(DATA_ATUAL_DIAS, RAW.meta.data_max_dias);
 const DATA_FIM_PADRAO_ISO = (HOJE_DIAS === DATA_ATUAL_DIAS) ? DATA_ATUAL_ISO : RAW.meta.data_max_iso;
+// Correção do filtro Personalizado: mantém o fim padrão na data atual/base,
+// mas libera a seleção até o fim do ano vigente/importado para permitir data atual
+// ou posterior após a importação do Excel, sem mexer na lógica dos gráficos.
+const ANO_LIMITE_PERSONALIZADO = Math.max(
+  Number(DATA_ATUAL_ISO.slice(0, 4)),
+  Number(String(RAW.meta.data_max_iso || DATA_ATUAL_ISO).slice(0, 4))
+);
+const DATA_MAX_PERSONALIZADO_ISO = ANO_LIMITE_PERSONALIZADO + '-12-31';
 
 function clearActive() {
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -4978,9 +4985,9 @@ RAW.meta.anos.forEach(ano => {
 const dateIni = document.getElementById('date-ini');
 const dateFim = document.getElementById('date-fim');
 dateIni.min = RAW.meta.data_min_iso;
-dateIni.max = DATA_FIM_PADRAO_ISO;
+dateIni.max = DATA_MAX_PERSONALIZADO_ISO;
 dateFim.min = RAW.meta.data_min_iso;
-dateFim.max = DATA_FIM_PADRAO_ISO;
+dateFim.max = DATA_MAX_PERSONALIZADO_ISO;
 dateIni.value = RAW.meta.data_min_iso;
 dateFim.value = DATA_FIM_PADRAO_ISO;
 
