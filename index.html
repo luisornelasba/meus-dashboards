@@ -4947,7 +4947,11 @@ const ANO_LIMITE_PERSONALIZADO = Math.max(
   Number(DATA_ATUAL_ISO.slice(0, 4)),
   Number(String(RAW.meta.data_max_iso || DATA_ATUAL_ISO).slice(0, 4))
 );
-const DATA_MAX_PERSONALIZADO_ISO = ANO_LIMITE_PERSONALIZADO + '-12-31';
+// Correção definitiva do filtro PERSONALIZADO:
+// libera o seletor para data atual e datas posteriores após importação do Excel.
+// Não altera a lógica de filtragem: se a data selecionada for futura, o dashboard
+// apenas considera os registros existentes até aquela data.
+const DATA_MAX_PERSONALIZADO_ISO = '2099-12-31';
 
 function clearActive() {
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -4990,6 +4994,12 @@ dateFim.min = RAW.meta.data_min_iso;
 dateFim.max = DATA_MAX_PERSONALIZADO_ISO;
 dateIni.value = RAW.meta.data_min_iso;
 dateFim.value = DATA_FIM_PADRAO_ISO;
+// reforço aplicado após a renderização inicial para evitar que navegadores
+// mantenham limite antigo em cache depois da importação da base Excel.
+setTimeout(function() {
+  if (dateIni) dateIni.max = DATA_MAX_PERSONALIZADO_ISO;
+  if (dateFim) dateFim.max = DATA_MAX_PERSONALIZADO_ISO;
+}, 0);
 
 document.getElementById('btn-apply').addEventListener('click', () => {
   const v1 = dateIni.value, v2 = dateFim.value;
@@ -5484,8 +5494,8 @@ function _initImportador() {
     var novoRAW = {
       meta: {
         epoch: '2022-01-01', data_referencia: fmtBR(dataMax),
-        data_min_dias: diasDesdeEpoch(dataMin), data_max_dias: diasDesdeEpoch(dataMax),
-        data_min_iso: dateToISODay(dataMin), data_max_iso: dateToISODay(dataMax),
+        data_min_dias: diasDesdeEpoch(dataMin), data_max_dias: Math.max(diasDesdeEpoch(dataMax), diasDesdeEpoch(limiteData)),
+        data_min_iso: dateToISODay(dataMin), data_max_iso: dateToISODay(new Date(Math.max(dataMax.getTime(), limiteData.getTime()))),
         anos: anos,
         totalClientesGeo: geoExistente.cnpjGeo ? Object.keys(geoExistente.cnpjGeo).length : 0,
         totalCnpjsBase: CNPJS.length,
