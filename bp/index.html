@@ -1089,7 +1089,7 @@
     <div class="kpi-card accent-yellow">
       <div class="kpi-label">
         <span class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></span>
-        Meta YTD (19/mês)
+        Meta YTD (Plano Mensal)
       </div>
       <div class="kpi-value yellow num" id="kpiMeta">0</div>
       <div class="kpi-meta"><span id="kpiMetaSub">Janeiro a Maio · 100 prop.</span></div>
@@ -1097,15 +1097,15 @@
     <div class="kpi-card accent-violet">
       <div class="kpi-label">
         <span class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span>
-        % de Atingimento
+        % de Atingimento YTD
       </div>
       <div class="kpi-value violet num" id="kpiAtingPct">0%</div>
-      <div class="kpi-meta"><span class="kpi-trend up" id="kpiAtingTrend">+0pp</span><span>vs mês anterior</span></div>
+      <div class="kpi-meta"><span class="kpi-trend up" id="kpiAtingTrend">+0pp</span><span>sobre Meta YTD · vs mês anterior</span></div>
     </div>
     <div class="kpi-card accent-red">
       <div class="kpi-label">
         <span class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
-        Gap vs Meta
+        Gap vs Meta YTD
       </div>
       <div class="kpi-value red num" id="kpiGap">0</div>
       <div class="kpi-meta"><span id="kpiGapSub">Necessário p/ atingir</span></div>
@@ -1128,8 +1128,8 @@
     <div class="chart-card">
       <div class="chart-header">
         <div>
-          <div class="chart-title">Atingimento da Meta</div>
-          <div class="chart-subtitle">YTD · Janeiro até final do mês corrente</div>
+          <div class="chart-title">Atingimento da Meta YTD</div>
+          <div class="chart-subtitle">Referência: Meta YTD acumulada até o mês corrente</div>
         </div>
         <div class="chart-tag yellow">Gauge</div>
       </div>
@@ -1137,7 +1137,7 @@
         <canvas id="chartGauge" width="240" height="240"></canvas>
         <div class="gauge-center">
           <div class="gauge-pct" id="gaugePct">0%</div>
-          <div class="gauge-label">Atingimento</div>
+          <div class="gauge-label">Meta YTD</div>
         </div>
       </div>
       <div class="chart-insight"><span class="insight-dot"></span><span id="gaugeInsight">Carregando…</span></div>
@@ -1242,12 +1242,13 @@
             <th>Total</th><th>Realizado</th>
             <th>Cláudia</th><th>Realizado</th>
             <th>Dyego</th><th>Realizado</th>
-            <th>Ana C.</th><th>Realizado</th>
+            <th>Carol</th><th>Realizado</th>
             <th>Fernando</th><th>Realizado</th>
+            <th>PAULA</th><th>Realizado</th>
           </tr>
         </thead>
         <tbody id="consultorMetaTableBody">
-          <tr><td colspan="11">Carregando metas...</td></tr>
+          <tr><td colspan="13">Carregando metas...</td></tr>
         </tbody>
       </table>
     </div>
@@ -1521,10 +1522,21 @@ const COLORS = {
 
 /* ========= METAS OFICIAIS DO PROGRAMA =========
    Meta total: 167 CNPJs até o final de setembro de 2026
-   Distribuição mensal: 19 CNPJs/mês (jan-set = 9 meses × ~19 ≈ 171, ajustado para 167) */
+   Distribuição mensal oficial Jan-Set/2026 conforme planejamento vigente */
 const META = {
   total: 167,           // CNPJs até set/2026
-  mensal: 19,           // CNPJs por mês
+  mensal: 19,           // fallback legado para rotinas não-YTD
+  mensalPlanejada: {    // metas oficiais por mês para cálculo YTD
+    1: 10,
+    2: 11,
+    3: 13,
+    4: 22,
+    5: 18,
+    6: 11,
+    7: 42,
+    8: 20,
+    9: 20,
+  },
   prazoMonth: 9,        // Setembro (mês 9)
   prazoYear: 2026,
   // Metas estratégicas por categoria
@@ -1540,6 +1552,17 @@ function metaYTDMeses(){
   const t = getToday();
   const cur = t.getFullYear() === META.prazoYear ? Math.min(t.getMonth()+1, META.prazoMonth) : META.prazoMonth;
   return cur;
+}
+function getMetaYTDValor(){
+  const meses = metaYTDMeses();
+  const plano = META.mensalPlanejada || {};
+  let total = 0;
+  for(let m=1; m<=meses; m++) total += Number(plano[m] ?? META.mensal ?? 0);
+  return Math.min(META.total || 167, total);
+}
+function getMetaMensalPlanejada(monthIndex){
+  const plano = META.mensalPlanejada || {};
+  return Number(plano[monthIndex] ?? META.mensal ?? 0);
 }
 
 /* ===== PALETA NEON / GRADIENTES =====
@@ -1832,7 +1855,7 @@ function renderKPIs(data){
 
   // META YTD: dinâmica até último dia do mês corrente (independente do filtro de data)
   const ytd = getYTDFixedRange();
-  const meta = metaYTDMeses() * META.mensal;
+  const meta = getMetaYTDValor();
   // Aceitas YTD-fixas (p/ % atingimento) — respeita os outros filtros, mas usa range YTD fixo
   const ytdData = applyFiltersExceptDate(ytd.startStr, ytd.endStr);
   const ytdAceitas = ytdData.filter(d=>d.Status==='ACEITA').length;
@@ -1878,8 +1901,12 @@ function renderKPIs(data){
   if(months.length >= 2){
     const last = monthAgg[months[months.length-1]];
     const prev2 = monthAgg[months[months.length-2]];
-    const lastPct = last.aceitas/META.mensal;
-    const prevPct = prev2.aceitas/META.mensal;
+    const lastMonth = Number(months[months.length-1].split('-')[1]);
+    const prevMonth = Number(months[months.length-2].split('-')[1]);
+    const lastMeta = getMetaMensalPlanejada(lastMonth) || META.mensal;
+    const prevMeta = getMetaMensalPlanejada(prevMonth) || META.mensal;
+    const lastPct = lastMeta ? last.aceitas/lastMeta : 0;
+    const prevPct = prevMeta ? prev2.aceitas/prevMeta : 0;
     atingDelta = Math.round((lastPct - prevPct)*100);
   }
   const atingTrend = document.getElementById('kpiAtingTrend');
@@ -1910,15 +1937,12 @@ function aggByMonth(data){
 
 /* ========= Meta mensal oficial Jan-Set para gráficos e tabela ========= */
 function getMetaMensalConsultorJanSetTotals(){
-  const META_GERAL = 167;
-  const mesesHistoricos = ['2026-01','2026-02','2026-03','2026-04'];
-  const mesesRestantes = [
-    {key:'2026-05', valor:24},
-    {key:'2026-06', valor:24},
-    {key:'2026-07', valor:23},
-    {key:'2026-08', valor:20},
-    {key:'2026-09', valor:18},
-  ];
+  const mesesHistoricos = ['2026-01','2026-02','2026-03','2026-04','2026-05','2026-06'];
+  const metasFixas = {
+    '2026-07': 42,
+    '2026-08': 20,
+    '2026-09': 20,
+  };
 
   const countAceitasMes = (monthKey) => RAW_DATA_REF.data.filter(r =>
     r.Status === 'ACEITA' && r.Data && r.Data.startsWith(monthKey)
@@ -1926,26 +1950,7 @@ function getMetaMensalConsultorJanSetTotals(){
 
   const out = {};
   mesesHistoricos.forEach(key => { out[key] = countAceitasMes(key); });
-
-  // Regra solicitada: maio a setembro seguem os valores definidos para o saldo até a meta total.
-  // Caso o realizado histórico mude e ultrapasse a meta, zera o saldo futuro para não gerar meta negativa.
-  const realizadoHistorico = mesesHistoricos.reduce((acc, key) => acc + (Number(out[key]) || 0), 0);
-  const saldo = Math.max(0, META_GERAL - realizadoHistorico);
-  const somaBase = mesesRestantes.reduce((acc, item) => acc + item.valor, 0) || 1;
-
-  if(saldo === somaBase){
-    mesesRestantes.forEach(item => { out[item.key] = item.valor; });
-  }else{
-    const calculados = mesesRestantes.map((item, idx) => {
-      const exato = saldo * (item.valor / somaBase);
-      const base = Math.floor(exato);
-      return {idx, key:item.key, base, resto:exato-base};
-    });
-    let sobra = saldo - calculados.reduce((acc, item) => acc + item.base, 0);
-    calculados.sort((a,b)=>b.resto-a.resto || a.idx-b.idx);
-    for(let i=0; i<calculados.length && sobra>0; i++, sobra--) calculados[i].base += 1;
-    calculados.sort((a,b)=>a.idx-b.idx).forEach(item => { out[item.key] = item.base; });
-  }
+  Object.entries(metasFixas).forEach(([key, valor]) => { out[key] = valor; });
   return out;
 }
 
@@ -2047,8 +2052,15 @@ function renderGauge(){
 /* ========= Consultores ========= */
 function renderConsultores(data){
   const counts = {};
-  data.filter(d=>d.Status==='ACEITA').forEach(d=>{ counts[d.Consultor]=(counts[d.Consultor]||0)+1; });
-  const sorted = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,4);
+  data
+    .filter(d=>d.Status==='ACEITA' && String(d.Consultor || '').trim() !== '')
+    .forEach(d=>{
+      const nome = String(d.Consultor || 'Sem consultor').trim();
+      counts[nome]=(counts[nome]||0)+1;
+    });
+  // Mantém o ranking 100% dinâmico com TODOS os proprietários/consultores que tiverem propostas aceitas
+  // vindas do arquivo importado, sem limitar aos 4 consultores fixos.
+  const sorted = Object.entries(counts).sort((a,b)=>b[1]-a[1] || a[0].localeCompare(b[0]));
   const labels = sorted.map(s=>s[0]);
   const values = sorted.map(s=>s[1]);
   const max = Math.max(...values, 1);
@@ -2056,7 +2068,9 @@ function renderConsultores(data){
   const palettes = [NEON.cyan, NEON.emerald, NEON.violet, NEON.pink];
 
   if(charts.consultores) charts.consultores.destroy();
-  const ctx = document.getElementById('chartConsultores').getContext('2d');
+  const canvasConsultores = document.getElementById('chartConsultores');
+  if(!canvasConsultores) return;
+  const ctx = canvasConsultores.getContext('2d');
   charts.consultores = new Chart(ctx,{
     type:'bar',
     data:{labels,datasets:[{
@@ -2259,13 +2273,28 @@ function renderTop5(data){
 
 /* ========= Consultor × Status (empilhado) ========= */
 function renderConsultorStatus(data){
-  const consultores = ['CLAUDIA','DYEGO','ANA CAROLINE','FERNANDO'];
-  const aceitas = consultores.map(c=>data.filter(d=>d.Consultor===c && d.Status==='ACEITA').length);
-  const desenv = consultores.map(c=>data.filter(d=>d.Consultor===c && d.Status==='EM DESENVOLVIMENTO').length);
-  const recusadas = consultores.map(c=>data.filter(d=>d.Consultor===c && d.Status==='RECUSADA').length);
+  const normalizeNomeConsultor = (v) => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toUpperCase();
+  const base = {};
+  data.forEach(d => {
+    const c = String(d.Consultor || '').trim();
+    if(!c || normalizeNomeConsultor(c) === 'DALINE DE SOUSA ATAIDE') return;
+    if(!base[c]) base[c] = {total:0, aceitas:0, desenv:0, recusadas:0};
+    base[c].total++;
+    if(d.Status === 'ACEITA') base[c].aceitas++;
+    if(d.Status === 'EM DESENVOLVIMENTO') base[c].desenv++;
+    if(d.Status === 'RECUSADA') base[c].recusadas++;
+  });
+  const preferidos = ['CLAUDIA','DYEGO','ANA CAROLINE','FERNANDO'];
+  const demais = Object.keys(base).filter(c => !preferidos.includes(c)).sort((a,b)=>(base[b].aceitas-base[a].aceitas)||(base[b].total-base[a].total)||a.localeCompare(b));
+  const consultores = [...preferidos.filter(c => base[c]), ...demais];
+  const aceitas = consultores.map(c=>base[c]?.aceitas || 0);
+  const desenv = consultores.map(c=>base[c]?.desenv || 0);
+  const recusadas = consultores.map(c=>base[c]?.recusadas || 0);
 
   if(charts.consultorStatus) charts.consultorStatus.destroy();
-  const ctx = document.getElementById('chartConsultorStatus').getContext('2d');
+  const canvasStatus = document.getElementById('chartConsultorStatus');
+  if(!canvasStatus) return;
+  const ctx = canvasStatus.getContext('2d');
   charts.consultorStatus = new Chart(ctx,{
     type:'bar',
     data:{labels:consultores,datasets:[
@@ -2306,31 +2335,25 @@ function renderConsultorMeta(){
   const tbody = document.getElementById('consultorMetaTableBody');
   if(!tbody) return;
 
-  const META_GERAL = 167;
-
-  const mesesHistoricos = [
+  const meses = [
     {key:'2026-01', mes:'Janeiro/26', historico:true},
     {key:'2026-02', mes:'Fevereiro/26', historico:true},
     {key:'2026-03', mes:'Março/26', historico:true},
     {key:'2026-04', mes:'Abril/26', historico:true},
-  ];
-
-  const mesesRestantes = [
-    // Distribuição solicitada para o saldo entre maio e setembro.
-    // Quando Jan-Abr realizado somar 58, os totais ficam exatamente: 24, 24, 23, 20 e 18.
-    {key:'2026-05', mes:'Maio/26', peso:24},
-    {key:'2026-06', mes:'Junho/26', peso:24},
-    {key:'2026-07', mes:'Julho/26', peso:23},
-    {key:'2026-08', mes:'Agosto/26', peso:20},
-    {key:'2026-09', mes:'Setembro/26', peso:18},
+    {key:'2026-05', mes:'Maio/26', historico:true},
+    {key:'2026-06', mes:'Junho/26', historico:true},
+    {key:'2026-07', mes:'Julho/26', historico:false, total:42, claudia:4, dyego:12, ana:9, fernando:9, paula:8},
+    {key:'2026-08', mes:'Agosto/26', historico:false, total:20, claudia:4, dyego:4, ana:4, fernando:4, paula:4},
+    {key:'2026-09', mes:'Setembro/26', historico:false, total:20, claudia:4, dyego:4, ana:4, fernando:4, paula:4},
   ];
 
   const normalizeConsultor = (v) => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toUpperCase();
   const aliases = {
     CLAUDIA: ['CLAUDIA','CLÁUDIA'],
     DYEGO: ['DYEGO'],
-    ANA: ['ANA CAROLINE','ANA C.','ANA CAROLINA','ANA'],
-    FERNANDO: ['FERNANDO']
+    ANA: ['ANA CAROLINE','ANA C.','ANA CAROLINA','ANA','CAROL'],
+    FERNANDO: ['FERNANDO'],
+    PAULA: ['PAULA']
   };
 
   const countReal = (monthKey, consultor=null) => RAW_DATA_REF.data.filter(r => {
@@ -2339,63 +2362,28 @@ function renderConsultorMeta(){
     if(consultor){
       const atual = normalizeConsultor(r.Consultor);
       const permitidos = (aliases[consultor] || [consultor]).map(normalizeConsultor);
-      if(!permitidos.includes(atual)) return false;
+      if(!permitidos.some(nome => atual === nome || atual.includes(nome) || nome.includes(atual))) return false;
     }
     return true;
   }).length;
 
-  function distribuirPorPeso(total, itens){
-    const somaPesos = itens.reduce((acc, item) => acc + (Number(item.peso) || 0), 0) || 1;
-    const calculados = itens.map((item, idx) => {
-      const exato = total * ((Number(item.peso) || 0) / somaPesos);
-      const base = Math.floor(exato);
-      return {idx, base, resto: exato - base};
-    });
-    let sobra = total - calculados.reduce((acc, item) => acc + item.base, 0);
-    calculados.sort((a,b) => b.resto - a.resto || a.idx - b.idx);
-    for(let i=0; i<calculados.length && sobra>0; i++, sobra--){
-      calculados[i].base += 1;
+  const plano = meses.map(m => {
+    if(m.historico){
+      return {
+        ...m,
+        total: countReal(m.key),
+        claudia: countReal(m.key,'CLAUDIA'),
+        dyego: countReal(m.key,'DYEGO'),
+        ana: countReal(m.key,'ANA'),
+        fernando: countReal(m.key,'FERNANDO'),
+        paula: countReal(m.key,'PAULA')
+      };
     }
-    calculados.sort((a,b) => a.idx - b.idx);
-    return calculados.map(item => item.base);
-  }
-
-  function distribuirConsultores(total){
-    const claudia = Math.round(total * 0.30);
-    const dyego = Math.round(total * 0.30);
-    const ana = Math.round(total * 0.20);
-    const fernando = Math.max(0, total - claudia - dyego - ana);
-    return {claudia, dyego, ana, fernando};
-  }
-
-  // Janeiro a Abril: coluna TOTAL deve ser igual à coluna REALIZADO do próprio mês.
-  const planoHistorico = mesesHistoricos.map(m => {
-    const totalRealizadoMes = countReal(m.key);
-    return {
-      ...m,
-      total: totalRealizadoMes,
-      claudia: countReal(m.key,'CLAUDIA'),
-      dyego: countReal(m.key,'DYEGO'),
-      ana: countReal(m.key,'ANA'),
-      fernando: countReal(m.key,'FERNANDO')
-    };
+    return m;
   });
-
-  // Maio a Setembro: distribui o saldo que falta para atingir a meta total de 167.
-  // A base do saldo considera Jan-Abr já realizado, para preservar a regra dos meses antigos.
-  const realizadoJanAbr = planoHistorico.reduce((acc, item) => acc + (Number(item.total) || 0), 0);
-  const saldoMaiSet = Math.max(0, META_GERAL - realizadoJanAbr);
-  const totaisMensaisRestantes = distribuirPorPeso(saldoMaiSet, mesesRestantes);
-
-  const planoRestante = mesesRestantes.map((m, idx) => {
-    const total = totaisMensaisRestantes[idx];
-    return {...m, total, ...distribuirConsultores(total)};
-  });
-
-  const plano = [...planoHistorico, ...planoRestante];
 
   const soma = plano.reduce((acc, p) => {
-    acc.total += p.total;
+    acc.total += Number(p.total) || 0;
     acc.realizado += countReal(p.key);
     acc.claudia += Number(p.claudia) || 0;
     acc.realizadoClaudia += countReal(p.key,'CLAUDIA');
@@ -2405,8 +2393,10 @@ function renderConsultorMeta(){
     acc.realizadoAna += countReal(p.key,'ANA');
     acc.fernando += Number(p.fernando) || 0;
     acc.realizadoFernando += countReal(p.key,'FERNANDO');
+    acc.paula += Number(p.paula) || 0;
+    acc.realizadoPaula += countReal(p.key,'PAULA');
     return acc;
-  }, {total:0, realizado:0, claudia:0, realizadoClaudia:0, dyego:0, realizadoDyego:0, ana:0, realizadoAna:0, fernando:0, realizadoFernando:0});
+  }, {total:0, realizado:0, claudia:0, realizadoClaudia:0, dyego:0, realizadoDyego:0, ana:0, realizadoAna:0, fernando:0, realizadoFernando:0, paula:0, realizadoPaula:0});
 
   const linhas = plano.map(p => `
     <tr>
@@ -2416,6 +2406,7 @@ function renderConsultorMeta(){
       <td><span class="meta-cell">${p.dyego}</span></td><td><span class="realizado-cell">${countReal(p.key,'DYEGO')}</span></td>
       <td><span class="meta-cell">${p.ana}</span></td><td><span class="realizado-cell">${countReal(p.key,'ANA')}</span></td>
       <td><span class="meta-cell">${p.fernando}</span></td><td><span class="realizado-cell">${countReal(p.key,'FERNANDO')}</span></td>
+      <td><span class="meta-cell">${p.paula}</span></td><td><span class="realizado-cell">${countReal(p.key,'PAULA')}</span></td>
     </tr>
   `).join('');
 
@@ -2427,6 +2418,7 @@ function renderConsultorMeta(){
       <td><span class="meta-cell">${soma.dyego}</span></td><td><span class="realizado-cell">${soma.realizadoDyego}</span></td>
       <td><span class="meta-cell">${soma.ana}</span></td><td><span class="realizado-cell">${soma.realizadoAna}</span></td>
       <td><span class="meta-cell">${soma.fernando}</span></td><td><span class="realizado-cell">${soma.realizadoFernando}</span></td>
+      <td><span class="meta-cell">${soma.paula}</span></td><td><span class="realizado-cell">${soma.realizadoPaula}</span></td>
     </tr>
   `;
 
@@ -2580,6 +2572,7 @@ function renderExecutiveInsights(data){
 
   const META_FINAL = 167;
   const META_INTERMEDIARIA = 100;
+  const VOLUME_MINIMO_CONVERSAO = 5;
   const arr = Array.isArray(data) ? data : [];
   const total = arr.length;
   const aceitas = arr.filter(d=>d.Status==='ACEITA').length;
@@ -2587,13 +2580,19 @@ function renderExecutiveInsights(data){
   const recusadas = arr.filter(d=>d.Status==='RECUSADA').length;
   const conversao = total ? (aceitas/total)*100 : 0;
   const pctMetaFinal = META_FINAL ? (aceitas/META_FINAL)*100 : 0;
+  const metaYTDValor = (typeof getMetaYTDValor === 'function') ? getMetaYTDValor() : META_INTERMEDIARIA;
+  const pctMetaYTD = metaYTDValor ? (aceitas/metaYTDValor)*100 : 0;
   const gapIntermediario = Math.max(0, META_INTERMEDIARIA - aceitas);
   const gapFinal = Math.max(0, META_FINAL - aceitas);
+  const potencialComPipeline = aceitas + desenvolvimento;
+  const deficitMesmoComPipeline = Math.max(0, META_FINAL - potencialComPipeline);
+  const coberturaPipeline = gapFinal > 0 ? (desenvolvimento/gapFinal)*100 : 100;
 
   const fmtPct = (v, casas=1) => Number.isFinite(v) ? v.toLocaleString('pt-BR',{minimumFractionDigits:casas, maximumFractionDigits:casas}) + '%' : '0,0%';
   const fmtInt = (v) => (Number(v)||0).toLocaleString('pt-BR');
-  const escapeHtml = (v) => String(v ?? '').replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+  const escapeHtml = (v) => String(v ?? '').replace(/[&<>\"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;','"':'&quot;'}[m] || m));
   const norm = (v) => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toUpperCase();
+  const plural = (qtd, singular, pluralTxt) => `${fmtInt(qtd)} ${Number(qtd) === 1 ? singular : pluralTxt}`;
   const monthNames = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
   const dates = arr.map(d=>d.Data).filter(Boolean).sort();
@@ -2604,9 +2603,10 @@ function renderExecutiveInsights(data){
   const currentYear = currentMonthKey ? currentMonthKey.slice(0,4) : '';
   const currentAccepted = currentMonthKey ? arr.filter(d=>d.Status==='ACEITA' && d.Data && d.Data.startsWith(currentMonthKey)).length : 0;
   const monthlyTargetMap = {'2026-05':24,'2026-06':24,'2026-07':23,'2026-08':20,'2026-09':18};
-  const historicalTarget = currentMonthKey ? arr.filter(d=>d.Status==='ACEITA' && d.Data && d.Data.startsWith(currentMonthKey)).length : 0;
+  const historicalTarget = currentMonthKey ? currentAccepted : 0;
   const currentTarget = monthlyTargetMap[currentMonthKey] ?? historicalTarget;
   const currentPct = currentTarget ? (currentAccepted/currentTarget)*100 : 0;
+  const currentGap = Math.max(0, currentTarget - currentAccepted);
 
   const byConsultor = {};
   for(const r of arr){
@@ -2620,14 +2620,15 @@ function renderExecutiveInsights(data){
   }
   const consultores = Object.entries(byConsultor).map(([nome,v])=>({nome, ...v, conversao:v.total ? (v.aceitas/v.total)*100 : 0, taxaRecusa:v.total ? (v.recusadas/v.total)*100 : 0}));
   const lider = consultores.slice().sort((a,b)=>b.aceitas-a.aceitas || b.conversao-a.conversao)[0] || {nome:'-', aceitas:0, conversao:0, desenvolvimento:0};
-  const eficiente = consultores.filter(c=>c.total>0).sort((a,b)=>b.conversao-a.conversao || b.aceitas-a.aceitas)[0] || lider;
-  const critico = consultores.filter(c=>c.total>0).sort((a,b)=>b.recusadas-a.recusadas || b.taxaRecusa-a.taxaRecusa)[0] || {nome:'-', recusadas:0, taxaRecusa:0};
-  const destaqueMes = consultores.slice().sort((a,b)=>b.mesAtual-a.mesAtual || b.aceitas-a.aceitas)[0] || lider;
+  const consultoresElegiveisConversao = consultores.filter(c=>c.total >= VOLUME_MINIMO_CONVERSAO);
+  const eficiente = consultoresElegiveisConversao.slice().sort((a,b)=>b.conversao-a.conversao || b.aceitas-a.aceitas || b.total-a.total)[0] || null;
+  const participacaoLider = aceitas ? (lider.aceitas/aceitas)*100 : 0;
 
   const countCat = (nome, testFn) => {
     const aceitasCat = arr.filter(r=>r.Status==='ACEITA' && testFn(r)).length;
     const meta = META.categorias[nome] || 0;
-    return {nome, realizado:aceitasCat, meta, gap:Math.max(0, meta-aceitasCat), pct:meta ? (aceitasCat/meta)*100 : 0};
+    const nomeFinal = norm(nome).includes('OUTROS') ? 'Outros Setores' : nome;
+    return {nome:nomeFinal, realizado:aceitasCat, meta, gap:Math.max(0, meta-aceitasCat), pct:meta ? (aceitasCat/meta)*100 : 0};
   };
   const categorias = [
     countCat('Médias empresas', isMediaEmpresa),
@@ -2651,21 +2652,36 @@ function renderExecutiveInsights(data){
   const porteShare = aceitas ? (porteTop[1]/aceitas)*100 : 0;
 
   const statusMeta = currentPct >= 100 ? 'ins-ok' : currentPct >= 75 ? 'ins-warn' : 'ins-danger';
-  const pipelineRatio = aceitas ? (desenvolvimento/aceitas)*100 : 0;
-  const pipelineClass = desenvolvimento > 0 ? 'ins-info' : 'ins-warn';
+  const pipelineClass = gapFinal <= 0 ? 'ins-ok' : (desenvolvimento >= gapFinal ? 'ins-ok' : 'ins-warn');
+  const coberturaClass = gapFinal <= 0 ? 'ins-ok' : (coberturaPipeline >= 100 ? 'ins-ok' : coberturaPipeline >= 60 ? 'ins-warn' : 'ins-danger');
   const taxaRecusaGeral = total ? (recusadas/total)*100 : 0;
   const recusaClass = recusadas >= 5 || taxaRecusaGeral >= 10 ? 'ins-danger' : (recusadas > 0 ? 'ins-warn' : 'ins-ok');
   const catClass = categoriaCritica.pct < 30 ? 'ins-danger' : 'ins-warn';
+  const metaYtdTexto = `Meta YTD: <strong>${fmtInt(metaYTDValor)}</strong> até o mês corrente`; 
+  const metaFinalTexto = `Meta Final: <strong>${fmtInt(META_FINAL)}</strong> até Setembro/2026`;
+  const textoMelhorConversao = eficiente
+    ? `<strong>${escapeHtml(eficiente.nome)}</strong> apresenta a melhor conversão elegível, com <strong>${fmtPct(eficiente.conversao)}</strong> sobre <strong>${plural(eficiente.total,'proposta analisada','propostas analisadas')}</strong>. Para evitar distorções por amostra pequena, a regra considera apenas consultores com pelo menos <strong>${fmtInt(VOLUME_MINIMO_CONVERSAO)}</strong> propostas no período filtrado.`
+    : `Sem volume mínimo suficiente para apontar melhor conversão com segurança estatística. A regra considera apenas consultores com pelo menos <strong>${fmtInt(VOLUME_MINIMO_CONVERSAO)}</strong> propostas no período filtrado.`;
+  const textoPipeline = gapFinal <= 0
+    ? `A <strong>Meta Final</strong> já foi atingida ou superada. O pipeline atual de <strong>${plural(desenvolvimento,'proposta em desenvolvimento','propostas em desenvolvimento')}</strong> passa a representar oportunidade adicional de expansão do resultado.`
+    : `Na situação atual, faltam <strong>${plural(gapFinal,'proposta aceita','propostas aceitas')}</strong> para atingir a <strong>Meta Final</strong> de <strong>${fmtInt(META_FINAL)}</strong>. No cenário projetado, caso todas as <strong>${plural(desenvolvimento,'proposta em desenvolvimento','propostas em desenvolvimento')}</strong> sejam convertidas, o programa alcançará aproximadamente <strong>${plural(potencialComPipeline,'proposta aceita','propostas aceitas')}</strong>, restando um déficit estimado de <strong>${plural(deficitMesmoComPipeline,'proposta','propostas')}</strong> frente à <strong>Meta Final</strong>.`;
+  const textoCobertura = gapFinal <= 0
+    ? `O programa já alcançou <strong>${fmtPct(pctMetaFinal)}</strong> da <strong>Meta Final</strong>, eliminando o gap projetado. A prioridade passa a ser sustentar qualidade, reduzir recusas e consolidar entregas adicionais.`
+    : `O pipeline atual cobre <strong>${fmtPct(coberturaPipeline)}</strong> da necessidade atual de <strong>${plural(gapFinal,'proposta aceita','propostas aceitas')}</strong> para atingir a <strong>Meta Final</strong>. Mesmo convertendo todo o estoque em desenvolvimento, ainda será necessário gerar aproximadamente <strong>${plural(deficitMesmoComPipeline,'nova proposta aceita','novas propostas aceitas')}</strong>.`;
+  const textoRiscoResumo = gapFinal > 0 && deficitMesmoComPipeline > 0
+    ? `O principal risco operacional está na <strong>insuficiência do pipeline</strong>: atualmente faltam <strong>${plural(gapFinal,'proposta aceita','propostas aceitas')}</strong> para atingir a <strong>Meta Final</strong> de <strong>${fmtInt(META_FINAL)}</strong>. Caso todas as <strong>${plural(desenvolvimento,'proposta em desenvolvimento','propostas em desenvolvimento')}</strong> sejam convertidas, o programa chegará a aproximadamente <strong>${plural(potencialComPipeline,'proposta aceita','propostas aceitas')}</strong>, permanecendo um déficit estimado de <strong>${plural(deficitMesmoComPipeline,'proposta','propostas')}</strong> frente à <strong>Meta Final</strong>.`
+    : `O pipeline atual é suficiente para cobrir o gap da <strong>Meta Final</strong>, desde que a conversão do estoque em desenvolvimento seja priorizada e acompanhada de perto.`;
 
   const cards = [
-    {cls:statusMeta, title:'📈 Ritmo do mês atual', text:`Em <strong>${escapeHtml(currentMonthName)}/${escapeHtml(currentYear)}</strong>, o painel registra <strong>${fmtInt(currentAccepted)} aceitas</strong> para uma referência/meta de <strong>${fmtInt(currentTarget)}</strong>, equivalente a <strong>${fmtPct(currentPct)}</strong> do alvo mensal.`},
-    {cls:'ins-ok', title:'🏆 Consultor líder', text:`<strong>${escapeHtml(lider.nome)}</strong> lidera a operação com <strong>${fmtInt(lider.aceitas)} propostas aceitas</strong>, concentrando <strong>${fmtPct(aceitas ? (lider.aceitas/aceitas)*100 : 0)}</strong> das conversões do período filtrado.`},
-    {cls:'ins-ok', title:'⚡ Melhor conversão', text:`<strong>${escapeHtml(eficiente.nome)}</strong> apresenta a melhor eficiência, com taxa de conversão de <strong>${fmtPct(eficiente.conversao)}</strong> sobre <strong>${fmtInt(eficiente.total)}</strong> propostas analisadas no painel.`},
-    {cls:gapIntermediario === 0 ? 'ins-ok' : 'ins-warn', title:'🎯 Gap até Junho', text:`Para alcançar o marco intermediário de <strong>${fmtInt(META_INTERMEDIARIA)} aceitas</strong>, ainda faltam <strong>${fmtInt(gapIntermediario)}</strong> conversões. O resultado atual é de <strong>${fmtInt(aceitas)}</strong> aceitas.`},
-    {cls:pipelineClass, title:'🧩 Pipeline futuro', text:`Existem <strong>${fmtInt(desenvolvimento)} propostas em desenvolvimento</strong>, volume equivalente a <strong>${fmtPct(pipelineRatio)}</strong> das aceitas atuais. Esse estoque é a principal alavanca para acelerar o fechamento.`},
-    {cls:recusaClass, title:'🚨 Atenção em recusas', text:`O painel registra <strong>${fmtInt(recusadas)}</strong> recusadas no período filtrado, com taxa geral de recusa de <strong>${fmtPct(taxaRecusaGeral)}</strong>. O ponto exige leitura comercial ampla e revisão das abordagens com maior perda.`},
-    {cls:catClass, title:'🏗️ Categoria crítica', text:`<strong>${escapeHtml(categoriaCritica.nome)}</strong> tem o maior gap absoluto: <strong>${fmtInt(categoriaCritica.gap)}</strong> abaixo da meta, com <strong>${fmtInt(categoriaCritica.realizado)}</strong> de <strong>${fmtInt(categoriaCritica.meta)}</strong> realizados.`},
-    {cls:'ins-info', title:'🏭 Mix de produto e porte', text:`O mix de aceitas é liderado por <strong>${escapeHtml(produtoTop[0])}</strong>, com <strong>${fmtInt(produtoTop[1])}</strong> registros (<strong>${fmtPct(produtoShare)}</strong>). No porte, predomina <strong>${escapeHtml(porteTop[0])}</strong> com <strong>${fmtPct(porteShare)}</strong>.`}
+    {cls:statusMeta, title:'📈 Ritmo do mês atual', text:`Em <strong>${escapeHtml(currentMonthName)}/${escapeHtml(currentYear)}</strong>, o painel registra <strong>${plural(currentAccepted,'proposta aceita','propostas aceitas')}</strong> para uma meta mensal de <strong>${fmtInt(currentTarget)}</strong>, equivalente a <strong>${fmtPct(currentPct)}</strong> do alvo. Restam <strong>${plural(currentGap,'proposta','propostas')}</strong> para cumprir a meta do mês.`},
+    {cls:'ins-ok', title:'🏆 Consultor líder', text:`<strong>${escapeHtml(lider.nome)}</strong> lidera a operação com <strong>${plural(lider.aceitas,'proposta aceita','propostas aceitas')}</strong>, concentrando <strong>${fmtPct(participacaoLider)}</strong> das conversões do período filtrado.`},
+    {cls:eficiente ? 'ins-ok' : 'ins-info', title:'⚡ Melhor conversão', text:textoMelhorConversao},
+    {cls:gapIntermediario === 0 ? 'ins-ok' : 'ins-warn', title:'🎯 Meta YTD x Final', text:`O KPI superior deve ser lido pela ótica da <strong>Meta YTD</strong> acumulada (<strong>${fmtPct(pctMetaYTD)}</strong>; ${metaYtdTexto}). Já esta análise estratégica considera a <strong>Meta Final</strong> (<strong>${fmtPct(pctMetaFinal)}</strong>; ${metaFinalTexto}).`},
+    {cls:pipelineClass, title:'🧩 Pipeline futuro', text:textoPipeline},
+    {cls:coberturaClass, title:'📊 Suficiência do pipeline', text:textoCobertura},
+    {cls:recusaClass, title:'🚨 Atenção em recusas', text:`O painel registra <strong>${plural(recusadas,'proposta recusada','propostas recusadas')}</strong> no período filtrado, com taxa geral de recusa de <strong>${fmtPct(taxaRecusaGeral)}</strong>. O indicador exige leitura comercial ampla e melhor qualificação das oportunidades.`},
+    {cls:catClass, title:'🏗️ Categoria crítica', text:`A categoria <strong>“${escapeHtml(categoriaCritica.nome)}”</strong> apresenta o maior gap absoluto: faltam <strong>${plural(categoriaCritica.gap,'proposta','propostas')}</strong> para atingir a meta definida (<strong>${fmtInt(categoriaCritica.realizado)}</strong> de <strong>${fmtInt(categoriaCritica.meta)}</strong>).`},
+    {cls:'ins-info', title:'🏭 Mix de produto e porte', text:`<strong>${escapeHtml(produtoTop[0])}</strong> responde por <strong>${fmtPct(produtoShare)}</strong> das propostas aceitas, indicando ${produtoShare >= 70 ? 'forte concentração da carteira em uma única linha de atendimento' : 'distribuição mais equilibrada entre linhas de atendimento'}. No porte, predomina <strong>${escapeHtml(porteTop[0])}</strong> com <strong>${fmtPct(porteShare)}</strong>.`}
   ];
 
   grid.innerHTML = cards.map(c => `
@@ -2681,13 +2697,15 @@ function renderExecutiveInsights(data){
   }
 
   summary.innerHTML = `
-    O programa registra <strong>${fmtInt(aceitas)} propostas aceitas</strong> em um universo de <strong>${fmtInt(total)} propostas</strong>, com conversão geral de <strong>${fmtPct(conversao)}</strong> e atingimento de <strong>${fmtPct(pctMetaFinal)}</strong> da meta final de <strong>${fmtInt(META_FINAL)}</strong> aceitas até Setembro/2026.
+    ${textoRiscoResumo}
     <br><br>
-    Na leitura por consultores, <strong>${escapeHtml(lider.nome)}</strong> lidera em volume absoluto com <strong>${fmtInt(lider.aceitas)}</strong> aceitas. No mês atual, <strong>${escapeHtml(destaqueMes.nome)}</strong> aparece com <strong>${fmtInt(destaqueMes.mesAtual)}</strong> aceitas no período filtrado.
+    Atualmente, são <strong>${plural(aceitas,'proposta aceita','propostas aceitas')}</strong> em um universo de <strong>${fmtInt(total)}</strong>, com conversão geral de <strong>${fmtPct(conversao)}</strong>. O KPI superior deve ser lido pela ótica da <strong>Meta YTD</strong>, com <strong>${fmtPct(pctMetaYTD)}</strong> de atingimento sobre <strong>${fmtInt(metaYTDValor)}</strong> propostas acumuladas até o mês corrente. Já esta análise estratégica considera a <strong>Meta Final</strong> de <strong>${fmtInt(META_FINAL)}</strong> propostas aceitas até Setembro/2026, com <strong>${fmtPct(pctMetaFinal)}</strong> realizado.
     <br><br>
-    O principal risco está em <strong>${escapeHtml(categoriaCritica.nome)}</strong>, categoria com maior gap absoluto de <strong>${fmtInt(categoriaCritica.gap)}</strong> frente à meta. No acompanhamento geral, o painel registra <strong>${fmtInt(recusadas)}</strong> recusadas, com taxa geral de recusa de <strong>${fmtPct(taxaRecusaGeral)}</strong>.
+    Na leitura por consultores, <strong>${escapeHtml(lider.nome)}</strong> concentra <strong>${plural(lider.aceitas,'proposta aceita','propostas aceitas')}</strong>, equivalente a <strong>${fmtPct(participacaoLider)}</strong> das conversões do período filtrado. ${eficiente ? `A melhor conversão elegível está com <strong>${escapeHtml(eficiente.nome)}</strong>, considerando apenas consultores com volume mínimo de <strong>${fmtInt(VOLUME_MINIMO_CONVERSAO)}</strong> propostas analisadas.` : `Não há volume mínimo suficiente para indicar melhor conversão com segurança estatística.`}
     <br><br>
-    Para atingir a meta final, ainda faltam <strong>${fmtInt(gapFinal)}</strong> propostas aceitas. O pipeline de <strong>${fmtInt(desenvolvimento)}</strong> propostas em desenvolvimento precisa ser convertido com prioridade, especialmente nas categorias com maior distância da meta.
+    A categoria <strong>“${escapeHtml(categoriaCritica.nome)}”</strong> apresenta o maior gap absoluto, com <strong>${plural(categoriaCritica.gap,'proposta faltante','propostas faltantes')}</strong> para a meta definida. O painel também registra <strong>${plural(recusadas,'proposta recusada','propostas recusadas')}</strong>, com taxa geral de <strong>${fmtPct(taxaRecusaGeral)}</strong>, ponto que exige revisão comercial e melhor qualificação das oportunidades.
+    <br><br>
+    A prioridade agora é converter o pipeline em desenvolvimento, acelerar a geração de novas oportunidades nas categorias com maior gap e reduzir perdas por recusa. Na situação atual, faltam <strong>${plural(gapFinal,'proposta aceita','propostas aceitas')}</strong> para alcançar a <strong>Meta Final</strong>. No cenário projetado, com conversão integral do pipeline, ainda restariam <strong>${plural(deficitMesmoComPipeline,'proposta aceita','propostas aceitas')}</strong> a serem geradas; o estoque atual cobre <strong>${fmtPct(coberturaPipeline)}</strong> da necessidade atual.
   `;
 }
 
@@ -3279,6 +3297,22 @@ function normalize(s){
   if(s === null || s === undefined) return '';
   return String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().trim();
 }
+/* Busca campo com tolerância a variações de cabeçalho do Excel (acentos, espaços e caixa).
+   Mantém a importação compatível com bases que usam Consultor, Proprietário ou Proprietária. */
+function getRowValue(row, aliases){
+  if(!row || !aliases) return '';
+  const keys = Object.keys(row);
+  const normalizedAliases = aliases.map(a => normalize(a));
+  for(const key of keys){
+    if(normalizedAliases.includes(normalize(key))) return row[key];
+  }
+  for(const key of keys){
+    const nk = normalize(key);
+    if(normalizedAliases.some(a => nk.indexOf(a) !== -1 || a.indexOf(nk) !== -1)) return row[key];
+  }
+  return '';
+}
+const CONSULTOR_FIELD_ALIASES = ['Consultor','Proprietário','Proprietaria','Proprietário (Cliente)','Proprietária','Owner','Responsável','Responsavel'];
 function geocodeBairro(bairro){
   if(!bairro) return null;
   const b = normalize(bairro);
@@ -3333,8 +3367,8 @@ function excelDateToISO(val){
 /* Normaliza Status: aceita "Aceita", "ACEITA", "Em Desenvolvimento", etc */
 function normalizeStatus(s){
   const n = normalize(s);
-  if(n === 'ACEITA' || n === 'CONCLUIDA' || n === 'CONCLUÍDA') return 'ACEITA';
-  if(n === 'RECUSADA') return 'RECUSADA';
+  if(n === 'ACEITA' || n === 'ACEITE' || n === 'ACEITO' || n === 'CONCLUIDA' || n === 'CONCLUÍDA') return 'ACEITA';
+  if(n === 'RECUSADA' || n === 'RECUSADO') return 'RECUSADA';
   if(n.indexOf('DESENVOL') !== -1) return 'EM DESENVOLVIMENTO';
   return n;
 }
@@ -3347,7 +3381,8 @@ function normalizeConsultor(name){
   if(n.indexOf('DYEGO') !== -1) return 'DYEGO';
   if(n.indexOf('ANA CAROLINE') !== -1 || n.indexOf('ANA CAROL') !== -1) return 'ANA CAROLINE';
   if(n.indexOf('FERNANDO') !== -1) return 'FERNANDO';
-  return name; // fallback: mantém original
+  if(n.indexOf('PAULA') !== -1) return 'PAULA';
+  return String(name).trim().toUpperCase(); // fallback: mantém novos proprietários/consultores importados
 }
 
 /* === Detector de tipo de arquivo ===
@@ -3368,9 +3403,9 @@ function detectAndParse(workbook, fileName){
     if(asBP.length > 0){
       const cols = Object.keys(asBP[0]).map(c=>normalize(c));
       const hasCNPJ = cols.some(c=>c==='CNPJ');
-      const hasConsultor = cols.some(c=>c==='CONSULTOR');
-      const hasStatus = cols.some(c=>c==='STATUS');
-      const hasCliente = cols.some(c=>c==='CLIENTE');
+      const hasConsultor = cols.some(c=>c==='CONSULTOR' || c.indexOf('PROPRIETARIO') !== -1 || c.indexOf('PROPRIETARIA') !== -1 || c.indexOf('RESPONSAVEL') !== -1);
+      const hasStatus = cols.some(c=>c==='STATUS' || c.indexOf('RAZAO DO STATUS') !== -1);
+      const hasCliente = cols.some(c=>c==='CLIENTE' || c.indexOf('CLIENTE') !== -1);
       if(hasCNPJ && hasConsultor && hasStatus && hasCliente){
         return {type:'bp', rows: asBP, sheetName: sheet};
       }
@@ -3420,17 +3455,18 @@ function buildDatasetFromImports(bpFile, mercadoFile){
       if(!cnpjRaw) continue; // ignora linhas sem CNPJ
       const cnpj = String(cnpjRaw).replace(/\D/g,'').padStart(14,'0');
       if(cnpj.length !== 14) continue;
+      const consultorRaw = getRowValue(row, CONSULTOR_FIELD_ALIASES);
       // Curadoria: ignorar proprietários excluídos
-      if(isExcludedConsultor(row['Consultor'])){ excludedBP++; continue; }
-      const consultor = normalizeConsultor(row['Consultor']);
-      const cliente = String(row['Cliente']||'').trim();
-      const porte = normalize(row['Porte']);
+      if(isExcludedConsultor(consultorRaw)){ excludedBP++; continue; }
+      const consultor = normalizeConsultor(consultorRaw);
+      const cliente = String(getRowValue(row, ['Cliente','Cliente (Cliente)','Nome do Cliente','Razão Social','Razao Social']) || row['Cliente'] || '').trim();
+      const porte = normalize(getRowValue(row, ['Porte','Porte (Cliente)','Classificação Porte','Classificacao Porte']) || row['Porte']);
       let porteStd = porte;
       if(porte.indexOf('MICRO') !== -1) porteStd = 'MICRO EMPRESA';
       else if(porte.indexOf('PEQUENO') !== -1 || porte === 'EPP') porteStd = 'EMPRESA DE PEQUENO PORTE';
       else if(porte.indexOf('DEMAIS') !== -1 || porte.indexOf('GRANDE') !== -1 || porte.indexOf('MEDIA') !== -1) porteStd = 'DEMAIS';
-      const status = normalizeStatus(row['Status']);
-      const data = excelDateToISO(row['Data Aceite/ Modificação'] || row['Data'] || row['Data Aceite']);
+      const status = normalizeStatus(getRowValue(row, ['Status','Razão do Status','Razao do Status']) || row['Status']);
+      const data = excelDateToISO(getRowValue(row, ['Data Aceite/ Modificação','Data Aceite/ Modificacao','Data','Data Aceite','Data do Aceite','Data de Modificação','Data de Modificacao']));
       if(!data) continue; // sem data não consegue plotar
 
       // Buscar enriquecimento na Mercado (CNPJ + data próxima)
@@ -3501,9 +3537,10 @@ function buildDatasetFromImports(bpFile, mercadoFile){
       const cnpjRaw = m['CNPJ (Cliente)'];
       if(!cnpjRaw) continue;
       // Curadoria: ignorar proprietários excluídos
-      if(isExcludedConsultor(m['Proprietário'])) continue;
+      const proprietarioRaw = getRowValue(m, CONSULTOR_FIELD_ALIASES);
+      if(isExcludedConsultor(proprietarioRaw)) continue;
       const cnpj = String(cnpjRaw).replace(/\D/g,'').padStart(14,'0');
-      const consultor = normalizeConsultor(m['Proprietário']);
+      const consultor = normalizeConsultor(proprietarioRaw);
       const cliente = String(m['Cliente']||'').trim();
       const porte = normalize(m['Porte']);
       let porteStd = porte;
@@ -4405,5 +4442,277 @@ startChartFullscreenFeature();
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
   <span id="toastMsg"></span>
 </div>
+
+
+<!-- ═══════ EXPORTAR PARA CHATGPT · INJEÇÃO ISOLADA ═══════ -->
+<style id="chatgpt-export-injected-style">
+  #chatgptExportBtn{
+    position:static;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    padding:9px 16px;
+    border:1px solid rgba(16,185,129,0.28);
+    border-radius:10px;
+    background:linear-gradient(135deg,#047857,#10B981);
+    color:#FFFFFF;
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+    font-size:12.5px;
+    font-weight:700;
+    letter-spacing:-0.01em;
+    box-shadow:0 10px 26px rgba(4,120,87,0.18),0 2px 6px rgba(17,24,39,0.08);
+    cursor:pointer;
+    transition:transform .16s ease, box-shadow .16s ease, filter .16s ease;
+    white-space:nowrap;
+    height:38px;
+    flex-shrink:0;
+  }
+  #chatgptExportBtn:hover{
+    transform:translateY(-1px);
+    filter:saturate(1.05);
+    box-shadow:0 14px 34px rgba(4,120,87,0.28),0 3px 8px rgba(17,24,39,0.10);
+  }
+  #chatgptExportBtn:active{transform:translateY(0)}
+  #chatgptExportToast{
+    position:fixed;
+    right:24px;
+    bottom:24px;
+    z-index:2600;
+    display:none;
+    align-items:center;
+    gap:10px;
+    max-width:420px;
+    padding:12px 18px;
+    border-radius:12px;
+    background:#064E3B;
+    color:#FFFFFF;
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+    font-size:13px;
+    font-weight:600;
+    box-shadow:0 18px 48px rgba(6,78,59,0.26),0 2px 8px rgba(17,24,39,0.10);
+    opacity:0;
+    transform:translateY(14px);
+    transition:opacity .22s ease, transform .22s ease;
+  }
+  #chatgptExportToast.show{
+    display:flex;
+    opacity:1;
+    transform:translateY(0);
+  }
+  @media (max-width:768px){
+    #chatgptExportBtn{
+      width:100%;
+      padding:10px 14px;
+      font-size:12px;
+    }
+    #chatgptExportToast{right:16px;left:16px;bottom:72px;max-width:none}
+  }
+</style>
+
+<button id="chatgptExportBtn" type="button" onclick="exportarDadosParaChatGPT()" title="Copiar dados do dashboard para usar no ChatGPT">
+  🟢 Exportar Relatório
+</button>
+
+<div id="chatgptExportToast" role="status" aria-live="polite">🟢 Dados copiados com sucesso! Cole direto no ChatGPT.</div>
+
+<script id="chatgpt-export-injected-script">
+(function(){
+  function posicionarBotaoExportarRelatorio(){
+    const botaoExportar = document.getElementById('chatgptExportBtn');
+    const botaoImportar = document.getElementById('openImportBtn');
+    if(botaoExportar && botaoImportar && botaoImportar.parentElement && botaoExportar.parentElement !== botaoImportar.parentElement){
+      botaoImportar.insertAdjacentElement('afterend', botaoExportar);
+    }
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', posicionarBotaoExportarRelatorio);
+  }else{
+    posicionarBotaoExportarRelatorio();
+  }
+
+  function textoLimpo(valor){
+    return String(valor ?? '')
+      .replace(/\s+/g,' ')
+      .replace(/\|/g,'\\|')
+      .trim();
+  }
+
+  function elementoVisivel(el){
+    if(!el) return false;
+    const style = window.getComputedStyle(el);
+    if(style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') return false;
+    return !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length);
+  }
+
+  function ancestralVisivel(el){
+    let atual = el;
+    while(atual && atual !== document.body){
+      if(!elementoVisivel(atual)) return false;
+      atual = atual.parentElement;
+    }
+    return true;
+  }
+
+  function obterTituloContexto(el, fallback){
+    const card = el.closest('.chart-card,.kpi-card,section,.card,.table-card') || el.parentElement;
+    if(!card) return fallback;
+    const titulo = card.querySelector('.chart-title,.sec-title,h1,h2,h3,h4,[data-title]');
+    return textoLimpo(titulo?.textContent || fallback);
+  }
+
+  function coletarPeriodoEFiltros(){
+    const linhas = [];
+    const dateInputs = Array.from(document.querySelectorAll('input[type="date"], .date-input')).filter(ancestralVisivel);
+    if(dateInputs.length){
+      const periodo = dateInputs.map(input => textoLimpo(input.value || input.textContent)).filter(Boolean).join(' até ');
+      if(periodo) linhas.push(`- **Período selecionado:** ${periodo}`);
+    }
+
+    const filtrosAtivos = Array.from(document.querySelectorAll('.pill.active,.tab.active,select')).filter(ancestralVisivel).map(el => {
+      if(el.tagName === 'SELECT'){
+        const label = textoLimpo(el.closest('.filter-group')?.querySelector('.filter-label')?.textContent || el.getAttribute('aria-label') || el.id || 'Filtro');
+        const selecionados = Array.from(el.selectedOptions || []).map(opt => textoLimpo(opt.textContent || opt.value)).filter(Boolean).join(', ');
+        return selecionados ? `- **${label}:** ${selecionados}` : '';
+      }
+      const label = textoLimpo(el.closest('.filter-group')?.querySelector('.filter-label')?.textContent || 'Filtro');
+      const valor = textoLimpo(el.textContent);
+      return valor ? `- **${label}:** ${valor}` : '';
+    }).filter(Boolean);
+
+    if(filtrosAtivos.length){
+      linhas.push(...Array.from(new Set(filtrosAtivos)));
+    }
+    return linhas.length ? `## Período e filtros ativos\n${linhas.join('\n')}` : '';
+  }
+
+  function coletarKPIs(){
+    const cards = Array.from(document.querySelectorAll('.kpi-card')).filter(ancestralVisivel);
+    if(!cards.length) return '';
+    const linhas = ['## KPIs principais','| Indicador | Valor | Complemento |','|---|---:|---|'];
+    cards.forEach(card => {
+      const label = textoLimpo(card.querySelector('.kpi-label')?.textContent || 'Indicador');
+      const valor = textoLimpo(card.querySelector('.kpi-value')?.textContent || '');
+      const meta = textoLimpo(card.querySelector('.kpi-meta')?.textContent || '');
+      if(label || valor || meta) linhas.push(`| ${label} | ${valor || '-'} | ${meta || '-'} |`);
+    });
+    return linhas.join('\n');
+  }
+
+  function coletarResumoGraficos(){
+    const cards = Array.from(document.querySelectorAll('.chart-card')).filter(ancestralVisivel);
+    if(!cards.length) return '';
+    const linhas = ['## Quadros e gráficos exibidos','| Quadro | Subtítulo / leitura disponível |','|---|---|'];
+    cards.forEach(card => {
+      const titulo = textoLimpo(card.querySelector('.chart-title')?.textContent || card.querySelector('.sec-title')?.textContent || 'Quadro');
+      const subtitulo = textoLimpo(card.querySelector('.chart-subtitle')?.textContent || card.querySelector('.chart-insight')?.textContent || '');
+      if(titulo) linhas.push(`| ${titulo} | ${subtitulo || '-'} |`);
+    });
+    return linhas.join('\n');
+  }
+
+  function tabelaParaMarkdown(table, indice){
+    const titulo = obterTituloContexto(table, `Tabela ${indice + 1}`);
+    const rows = Array.from(table.querySelectorAll('tr')).filter(ancestralVisivel);
+    if(!rows.length) return '';
+
+    let headers = Array.from(rows[0].querySelectorAll('th,td')).map(cell => textoLimpo(cell.textContent));
+    const bodyRows = rows.slice(1).map(row => Array.from(row.querySelectorAll('td,th')).map(cell => textoLimpo(cell.textContent)));
+
+    if(!headers.length && bodyRows.length){
+      headers = bodyRows[0].map((_, i) => `Coluna ${i+1}`);
+    }
+    if(!headers.length) return '';
+
+    const qtdCols = headers.length;
+    const linhas = [`### ${titulo}`, `| ${headers.join(' | ')} |`, `| ${headers.map(()=>'---').join(' | ')} |`];
+    bodyRows.forEach(cells => {
+      const normalizadas = Array.from({length:qtdCols}, (_,i) => cells[i] || '');
+      if(normalizadas.some(Boolean)) linhas.push(`| ${normalizadas.join(' | ')} |`);
+    });
+    return linhas.join('\n');
+  }
+
+  function coletarTabelas(){
+    const tabelas = Array.from(document.querySelectorAll('table')).filter(ancestralVisivel);
+    if(!tabelas.length) return '';
+    const blocos = tabelas.map(tabelaParaMarkdown).filter(Boolean);
+    return blocos.length ? `## Tabelas ativas\n${blocos.join('\n\n')}` : '';
+  }
+
+  function coletarInsightsTextuais(){
+    const insights = Array.from(document.querySelectorAll('.insight')).filter(ancestralVisivel);
+    if(!insights.length) return '';
+    const linhas = ['## Análise executiva e insights exibidos'];
+    insights.forEach(ins => {
+      const titulo = textoLimpo(ins.querySelector('h4')?.textContent || 'Insight');
+      const texto = textoLimpo(ins.querySelector('p')?.textContent || '');
+      if(titulo || texto) linhas.push(`- **${titulo}:** ${texto}`);
+    });
+    const narr = Array.from(document.querySelectorAll('.narr')).filter(ancestralVisivel).map(el => textoLimpo(el.textContent)).filter(Boolean);
+    if(narr.length){
+      linhas.push('', '## Resumo executivo exibido', ...narr.map(t => t));
+    }
+    return linhas.join('\n');
+  }
+
+  function montarMarkdownDashboard(){
+    const titulo = textoLimpo(document.querySelector('h1')?.textContent || document.title || 'Dashboard');
+    const dataHora = new Date().toLocaleString('pt-BR');
+    const blocos = [
+      `# Exportação do Dashboard — ${titulo}`,
+      `**Gerado em:** ${dataHora}`,
+      coletarPeriodoEFiltros(),
+      coletarKPIs(),
+      coletarResumoGraficos(),
+      coletarTabelas(),
+      coletarInsightsTextuais()
+    ].filter(Boolean);
+    return blocos.join('\n\n');
+  }
+
+  function mostrarToastExportacao(mensagem, erro){
+    const toast = document.getElementById('chatgptExportToast');
+    if(!toast) return;
+    toast.textContent = mensagem || '🟢 Dados copiados com sucesso! Cole direto no ChatGPT.';
+    toast.style.background = erro ? '#991B1B' : '#064E3B';
+    toast.classList.add('show');
+    window.clearTimeout(window.__chatgptExportToastTimer);
+    window.__chatgptExportToastTimer = window.setTimeout(() => toast.classList.remove('show'), 3600);
+  }
+
+  async function copiarTexto(texto){
+    if(navigator.clipboard && window.isSecureContext){
+      await navigator.clipboard.writeText(texto);
+      return;
+    }
+    const area = document.createElement('textarea');
+    area.value = texto;
+    area.setAttribute('readonly','');
+    area.style.position = 'fixed';
+    area.style.left = '-9999px';
+    area.style.top = '0';
+    document.body.appendChild(area);
+    area.focus();
+    area.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(area);
+    if(!ok) throw new Error('Falha ao copiar para a área de transferência.');
+  }
+
+  window.exportarDadosParaChatGPT = async function exportarDadosParaChatGPT(){
+    try{
+      const markdown = montarMarkdownDashboard();
+      await copiarTexto(markdown);
+      mostrarToastExportacao('🟢 Dados copiados com sucesso! Cole direto no ChatGPT.');
+    }catch(err){
+      console.error('Erro ao exportar dados para ChatGPT:', err);
+      mostrarToastExportacao('Não foi possível copiar automaticamente. Verifique a permissão do navegador.', true);
+    }
+  };
+})();
+</script>
+<!-- ═══════ FIM EXPORTAR PARA CHATGPT ═══════ -->
+
 </body>
 </html>
