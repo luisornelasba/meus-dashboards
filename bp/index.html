@@ -1532,12 +1532,12 @@ const META = {
     1: 10,
     2: 11,
     3: 13,
-    4: 22,
-    5: 18,
-    6: 11,
-    7: 42,
-    8: 20,
-    9: 20,
+    4: 21,
+    5: 16,
+    6: 6,
+    7: 21,
+    8: 35,
+    9: 34,
   },
   prazoMonth: 9,        // Setembro (mês 9)
   prazoYear: 2026,
@@ -2338,15 +2338,15 @@ function renderConsultorMeta(){
   if(!tbody) return;
 
   const meses = [
-    {key:'2026-01', mes:'Janeiro/26', historico:true},
-    {key:'2026-02', mes:'Fevereiro/26', historico:true},
-    {key:'2026-03', mes:'Março/26', historico:true},
-    {key:'2026-04', mes:'Abril/26', historico:true},
-    {key:'2026-05', mes:'Maio/26', historico:true},
-    {key:'2026-06', mes:'Junho/26', historico:true},
-    {key:'2026-07', mes:'Julho/26', historico:false, total:42, claudia:4, dyego:12, ana:9, fernando:9, paula:8},
-    {key:'2026-08', mes:'Agosto/26', historico:false, total:20, claudia:4, dyego:4, ana:4, fernando:4, paula:4},
-    {key:'2026-09', mes:'Setembro/26', historico:false, total:20, claudia:4, dyego:4, ana:4, fernando:4, paula:4},
+    {key:'2026-01', mes:'Janeiro/26', historico:true, total:10},
+    {key:'2026-02', mes:'Fevereiro/26', historico:true, total:11},
+    {key:'2026-03', mes:'Março/26', historico:true, total:13},
+    {key:'2026-04', mes:'Abril/26', historico:true, total:21},
+    {key:'2026-05', mes:'Maio/26', historico:true, total:16},
+    {key:'2026-06', mes:'Junho/26', historico:true, total:6},
+    {key:'2026-07', mes:'Julho/26', historico:false, total:21, claudia:4, dyego:12, ana:9, fernando:9, paula:8},
+    {key:'2026-08', mes:'Agosto/26', historico:false, total:35, claudia:4, dyego:4, ana:4, fernando:4, paula:4},
+    {key:'2026-09', mes:'Setembro/26', historico:false, total:34, claudia:4, dyego:4, ana:4, fernando:4, paula:4},
   ];
 
   const normalizeConsultor = (v) => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toUpperCase();
@@ -2373,7 +2373,7 @@ function renderConsultorMeta(){
     if(m.historico){
       return {
         ...m,
-        total: countReal(m.key),
+        total: Number(m.total) || 0,
         claudia: countReal(m.key,'CLAUDIA'),
         dyego: countReal(m.key,'DYEGO'),
         ana: countReal(m.key,'ANA'),
