@@ -1232,7 +1232,7 @@
     <div class="chart-card">
       <div class="chart-header">
         <div>
-          <div class="chart-title">Meta Mensal por Consultor · Jan-Set</div>
+          <div class="chart-title">Meta Mensal por Consultor · Jan-Out</div>
           <div class="chart-subtitle">Distribuição da meta restante por vendedor</div>
         </div>
         <div class="chart-tag yellow">Plano</div>
@@ -1524,7 +1524,7 @@ const COLORS = {
 
 /* ========= METAS OFICIAIS DO PROGRAMA =========
    Meta total: 156 CNPJs até o final de setembro de 2026
-   Distribuição mensal oficial Jan-Set/2026 conforme planejamento vigente */
+   Distribuição mensal oficial Jan-Out/2026 conforme planejamento vigente */
 const META = {
   total: 156,           // CNPJs até set/2026
   mensal: 19,           // fallback legado para rotinas não-YTD
@@ -1537,7 +1537,8 @@ const META = {
     6: 6,
     7: 21,
     8: 28,
-    9: 30,
+    9: 19,
+    10: 13,
   },
   prazoMonth: 9,        // Setembro (mês 9)
   prazoYear: 2026,
@@ -2322,7 +2323,7 @@ function renderConsultorStatus(data){
 }
 
 
-/* ========= Meta Mensal por Consultor · Jan-Set ========= */
+/* ========= Meta Mensal por Consultor · Jan-Out ========= */
 function renderConsultorMeta(){
   const tbody = document.getElementById('consultorMetaTableBody');
   if(!tbody) return;
@@ -2336,7 +2337,8 @@ function renderConsultorMeta(){
     {key:'2026-06', mes:'Junho/26', historico:true, total:6},
     {key:'2026-07', mes:'Julho/26', historico:false, total:21, claudia:4, dyego:12, ana:9, fernando:9, paula:8},
     {key:'2026-08', mes:'Agosto/26', historico:false, total:28, claudia:4, dyego:4, ana:4, fernando:4, paula:4},
-    {key:'2026-09', mes:'Setembro/26', historico:false, total:30, claudia:4, dyego:4, ana:4, fernando:4, paula:4},
+    {key:'2026-09', mes:'Setembro/26', historico:false, total:17, claudia:4, dyego:4, ana:3, fernando:4, paula:3},
+    {key:'2026-10', mes:'Outubro/26', historico:false, total:13, claudia:2, dyego:2, ana:3, fernando:2, paula:3},
   ];
 
   const normalizeConsultor = (v) => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toUpperCase();
