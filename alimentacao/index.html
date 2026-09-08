@@ -78,6 +78,7 @@ header.top::after{content:"";position:absolute;right:-90px;top:-120px;width:420p
 .kpi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--azul)}
 .kpi.c2::before{background:var(--verde)} .kpi.c3::before{background:var(--azul-claro)}
 .kpi.c4::before{background:var(--agua)} .kpi.c5::before{background:var(--laranja)} .kpi.c6::before{background:#7B61C9}
+.kpi.c7::before{background:#F2A33C}
 .kpi .kl{font-size:10.5px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.6px}
 .kpi .kv{font-size:26px;font-weight:700;color:var(--txt);margin:7px 0 2px;letter-spacing:-.5px}
 .kpi .ks{font-size:11.5px;color:var(--txt2)}
@@ -262,12 +263,13 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   <section class="kgrid">
     <div class="kpi"><div class="kl">Propostas</div><div class="kv" id="k1">—</div><div class="ks" id="k1s"></div></div>
     <div class="kpi c2"><div class="kl">Aceitas</div><div class="kv" id="k2">—</div><div class="ks" id="k2s"></div></div>
+    <div class="kpi c3"><div class="kl">Concluídas</div><div class="kv" id="kSt2">—</div><div class="ks" id="kSt2s"></div></div>
+    <div class="kpi c7"><div class="kl">Em Desenvolvimento</div><div class="kv" id="kSt3">—</div><div class="ks" id="kSt3s"></div></div>
+    <div class="kpi c5"><div class="kl">Recusadas</div><div class="kv" id="kSt4">—</div><div class="ks" id="kSt4s"></div></div>
     <div class="kpi c3"><div class="kl">Valor Aceito</div><div class="kv" id="k3">—</div><div class="ks" id="k3s"></div></div>
-    <div class="kpi c4"><div class="kl">Ticket Médio (aceitas)</div><div class="kv" id="k4">—</div><div class="ks" id="k4s"></div></div>
     <div class="kpi c5"><div class="kl">Taxa de Conversão</div><div class="kv" id="k5">—</div><div class="ks" id="k5s"></div></div>
     <div class="kpi c6"><div class="kl">Pipeline em Desenv.</div><div class="kv" id="k6">—</div><div class="ks" id="k6s"></div></div>
     <div class="kpi"><div class="kl">Clientes Únicos</div><div class="kv" id="k7">—</div><div class="ks" id="k7s"></div></div>
-    <div class="kpi c2"><div class="kl">Pessoas Atendidas</div><div class="kv" id="k8">—</div><div class="ks" id="k8s"></div></div>
   </section>
 
   <section class="sec g23">
@@ -334,20 +336,6 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     <div class="card">
       <div class="chead"><div><h3><i style="background:var(--azul)"></i>Resumo por Entidade / Unidade</h3><div class="sub">Onde o produto é comercializado</div></div></div>
       <div class="tw"><table id="tEnt"><thead><tr><th>Entidade/Unidade</th><th class="num">Propostas</th><th class="num">Aceitas</th><th class="num">Conversão</th><th class="num">Valor Aceito</th><th>Participação</th></tr></thead><tbody></tbody></table></div>
-    </div>
-  </section>
-
-  <section class="sec">
-    <div class="card">
-      <div class="chead"><div><h3><i style="background:var(--laranja)"></i>Análise Executiva &amp; Insights Estratégicos</h3><div class="sub">Leitura automática dos dados filtrados</div></div></div>
-      <div class="ins" id="insights"></div>
-    </div>
-  </section>
-
-  <section class="sec">
-    <div class="card">
-      <div class="chead"><div><h3><i style="background:var(--verde)"></i>Resumo Executivo</h3><div class="sub">Síntese para a diretoria</div></div></div>
-      <div class="exec" id="exec"></div>
     </div>
   </section>
 
@@ -482,17 +470,37 @@ function normStatus(v){
   if(/^RECUS/.test(s)) return 'RECUSADA';
   return s;
 }
-function normConsultor(v){
+/* Consultor: exibir apenas o PRIMEIRO NOME — exceção ANA CAROLINE, que mantém os dois nomes.
+   Quando dois proprietários diferentes têm o mesmo primeiro nome, acrescenta a inicial do
+   sobrenome (FABIO P. / FABIO S.) para não fundir carteiras distintas. */
+let CONSULTOR_MAP = {};
+function nomeBase(v){
   const s = semAcento(v).trim().replace(/\s+/g,' ');
-  if(!s) return 'NÃO INFORMADO';
-  if(s.indexOf('PAULA') >= 0) return 'PAULA';
-  const mapa = [
-    ['ANA CAROLINE','ANA CAROLINE'], ['CLAUDIA','CLAUDIA'], ['DALINE','DALINE'], ['DYEGO','DYEGO'],
-    ['FERNANDO DE CARVALHO','FERNANDO'], ['GABATA','GABATA'], ['GISELA','GISELA'], ['GIZELE','GIZELE'],
-    ['PAULA JUVENAL','PAULA'], ['RAYANA','RAYANA'], ['SHEYLA','SHEYLA']
-  ];
-  for(const [chave, exib] of mapa){ if(s.indexOf(chave) >= 0) return exib; }
-  return s;
+  if(!s || s === 'NAN') return 'NÃO INFORMADO';
+  if(s.indexOf('ANA CAROLINE') >= 0) return 'ANA CAROLINE';
+  return s.split(' ')[0];
+}
+function montarMapaConsultores(lista){
+  const porBase = {};
+  lista.forEach(r => {
+    const cheio = semAcento(r.pro).trim().replace(/\s+/g,' ');
+    const base = nomeBase(r.pro);
+    (porBase[base] = porBase[base] || new Set()).add(cheio);
+  });
+  CONSULTOR_MAP = {};
+  Object.keys(porBase).forEach(base => {
+    const nomes = [...porBase[base]];
+    nomes.forEach(cheio => {
+      if(nomes.length === 1 || base === 'NÃO INFORMADO'){ CONSULTOR_MAP[cheio] = base; return; }
+      const partes = cheio.split(' ').filter(p => p.length > 2);
+      const sobren = partes.length > 1 ? partes[partes.length-1] : '';
+      CONSULTOR_MAP[cheio] = sobren ? base + ' ' + sobren.charAt(0) + '.' : base;
+    });
+  });
+}
+function normConsultor(v){
+  const cheio = semAcento(v).trim().replace(/\s+/g,' ');
+  return CONSULTOR_MAP[cheio] || nomeBase(v);
 }
 function normPorte(v){
   const s = semAcento(v).trim();
@@ -552,6 +560,7 @@ function toNum(v){
 
 /* ---------- PREPARO DOS REGISTROS ---------- */
 function prepara(lista){
+  montarMapaConsultores(lista);
   return lista.map(r => {
     const o = Object.assign({}, r);
     o.st    = normStatus(r.st);
@@ -996,107 +1005,26 @@ function renderKPIs(d){
   const n = d.length;
   const ac = d.filter(r => r.aceita);
   const vAc = soma(ac, r => r.vt);
-  const ticket = ac.length ? vAc/ac.length : 0;
   const conv = n ? ac.length/n*100 : 0;
   const dev = d.filter(r => r.st === 'EM DESENVOLVIMENTO');
   const clientes = new Set(d.map(r => r.cnpj).filter(Boolean)).size;
-  const pessoas = soma(ac, r => r.pes);
   const rec = d.filter(r => r.st === 'RECUSADA');
-  const set = (id,v,s) => { document.getElementById(id).textContent = v; document.getElementById(id+'s').innerHTML = s; };
+  const con = d.filter(r => r.st === 'CONCLUIDA');
+  const pct = q => n ? fmtP(q/n*100) : '0,0%';
+  const set = (id,v,s) => { const e = document.getElementById(id); if(!e) return; e.textContent = v; document.getElementById(id+'s').innerHTML = s; };
   set('k1', fmtN(n), fmtN(new Set(d.map(r=>r.id)).size)+' IDs distintos');
-  set('k2', fmtN(ac.length), 'Concluídas: <b style="color:#008BD2">'+fmtN(d.filter(r=>r.st==='CONCLUIDA').length)+'</b> · Recusadas: <b class="neg">'+fmtN(rec.length)+'</b>');
+  /* Um card por Razão do Status */
+  set('k2',   fmtN(ac.length),  pct(ac.length)+' do total · '+fmtMk(vAc));
+  set('kSt2', fmtN(con.length), pct(con.length)+' do total · '+fmtMk(soma(con,r=>r.vt)));
+  set('kSt3', fmtN(dev.length), pct(dev.length)+' do total · '+fmtMk(soma(dev,r=>r.vt)));
+  set('kSt4', fmtN(rec.length), pct(rec.length)+' do total · '+fmtMk(soma(rec,r=>r.vt)));
   set('k3', fmtMk(vAc), 'Valor total da base filtrada: '+fmtMk(soma(d,r=>r.vt)));
-  set('k4', fmtMk(ticket), 'Sobre '+fmtN(ac.length)+' propostas aceitas');
   set('k5', fmtP(conv), 'Aceitas ÷ total de propostas');
   set('k6', fmtMk(soma(dev,r=>r.vt)), fmtN(dev.length)+' propostas em negociação');
   set('k7', fmtN(clientes), fmtN(new Set(ac.map(r=>r.cnpj).filter(Boolean)).size)+' com proposta aceita');
-  set('k8', fmtN(pessoas), 'Somatório em propostas aceitas');
 }
 
 /* ---------- INSIGHTS / RESUMO EXECUTIVO ---------- */
-function renderExecutiveInsights(d){
-  const box = document.getElementById('insights'), execBox = document.getElementById('exec');
-  if(!d.length){ box.innerHTML = '<div class="ic warn"><h4>Sem dados</h4><p>Nenhuma proposta atende aos filtros selecionados.</p></div>'; execBox.innerHTML = '<p>Ajuste os filtros para gerar o resumo executivo.</p>'; return; }
-  const ac = d.filter(r => r.aceita), vAc = soma(ac,r=>r.vt), conv = d.length ? ac.length/d.length*100 : 0;
-  const cons = agrupa(d,'cons').sort(porValor);
-  const prods = agrupa(d,'prod').sort(porValor);
-  const clis = agrupa(d,'cli').sort(porValor);
-  const portes = agrupa(d,'porte').sort(porValor);
-  const rec = d.filter(r => r.st === 'RECUSADA');
-  const dev = d.filter(r => r.st === 'EM DESENVOLVIMENTO');
-
-  /* concentração */
-  const top3Cli = clis.slice(0,3), concCli = vAc ? soma(top3Cli,o=>o.vtAc)/vAc*100 : 0;
-  const topCons = cons[0], concCons = vAc && topCons ? topCons.vtAc/vAc*100 : 0;
-  const topProd = prods[0], concProd = vAc && topProd ? topProd.vtAc/vAc*100 : 0;
-
-  /* tendência mensal (últimos 3 vs 3 anteriores) */
-  const m = new Map();
-  ac.forEach(r => { if(r.ym) m.set(r.ym, (m.get(r.ym)||0) + r.vt); });
-  const ks = [...m.keys()].sort();
-  let tend = null;
-  if(ks.length >= 6){
-    const u3 = ks.slice(-3).reduce((a,k)=>a+m.get(k),0);
-    const a3 = ks.slice(-6,-3).reduce((a,k)=>a+m.get(k),0);
-    if(a3) tend = (u3/a3-1)*100;
-  }
-  /* melhor e pior mês */
-  let melhor = null, pior = null;
-  if(ks.length){ const ord = ks.slice().sort((a,b)=>m.get(b)-m.get(a)); melhor = ord[0]; pior = ord[ord.length-1]; }
-  /* motivo de recusa */
-  const mot = new Map();
-  rec.forEach(r => { const k = (r.mot||'').trim() || 'Não informado'; mot.set(k,(mot.get(k)||0)+1); });
-  const motTop = [...mot.entries()].sort((a,b)=>b[1]-a[1])[0];
-
-  const cards = [];
-  cards.push({ c: tend==null ? 'info' : (tend>=0?'ok':'warn'), t:'📈 Tendência recente',
-    p: tend==null ? 'Série mensal ainda curta para leitura de tendência no recorte atual ('+ks.length+' meses com aceite).'
-      : 'Os últimos 3 meses somam <b>'+fmtM(ks.slice(-3).reduce((a,k)=>a+m.get(k),0))+'</b> em valor aceito, '+
-        (tend>=0?'<b>+'+nf1.format(tend)+'%</b> acima':'<b>'+nf1.format(tend)+'%</b> abaixo')+' do trimestre imediatamente anterior.' +
-        (melhor?' Melhor mês da série: <b>'+fmtMes(melhor)+'</b> ('+fmtM(m.get(melhor))+').':'') });
-  cards.push({ c: conv>=55?'ok':(conv>=40?'info':'warn'), t:'🎯 Eficiência comercial',
-    p:'Taxa de conversão de <b>'+fmtP(conv)+'</b> ('+fmtN(ac.length)+' aceitas em '+fmtN(d.length)+' propostas). Ticket médio de <b>'+fmtM(ac.length?vAc/ac.length:0)+'</b>. '+
-      (rec.length?'As '+fmtN(rec.length)+' recusas representam '+fmtM(soma(rec,r=>r.vt))+' não convertidos'+(motTop?', com "<b>'+esc(motTop[0])+'</b>" liderando os motivos ('+motTop[1]+' casos).':'.'):'Nenhuma recusa no recorte.') });
-  cards.push({ c: concCli>60?'warn':'info', t:'⚠️ Concentração de carteira',
-    p:'Os 3 maiores clientes concentram <b>'+fmtP(concCli)+'</b> do valor aceito'+(top3Cli[0]?' — liderados por <b>'+esc(top3Cli[0].k)+'</b> ('+fmtM(top3Cli[0].vtAc)+')':'')+'. '+
-      (concCli>60?'Dependência elevada: perda de um contrato compromete a meta do produto.':'Distribuição saudável frente ao volume total.') });
-  cards.push({ c: concCons>55?'warn':'ok', t:'👥 Dependência de consultor',
-    p: topCons ? '<b>'+esc(topCons.k)+'</b> responde por <b>'+fmtP(concCons)+'</b> do valor aceito ('+fmtM(topCons.vtAc)+', conversão de '+fmtP(topCons.conv)+'). '+
-        (concCons>55?'Risco de concentração — vale replicar a rotina comercial dessa carteira para os demais consultores.':'Carteira distribuída entre a equipe.') : 'Sem consultor identificado no recorte.' });
-  cards.push({ c:'info', t:'📦 Mix de produto',
-    p: topProd ? '<b>'+esc(topProd.k)+'</b> concentra <b>'+fmtP(concProd)+'</b> do valor aceito ('+fmtM(topProd.vtAc)+'). '+
-        (prods.length>1?'O 2º colocado, '+esc(prods[1].k)+', responde por '+fmtM(prods[1].vtAc)+'. ':'')+'Total de '+prods.length+' produtos ativos no recorte.' : '—' });
-  cards.push({ c: dev.length?'ok':'info', t:'🔮 Pipeline em aberto',
-    p: dev.length ? '<b>'+fmtN(dev.length)+'</b> propostas em desenvolvimento somam <b>'+fmtM(soma(dev,r=>r.vt))+'</b>. Aplicando a conversão histórica de '+fmtP(conv)+', a expectativa de fechamento é de <b>'+fmtM(soma(dev,r=>r.vt)*conv/100)+'</b>.'
-      : 'Não há propostas em desenvolvimento no recorte — pipeline zerado exige prospecção imediata.' });
-  const pTop = portes[0];
-  cards.push({ c:'info', t:'🏭 Perfil das empresas',
-    p: pTop ? 'O porte <b>'+esc(pTop.k)+'</b> lidera com '+fmtM(pTop.vtAc)+' ('+fmtP(vAc?pTop.vtAc/vAc*100:0)+' do aceito) e conversão de '+fmtP(pTop.conv)+'. Base atinge <b>'+fmtN(new Set(d.map(r=>r.cnpj).filter(Boolean)).size)+'</b> CNPJs distintos.' : '—' });
-  const cnaes = agrupa(d,'cnae2').filter(o=>o.k&&o.k!=='—').sort(porValor);
-  cards.push({ c:'info', t:'🏷️ Setores (CNAE)',
-    p: cnaes.length ? 'A divisão <b>'+cnaes[0].k+' — '+(CNAE_DIV[cnaes[0].k]||'Não classificado')+'</b> concentra '+fmtM(cnaes[0].vtAc)+' ('+fmtP(vAc?cnaes[0].vtAc/vAc*100:0)+'). São <b>'+cnaes.length+'</b> divisões econômicas atendidas.' : 'CNAE não informado no recorte.' });
-
-  box.innerHTML = cards.map(c => '<div class="ic '+c.c+'"><h4>'+c.t+'</h4><p>'+c.p+'</p></div>').join('');
-
-  /* Resumo executivo narrativo */
-  const per = (() => { const ds = d.map(r=>r.ref).filter(Boolean).sort(); return ds.length ? fmtData(ds[0])+' a '+fmtData(ds[ds.length-1]) : '—'; })();
-  const acoes = [];
-  if(concCli > 60) acoes.push('Diversificar a carteira: os 3 maiores clientes respondem por '+fmtP(concCli)+' do faturamento aceito.');
-  if(concCons > 55 && topCons) acoes.push('Reduzir dependência de '+esc(topCons.k)+' ('+fmtP(concCons)+' do aceito) replicando sua rotina comercial para a equipe.');
-  if(conv < 50) acoes.push('Atacar a taxa de conversão de '+fmtP(conv)+' — revisar qualificação de leads e precificação antes do envio da proposta.');
-  if(dev.length) acoes.push('Priorizar as '+fmtN(dev.length)+' propostas em desenvolvimento ('+fmtM(soma(dev,r=>r.vt))+') com plano de fechamento por consultor.');
-  if(tend != null && tend < 0) acoes.push('Reverter a queda de '+nf1.format(Math.abs(tend))+'% no último trimestre com ação dirigida aos clientes recorrentes.');
-  if(rec.length && motTop) acoes.push('Tratar a causa "'+esc(motTop[0])+'", principal motivo de recusa ('+motTop[1]+' propostas).');
-  if(!acoes.length) acoes.push('Manter a rotina atual — os indicadores do recorte estão dentro de parâmetros saudáveis.');
-
-  execBox.innerHTML =
-    '<p>No período de <b>'+per+'</b>, o produto <span class="hl">Alimentação SESI</span> registrou <b>'+fmtN(d.length)+'</b> propostas, das quais <b>'+fmtN(ac.length)+'</b> foram aceitas — conversão de <span class="hl">'+fmtP(conv)+'</span> e valor aceito de <span class="hl">'+fmtM(vAc)+'</span>, com ticket médio de <b>'+fmtM(ac.length?vAc/ac.length:0)+'</b>.</p>'+
-    '<p>A operação atendeu <b>'+fmtN(new Set(d.map(r=>r.cnpj).filter(Boolean)).size)+'</b> CNPJs distintos em <b>'+agrupa(d,'ent').length+'</b> entidades/unidades, com '+fmtN(soma(ac,r=>r.pes))+' pessoas atendidas nas propostas aceitas. '+
-    (topProd?'O carro-chefe é <b>'+esc(topProd.k)+'</b> ('+fmtP(concProd)+' do valor aceito).':'')+
-    (topCons?' O maior desempenho individual é de <b>'+esc(topCons.k)+'</b>, com '+fmtM(topCons.vtAc)+'.':'')+'</p>'+
-    '<p><b>Prioridades recomendadas:</b></p><ul>'+acoes.map(a=>'<li>'+a+'</li>').join('')+'</ul>';
-}
-
 /* ==========================================================================
    DRILL-DOWN
    ========================================================================== */
@@ -1161,7 +1089,6 @@ function atualizar(){
   renderTop5(data);
   renderPorteTable(data);
   renderEntidades(data);
-  renderExecutiveInsights(data);
   renderDataTable(data);
 }
 
