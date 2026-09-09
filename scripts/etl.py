@@ -4,7 +4,7 @@
 ETL — Dashboard Produto Alimentação SESI · Área de Mercado
 ==========================================================
 Lê a planilha exportada do CRM (pasta entrada/), aplica as regras de negócio
-consolidadas do dashboard e grava public/dados.json.
+consolidadas do dashboard e grava alimentacao/dados.json.
 
 Rodar local:   python scripts/etl.py
 Na automação:  chamado pelo GitHub Actions a cada upload em entrada/
@@ -43,9 +43,40 @@ PRODUTOS_ESCOPO = {
 # o processo falha e o dashboard continua com o dado anterior.
 MINIMO_REGISTROS = 500
 
+# Pasta do dashboard dentro do repositório meus-dashboards.
+# A Vercel publica a raiz do repositório, então esta pasta é a rota /alimentacao.
+PASTA_SITE = 'alimentacao'
+
+# ==========================================================================
+# OUTROS DASHBOARDS ALIMENTADOS PELA MESMA PLANILHA
+# Cada um recebe <pasta>/base.json com as LINHAS BRUTAS do seu recorte.
+# O próprio dashboard aplica as regras dele — nada muda no jeito de calcular.
+# Para ativar um novo, basta acrescentar uma entrada aqui.
+# ==========================================================================
+COLUNAS_BRUTAS = [
+    'Proprietário', 'ID da Proposta', 'CNPJ (Cliente)', 'Cliente', 'CNAE (Cliente)',
+    'Porte', 'Razão do Status', 'Entidade/Unidade', 'Produto Existente',
+    'Data do Aceite', 'Data de Modificação', 'Valor Total',
+    'Endereço Principal: Bairro (Cliente)', 'Cidade (Cliente)', 'Endereço 1: Estado (Cliente)',
+]
+
+OUTROS_DASHBOARDS = {
+    'bp': {
+        'descricao': 'Brasil Mais Produtivo',
+        'tipo': 'produto',
+        'valores': {'NOVO B P MANUFATURA ENXUTA', 'NOVO B P EFICIENCIA ENERGETICA'},
+    },
+    # Para ligar os próximos, remova o # da linha correspondente:
+    # 'vacinas': {'descricao': 'Campanha de Vacinação', 'tipo': 'produto_contem', 'valores': {'VACINA'}},
+    # 'iel':     {'descricao': 'IEL', 'tipo': 'entidade_contem', 'valores': {'IEL'}},
+    # 'producao-area-mercado': {'descricao': 'Base completa', 'tipo': 'tudo', 'valores': set()},
+}
+
+CONTRATOS = {}   # preenchido em main() a partir da planilha de contratos
+
 RAIZ    = Path(__file__).resolve().parent.parent
 ENTRADA = RAIZ / 'entrada'
-SAIDA   = RAIZ / 'alimentacao' / 'dados.json'
+SAIDA   = RAIZ / PASTA_SITE / 'dados.json'
 FUSO_BR = timezone(timedelta(hours=-3))
 
 COLUNAS = {
@@ -86,19 +117,106 @@ def sem_acento(v):
     return ''.join(c for c in txt if unicodedata.category(c) != 'Mn').upper().strip()
 
 
-def achar_planilha():
-    """Pega o arquivo mais recente da pasta entrada/."""
+def listar_planilhas():
     if not ENTRADA.exists():
         erro(f'Pasta "entrada/" não encontrada em {RAIZ}.')
-    arquivos = [p for p in ENTRADA.iterdir()
-                if p.suffix.lower() in ('.xlsx', '.xlsm', '.xls') and not p.name.startswith('~$')]
-    if not arquivos:
+    arqs = [p for p in ENTRADA.iterdir()
+            if p.suffix.lower() in ('.xlsx', '.xlsm', '.xls') and not p.name.startswith('~$')]
+    if not arqs:
         erro('Nenhuma planilha (.xlsx) encontrada na pasta "entrada/". '
              'Faça o upload da exportação do CRM e tente de novo.')
-    arq = max(arquivos, key=lambda p: p.stat().st_mtime)
-    if len(arquivos) > 1:
-        log(f'{len(arquivos)} planilhas na pasta — usando a mais recente: {arq.name}')
-    return arq
+    return sorted(arqs, key=lambda p: p.stat().st_mtime, reverse=True)
+
+
+def tipo_da_planilha(caminho):
+    """Descobre pelo conteúdo se o arquivo é a Base de Mercado ou Todos os Contratos."""
+    try:
+        topo = pd.read_excel(caminho, header=None, nrows=12, dtype=object)
+    except Exception:
+        return None, None
+    for i in range(len(topo)):
+        linha = [sem_acento(c) for c in topo.iloc[i].tolist()]
+        tem_contrato = any('ID DO CONTRATO' in c for c in linha)
+        tem_proposta = any(c == 'ID DA PROPOSTA' for c in linha)
+        tem_produto  = any('PRODUTO EXISTENTE' in c for c in linha)
+        if tem_contrato:
+            return 'contratos', i
+        if tem_proposta and tem_produto:
+            return 'mercado', i
+    return None, None
+
+
+def escolher_planilhas():
+    """Separa os arquivos da pasta entrada/ por tipo, usando o mais recente de cada."""
+    mercado = contratos = None
+    pulo_m = pulo_c = 0
+    for arq in listar_planilhas():
+        tipo, pulo = tipo_da_planilha(arq)
+        if tipo == 'mercado' and mercado is None:
+            mercado, pulo_m = arq, pulo
+        elif tipo == 'contratos' and contratos is None:
+            contratos, pulo_c = arq, pulo
+    if mercado is None:
+        erro('Nenhuma planilha reconhecida como Base de Produção Mercado na pasta "entrada/". '
+             'O arquivo precisa ter as colunas "ID da Proposta" e "Produto Existente".')
+    return mercado, pulo_m, contratos, pulo_c
+
+
+def carregar_contratos(caminho, pulo):
+    """Monta o mapa ID da Proposta -> dados do contrato (usa o contrato mais recente)."""
+    if caminho is None:
+        return {}
+    df = pd.read_excel(caminho, skiprows=pulo, dtype=object)
+    df.columns = [str(c).strip() for c in df.columns]
+
+    def achar(*chaves):
+        for col in df.columns:
+            c = sem_acento(col)
+            if all(k in c for k in chaves):
+                return col
+        return None
+
+    col_pid = achar('ID DA PROPOSTA')
+    col_ctr = achar('ID DO CONTRATO')
+    if not col_pid or not col_ctr:
+        log('AVISO: planilha de contratos sem "ID da Proposta" ou "ID do Contrato" — ignorada.')
+        return {}
+    col_st  = achar('STATUS')
+    col_ini = achar('DATA', 'INICIO')
+    col_fim = achar('DATA', 'TERMINO')
+    col_val = achar('VALOR TOTAL')
+    col_cnaed = achar('DESCRICAO DO CNAE')
+
+    mapa = {}
+    for _, r in df.iterrows():
+        pid = texto(r[col_pid], '')
+        if not pid:
+            continue
+        reg = {
+            'ctr':    texto(r[col_ctr], ''),
+            'ctrSt':  texto(r[col_st], '') if col_st else '',
+            'ctrIni': to_iso(r[col_ini]) if col_ini else None,
+            'ctrFim': to_iso(r[col_fim]) if col_fim else None,
+            'ctrVal': round(to_num(r[col_val]), 2) if col_val else 0,
+            'cnaeD':  texto(r[col_cnaed], '') if col_cnaed else '',
+        }
+        ant = mapa.get(pid)
+        if ant is None:
+            reg['ctrN'] = 1
+            mapa[pid] = reg
+        else:
+            reg['ctrN'] = ant['ctrN'] + 1
+            # fica com o de término mais distante (o contrato mais "vivo")
+            if (reg['ctrFim'] or '') >= (ant['ctrFim'] or ''):
+                mapa[pid] = reg
+            else:
+                ant['ctrN'] = reg['ctrN']
+    log(f'Contratos: {len(df)} linhas lidas, {len(mapa)} propostas com contrato')
+    return mapa
+
+
+def main():
+    arq = achar_planilha()
 
 
 def achar_cabecalho(caminho):
@@ -177,12 +295,63 @@ def texto(v, padrao=''):
     return padrao if s.lower() in ('nan', 'none', 'nat') else s
 
 
-def main():
-    arq = achar_planilha()
-    log(f'Lendo {arq.name} ({arq.stat().st_size / 1048576:.1f} MB)')
+def linha_bruta(r, df):
+    """Converte uma linha da planilha nas colunas originais que os outros dashboards leem."""
+    out = {}
+    for col in COLUNAS_BRUTAS:
+        if col not in df.columns:
+            continue
+        v = r[col]
+        if col.startswith('Data'):
+            out[col] = to_iso(v)
+        elif col == 'Valor Total':
+            out[col] = round(to_num(v), 2)
+        else:
+            out[col] = texto(v, None)
+    return out
 
-    pulo = achar_cabecalho(arq)
-    log(f'Cabeçalho localizado na linha {pulo + 1} da planilha')
+
+def gerar_outros_dashboards(df, idx, nome_arquivo):
+    """Gera <pasta>/base.json para cada dashboard alimentado pela mesma planilha."""
+    if not OUTROS_DASHBOARDS:
+        return
+    prod = df[idx['prod']].map(sem_acento)
+    ent  = df['Entidade/Unidade'].map(sem_acento) if 'Entidade/Unidade' in df.columns else None
+    carimbo = datetime.now(FUSO_BR).strftime('%Y-%m-%dT%H:%M:%S')
+
+    for pasta, cfg in OUTROS_DASHBOARDS.items():
+        tipo, alvo = cfg['tipo'], cfg['valores']
+        if tipo == 'produto':
+            m = prod.isin(alvo)
+        elif tipo == 'produto_contem':
+            m = prod.apply(lambda v: any(a in v for a in alvo))
+        elif tipo == 'entidade_contem':
+            m = ent.apply(lambda v: any(a in v for a in alvo)) if ent is not None else prod.apply(lambda v: False)
+        else:
+            m = pd.Series(True, index=df.index)
+
+        sub = df[m]
+        linhas = [linha_bruta(r, df) for _, r in sub.iterrows()]
+        destino = RAIZ / pasta / 'base.json'
+        if not destino.parent.exists():
+            log(f'AVISO: pasta "{pasta}" não existe no repositório — pulando.')
+            continue
+        destino.write_text(json.dumps(
+            {'gerado_em': carimbo, 'origem': nome_arquivo, 'total': len(linhas), 'rows': linhas},
+            ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
+        log(f'   + {pasta}/base.json  ({cfg["descricao"]}): {len(linhas)} linhas, '
+            f'{destino.stat().st_size / 1024:.0f} KB')
+
+
+def main():
+    arq, pulo, arq_ctr, pulo_ctr = escolher_planilhas()
+    log(f'Base de Mercado: {arq.name} ({arq.stat().st_size / 1048576:.1f} MB), cabeçalho na linha {pulo + 1}')
+    if arq_ctr:
+        log(f'Contratos: {arq_ctr.name} ({arq_ctr.stat().st_size / 1048576:.1f} MB)')
+    else:
+        log('Nenhuma planilha de contratos na pasta — o dashboard fica sem os dados de contrato.')
+    CONTRATOS = carregar_contratos(arq_ctr, pulo_ctr)
+    globals()['CONTRATOS'] = CONTRATOS
 
     df = pd.read_excel(arq, skiprows=pulo, dtype=object)
     df.columns = [str(c).strip() for c in df.columns]
@@ -229,6 +398,11 @@ def main():
             'ind':   texto(g('ind')),
             'mot':   '' if REMOVER_MOTIVO_RECUSA else texto(g('mot')),
         })
+        ct = CONTRATOS.get(texto(g('id'), ''))
+        if ct:
+            registros[-1].update({'ctr': ct['ctr'], 'ctrSt': ct['ctrSt'], 'ctrIni': ct['ctrIni'],
+                                  'ctrFim': ct['ctrFim'], 'ctrVal': ct['ctrVal'], 'ctrN': ct['ctrN'],
+                                  'cnaeD': ct['cnaeD']})
 
     # ---- resumo para conferência no log da automação ----
     por_status = {}
@@ -255,13 +429,21 @@ def main():
     SAIDA.parent.mkdir(parents=True, exist_ok=True)
     SAIDA.write_text(json.dumps(saida, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
 
+    gerar_outros_dashboards(df, idx, arq.name)
+
     log('-' * 62)
-    log(f'OK  {len(registros)} propostas gravadas em public/dados.json '
+    log(f'OK  {len(registros)} propostas gravadas em {PASTA_SITE}/dados.json '
         f'({SAIDA.stat().st_size / 1024:.0f} KB)')
     log(f'    Período: {datas[0] if datas else "—"} a {datas[-1] if datas else "—"}')
     log(f'    Status: {por_status}')
     log(f'    Aceitas: {len(aceitas)} · valor aceito R$ {valor_aceito:,.2f}'
         .replace(',', 'X').replace('.', ',').replace('X', '.'))
+    com_ctr = sum(1 for x in registros if x.get('ctr'))
+    if CONTRATOS:
+        hoje_iso = datetime.now(FUSO_BR).strftime('%Y-%m-%d')
+        venc = sum(1 for x in registros if x.get('ctrFim') and x['ctrFim'] < hoje_iso)
+        vig  = sum(1 for x in registros if x.get('ctrFim') and x['ctrFim'] >= hoje_iso)
+        log(f'    Contratos: {com_ctr} propostas com contrato · {vig} vigentes · {venc} vencidos')
     log('-' * 62)
 
 
