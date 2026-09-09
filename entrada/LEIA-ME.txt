@@ -1,0 +1,2 @@
+Coloque aqui a planilha exportada do CRM (.xlsx).
+O robo processa sozinho e atualiza o dashboard em cerca de 1 minuto.
