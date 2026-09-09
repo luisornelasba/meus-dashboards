@@ -1,9 +1,0 @@
-COLOQUE AQUI a planilha exportada do CRM (.xlsx).
-
-Como fazer:
-1. No Dynamics 365, rode a exibicao de propostas e clique em "Exportar para Excel".
-2. Abra esta pasta no GitHub, clique em "Adicionar arquivo" > "Carregar arquivos".
-3. Arraste o arquivo e clique em "Confirmar alteracoes".
-
-O robo processa sozinho e atualiza o dashboard em cerca de 1 minuto.
-Pode manter sempre o mesmo nome de arquivo - ele substitui o anterior.
