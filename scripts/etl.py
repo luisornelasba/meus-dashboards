@@ -45,7 +45,7 @@ MINIMO_REGISTROS = 500
 
 RAIZ    = Path(__file__).resolve().parent.parent
 ENTRADA = RAIZ / 'entrada'
-SAIDA   = RAIZ / 'public' / 'dados.json'
+SAIDA   = RAIZ / 'alimentacao' / 'dados.json'
 FUSO_BR = timezone(timedelta(hours=-3))
 
 COLUNAS = {
