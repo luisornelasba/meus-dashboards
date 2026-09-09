@@ -30,6 +30,10 @@ REMOVER_MOTIVO_RECUSA = False  # True -> o motivo da recusa sai do arquivo
 
 # Escopo do produto ALIMENTAÇÃO — lista fechada (comparação sem acento, maiúsculas).
 # Para incluir um produto novo do CRM, acrescente a linha aqui.
+# Vigência estimada: contratos sem Data de Início/Término usam a Data de Modificação
+# como início e somam este número de meses para o término.
+MESES_VIGENCIA_PADRAO = 12
+
 PRODUTOS_ESCOPO = {
     'ALMOCO PADRAO - CONSTRUCAO CIVIL',
     'ALMOCO PADRAO - EMPRESAS',
@@ -186,19 +190,49 @@ def carregar_contratos(caminho, pulo):
     col_fim = achar('DATA', 'TERMINO')
     col_val = achar('VALOR TOTAL')
     col_cnaed = achar('DESCRICAO DO CNAE')
+    col_prod = achar('RESUMO DE PRODUTOS')
+    # "Data de Modificação" aparece duas vezes (uma com o prefixo "(Não Modificar)").
+    # A boa é a que NÃO tem esse prefixo.
+    col_mod = None
+    for col in df.columns:
+        c = sem_acento(col)
+        if 'DATA DE MODIFICACAO' in c and 'NAO MODIFICAR' not in c:
+            col_mod = col
+            break
 
     mapa = {}
     for _, r in df.iterrows():
         pid = texto(r[col_pid], '')
         if not pid:
             continue
+        ini = to_iso(r[col_ini]) if col_ini else None
+        fim = to_iso(r[col_fim]) if col_fim else None
+        estimado = False
+        if not ini or not fim:
+            # Regra: sem vigência informada, a Data de Modificação vira o início
+            # e o término é 12 meses depois.
+            mod = to_iso(r[col_mod]) if col_mod else None
+            if mod:
+                ini = ini or mod
+                if not fim:
+                    d = datetime.strptime(ini, '%Y-%m-%d')
+                    ano, mes = d.year + (d.month - 1 + MESES_VIGENCIA_PADRAO) // 12, \
+                               (d.month - 1 + MESES_VIGENCIA_PADRAO) % 12 + 1
+                    dia = min(d.day, [31,29 if ano%4==0 and (ano%100!=0 or ano%400==0) else 28,
+                                      31,30,31,30,31,31,30,31,30,31][mes-1])
+                    fim = f'{ano:04d}-{mes:02d}-{dia:02d}'
+                estimado = True
+        prods = texto(r[col_prod], '') if col_prod else ''
         reg = {
             'ctr':    texto(r[col_ctr], ''),
             'ctrSt':  texto(r[col_st], '') if col_st else '',
-            'ctrIni': to_iso(r[col_ini]) if col_ini else None,
-            'ctrFim': to_iso(r[col_fim]) if col_fim else None,
+            'ctrIni': ini,
+            'ctrFim': fim,
+            'ctrEst': estimado,
             'ctrVal': round(to_num(r[col_val]), 2) if col_val else 0,
             'cnaeD':  texto(r[col_cnaed], '') if col_cnaed else '',
+            'ctrProd': prods,
+            'ctrAli': any(a in sem_acento(prods) for a in PRODUTOS_ESCOPO),
         }
         ant = mapa.get(pid)
         if ant is None:
@@ -211,7 +245,11 @@ def carregar_contratos(caminho, pulo):
                 mapa[pid] = reg
             else:
                 ant['ctrN'] = reg['ctrN']
+    est = sum(1 for v in mapa.values() if v['ctrEst'])
+    ali = sum(1 for v in mapa.values() if v['ctrAli'])
     log(f'Contratos: {len(df)} linhas lidas, {len(mapa)} propostas com contrato')
+    log(f'   vigência estimada pela Data de Modificação + {MESES_VIGENCIA_PADRAO} meses: {est}')
+    log(f'   com produto de Alimentação no Resumo de Produtos: {ali}')
     return mapa
 
 
@@ -402,7 +440,8 @@ def main():
         if ct:
             registros[-1].update({'ctr': ct['ctr'], 'ctrSt': ct['ctrSt'], 'ctrIni': ct['ctrIni'],
                                   'ctrFim': ct['ctrFim'], 'ctrVal': ct['ctrVal'], 'ctrN': ct['ctrN'],
-                                  'cnaeD': ct['cnaeD']})
+                                  'cnaeD': ct['cnaeD'], 'ctrEst': ct['ctrEst'],
+                                  'ctrProd': ct['ctrProd'], 'ctrAli': ct['ctrAli']})
 
     # ---- resumo para conferência no log da automação ----
     por_status = {}
