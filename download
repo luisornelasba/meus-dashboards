@@ -1,0 +1,5 @@
+# temporários do Excel
+~$*
+*.tmp
+.DS_Store
+__pycache__/
