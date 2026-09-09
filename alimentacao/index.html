@@ -395,7 +395,14 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
 
 const RAW_DATA_REF = { data: (window.__SEED__ || []) };
 let META = null;                       /* metadados do dados.json (gerado_em, origem…) */
-const ARQUIVO_DADOS = 'dados.json';    /* base publicada ao lado do index.html */
+/* Caminho do dados.json — resolvido a partir da URL atual.
+   Funciona em /alimentacao, /alimentacao/, /alimentacao/index.html e em arquivo local. */
+const ARQUIVO_DADOS = (function(){
+  const p = location.pathname || '/';
+  if(p.endsWith('/')) return p + 'dados.json';              /* .../alimentacao/      */
+  if(/\.html?$/i.test(p)) return p.replace(/[^\/]+$/, '') + 'dados.json';  /* .../index.html */
+  return p + '/dados.json';                                  /* .../alimentacao      */
+})();
 
 /* ---------- CONSTANTES ---------- */
 const CL = { azul:'#164194', claro:'#008BD2', agua:'#6CC2BA', verde:'#52AE32', laranja:'#E84910',
