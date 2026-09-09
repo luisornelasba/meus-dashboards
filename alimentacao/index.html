@@ -269,6 +269,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
       <div class="fld"><label>Cliente</label><div class="ms" id="msCli"></div></div>
       <div class="fld"><label>Entidade / Unidade</label><div class="ms" id="msEnt"></div></div>
       <div class="fld"><label>CNPJ</label><input type="text" id="fCnpj" placeholder="Somente números"></div>
+      <div class="fld"><label>ID do Contrato</label><input type="text" id="fCtr" placeholder="Ex.: CTR-05924"></div>
       <div class="fld"><label>Busca livre</label><input type="text" id="fBusca" placeholder="Cliente, produto, ID…"></div>
     </div>
   </section>
@@ -355,7 +356,8 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   <section class="sec" id="secContratos">
     <div class="card">
       <div class="chead"><div><h3><i style="background:#7B61C9"></i>Contratos · Vigência e Renovação</h3>
-        <div class="sub" id="ctrSub">Cruzamento com a planilha Todos os Contratos, pelo ID da Proposta</div></div></div>
+        <div class="sub" id="ctrSub">Cruzamento com a planilha Todos os Contratos, pelo ID da Proposta</div></div>
+        <button class="btn btn-ghost" id="btnXlsCtr" style="margin-left:auto">⤓ Excel</button></div>
       <div class="ctr-grid" id="ctrKpis"></div>
       <div id="ctrProximos"></div>
     </div>
@@ -365,7 +367,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     <div class="card">
       <div class="chead">
         <div><h3><i></i>Tabela de Propostas · Drill-down</h3><div class="sub">Base filtrada — exatamente a mesma dos KPIs e gráficos</div></div>
-        <button class="btn btn-ghost" id="btnCsv" style="margin-left:auto">⤓ CSV</button>
+        <button class="btn btn-ghost" id="btnXlsDrill" style="margin-left:auto">⤓ Excel</button>
       </div>
       <div class="tw" style="max-height:620px;overflow-y:auto">
         <table id="tDrill">
@@ -617,6 +619,9 @@ function prepara(lista){
     o.ctrFim = r.ctrFim || null;
     o.ctrN   = r.ctrN || 0;
     o.cnaeD  = r.cnaeD || '';
+    o.ctrEst = !!r.ctrEst;
+    o.ctrProd= r.ctrProd || '';
+    o.ctrAli = !!r.ctrAli;
     o._busca = semAcento([o.cli,o.prod,o.id,o.cons,o.ent,o.cnpj,o.porte,o.cid,o.ctr].join(' '));
     return o;
   }).filter(o => o.id || o.cli);
@@ -736,6 +741,7 @@ function applyFilters(){
         fPo=FILTROS.porte.valores(), fPr=FILTROS.prod.valores(), fCn=FILTROS.cnae.valores(),
         fCl=FILTROS.cli.valores(), fEn=FILTROS.ent.valores();
   const cnpj = document.getElementById('fCnpj').value.replace(/\D/g,'');
+  const fctr = semAcento(document.getElementById('fCtr').value.trim());
   const q = semAcento(document.getElementById('fBusca').value.trim());
   return RAW_DATA_REF.data.filter(r => {
     if(ini && (!r.ref || r.ref < ini)) return false;
@@ -749,6 +755,7 @@ function applyFilters(){
     if(fCl.size && !fCl.has(r.cli)) return false;
     if(fEn.size && !fEn.has(r.ent)) return false;
     if(cnpj && r.cnpj.indexOf(cnpj) < 0) return false;
+    if(fctr && semAcento(r.ctr).indexOf(fctr) < 0) return false;
     if(q && r._busca.indexOf(q) < 0) return false;
     return true;
   });
@@ -759,6 +766,7 @@ function filtrosAtivos(){
   if(document.getElementById('fPreset').value !== 'all') n++;
   if(document.getElementById('fDe').value || document.getElementById('fAte').value) n++;
   if(document.getElementById('fCnpj').value.trim()) n++;
+  if(document.getElementById('fCtr').value.trim()) n++;
   if(document.getElementById('fBusca').value.trim()) n++;
   return n;
 }
@@ -785,6 +793,7 @@ const porValor = (a,b) => b.vtAc - a.vtAc || b.n - a.n;
    GRÁFICOS
    ========================================================================== */
 const CHARTS = {};
+let CTR_EXPORT = [];   /* contratos vigentes do recorte, para exportação */
 Chart.register(ChartDataLabels);
 Chart.defaults.font.family = "'Segoe UI',system-ui,sans-serif";
 Chart.defaults.font.size = 11.5;
@@ -1065,7 +1074,9 @@ function renderContratos(d){
   const sub  = document.getElementById('ctrSub');
   if(!grid) return;
 
-  const comCtr = d.filter(r => r.ctr);
+  /* Item 5: só entram os contratos cujo Resumo de Produtos contém algum produto
+     de Alimentação — a célula traz vários produtos juntos, separados por vírgula. */
+  const comCtr = d.filter(r => r.ctr && r.ctrAli);
   const ganhas = d.filter(r => r.ganha);
   const ganhasSem = ganhas.filter(r => !r.ctr);
   const comFim = comCtr.filter(r => r.ctrFim);
@@ -1075,12 +1086,15 @@ function renderContratos(d){
   const em90 = vigentes.filter(r => diasAte(r.ctrFim) <= 90);
 
   if(!comCtr.length){
-    sub.textContent = 'Nenhuma proposta do recorte atual tem contrato vinculado.';
+    sub.textContent = 'Nenhum contrato do recorte atual tem produto de Alimentação no Resumo de Produtos.';
     grid.innerHTML = '<div class="ctr-box neutro"><div class="cl">Contratos</div><div class="cv">0</div>' +
       '<div class="cs">Suba a planilha Todos os Contratos na pasta entrada para preencher este bloco.</div></div>';
     prox.innerHTML = ''; return;
   }
-  sub.textContent = 'Cruzamento pelo ID da Proposta · vigência apurada em ' + fmtData(HOJE_ISO);
+  const estimados = comCtr.filter(r => r.ctrEst).length;
+  sub.innerHTML = 'Contratos com produto de Alimentação no Resumo de Produtos · vigência apurada em ' +
+    fmtData(HOJE_ISO) + (estimados ? ' · <b>' + fmtN(estimados) + '</b> com vigência estimada ' +
+    '(Data de Modificação + 12 meses, por não ter início/término no CRM)' : '');
 
   const cx = (cls,l,v,s2) => '<div class="ctr-box '+cls+'"><div class="cl">'+l+'</div><div class="cv">'+v+'</div><div class="cs">'+s2+'</div></div>';
   grid.innerHTML =
@@ -1095,10 +1109,13 @@ function renderContratos(d){
   const porCtr = new Map();
   vigentes.forEach(r => {
     let o = porCtr.get(r.ctr);
-    if(!o){ o = { ctr:r.ctr, cli:r.cli, cons:r.cons, fim:r.ctrFim, vt:0, prods:new Set(), n:0 }; porCtr.set(r.ctr,o); }
+    if(!o){ o = { ctr:r.ctr, cli:r.cli, cnpj:r.cnpj, cons:r.cons, ini:r.ctrIni, fim:r.ctrFim,
+                  est:r.ctrEst, st:r.ctrSt, resumo:r.ctrProd, vt:0, prods:new Set(), n:0 }; porCtr.set(r.ctr,o); }
     o.vt += r.vt; o.n++; o.prods.add(r.prod);
   });
-  const lista = [...porCtr.values()].sort((a,b) => (a.fim||'').localeCompare(b.fim||'')).slice(0,15);
+  const todosVig = [...porCtr.values()].sort((a,b) => (a.fim||'').localeCompare(b.fim||''));
+  CTR_EXPORT = todosVig;                      /* usado pelo botão Excel deste bloco */
+  const lista = todosVig.slice(0,15);
   prox.innerHTML = !lista.length
     ? '<div style="font-size:12.5px;color:var(--txt3);padding:10px 2px">Nenhum contrato vigente no recorte atual — todos os vinculados já venceram.</div>'
     : '<div class="tw"><table><thead><tr><th>Cliente</th><th>Contrato</th><th>Produtos</th><th>Consultor</th>' +
@@ -1108,10 +1125,12 @@ function renderContratos(d){
         const cls = dd <= 30 ? 'b-venc' : (dd <= 90 ? 'b-prox' : 'b-vig');
         return '<tr><td class="strong"><span class="trunc" title="'+esc(o.cli)+'">'+esc(o.cli)+'</span></td>' +
           '<td>'+esc(o.ctr)+'</td>' +
-          '<td><span class="trunc" style="max-width:210px" title="'+esc([...o.prods].join(' · '))+'">'+esc([...o.prods].join(' · '))+'</span>' +
+          '<td><span class="trunc" style="max-width:230px" title="'+esc(o.resumo || [...o.prods].join(' · '))+'">' +
+            esc(o.resumo || [...o.prods].join(' · '))+'</span>' +
             (o.n > 1 ? ' <span class="badge b-semctr">'+o.n+' propostas</span>' : '') + '</td>' +
           '<td>'+esc(o.cons)+'</td>' +
-          '<td>'+fmtData(o.fim)+' <span class="badge '+cls+'">'+(dd === 0 ? 'vence hoje' : 'em '+dd+'d')+'</span></td>' +
+          '<td>'+fmtData(o.fim)+' <span class="badge '+cls+'">'+(dd === 0 ? 'vence hoje' : 'em '+dd+'d')+'</span>' +
+            (o.est ? ' <span class="badge b-semctr" title="Vigência estimada: Data de Modificação + 12 meses">est.</span>' : '') + '</td>' +
           '<td class="num strong">'+fmtM(o.vt)+'</td></tr>';
       }).join('') + '</tbody></table></div>' +
       '<div style="font-size:11.5px;color:var(--txt3);margin-top:9px">' + fmtN(porCtr.size) +
@@ -1232,7 +1251,7 @@ function ligarEventos(){
     DRILL.pag = 1; atualizar();
   }));
   let t;
-  ['fCnpj','fBusca'].forEach(id => document.getElementById(id).addEventListener('input', () => {
+  ['fCnpj','fCtr','fBusca'].forEach(id => document.getElementById(id).addEventListener('input', () => {
     clearTimeout(t); t = setTimeout(() => { DRILL.pag = 1; atualizar(); }, 220);
   }));
   document.getElementById('btnReset').onclick = () => {
@@ -1240,7 +1259,8 @@ function ligarEventos(){
     document.getElementById('fPreset').value = 'all';
     document.getElementById('fDe').value = ''; document.getElementById('fAte').value = '';
     document.getElementById('fDe').disabled = false; document.getElementById('fAte').disabled = false;
-    document.getElementById('fCnpj').value = ''; document.getElementById('fBusca').value = '';
+    document.getElementById('fCnpj').value = ''; document.getElementById('fCtr').value = '';
+    document.getElementById('fBusca').value = '';
     DRILL.pag = 1; atualizar(); toast('Filtros limpos.','ok');
   };
   document.querySelectorAll('#tDrill thead th.s').forEach(th => th.onclick = () => {
@@ -1266,7 +1286,8 @@ function ligarEventos(){
   document.getElementById('btnImport').onclick = () => document.getElementById('fileIn').click();
   document.getElementById('fileIn').onchange = importarExcel;
   document.getElementById('btnExport').onclick = exportarRelatorio;
-  document.getElementById('btnCsv').onclick = exportarCSV;
+  document.getElementById('btnXlsDrill').onclick = exportarDrillXLSX;
+  document.getElementById('btnXlsCtr').onclick = exportarContratosXLSX;
 }
 
 /* ---------- MODAL ---------- */
@@ -1374,7 +1395,8 @@ function importarExcel(ev){
       document.getElementById('fPreset').value = 'all';
       document.getElementById('fDe').value = ''; document.getElementById('fAte').value = '';
       document.getElementById('fDe').disabled = false; document.getElementById('fAte').disabled = false;
-      document.getElementById('fCnpj').value = ''; document.getElementById('fBusca').value = '';
+      document.getElementById('fCnpj').value = ''; document.getElementById('fCtr').value = '';
+      document.getElementById('fBusca').value = '';
       Object.values(FILTROS).forEach(x => x.limpar());
       atualizar();
       toast('Base atualizada: ' + fmtN(RAW_DATA_REF.data.length) + ' propostas do escopo Alimentação (de ' + fmtN(brutos.length) + ' linhas lidas).','ok');
@@ -1389,7 +1411,34 @@ function importarExcel(ev){
 /* ==========================================================================
    EXPORTAR
    ========================================================================== */
-function exportarCSV(){
+function exportarDrillXLSX(){
+  const d = applyFilters();
+  if(!d.length){ toast('Nada a exportar no filtro atual.','err'); return; }
+  const cab = ['Proprietário','ID da Proposta','CNPJ','Cliente','CNAE','Divisão CNAE','Atividade (CNAE)','Porte',
+    'Razão do Status','Entidade/Unidade','Produto','Data','ID do Contrato','Status do Contrato',
+    'Início do Contrato','Término do Contrato','Vigência Estimada','Situação da Vigência','Valor Total'];
+  const linhas = d.map(r => [r.cons, r.id, r.cnpj, r.cli, r.cnae, CNAE_DIV[r.cnae2]||'', r.cnaeD||'', r.porte,
+    STATUS_LABEL[r.st]||r.st, r.ent, r.prod, fmtData(r.ref), r.ctr||'', r.ctrSt||'',
+    fmtData(r.ctrIni), fmtData(r.ctrFim), r.ctrEst ? 'Sim' : 'Não', situacaoContrato(r).txt, +r.vt.toFixed(2)]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([cab].concat(linhas)), 'Drill-down');
+  XLSX.writeFile(wb, 'Drilldown_Alimentacao_SESI_' + hoje() + '.xlsx');
+  toast('Excel exportado com ' + fmtN(d.length) + ' registros.','ok');
+}
+
+function exportarContratosXLSX(){
+  if(!CTR_EXPORT.length){ toast('Nenhum contrato vigente no filtro atual.','err'); return; }
+  const cab = ['ID do Contrato','Cliente','CNPJ','Consultor','Resumo de Produtos','Status do Contrato',
+    'Início','Término','Dias até o vencimento','Vigência Estimada','Propostas','Valor Total'];
+  const linhas = CTR_EXPORT.map(o => [o.ctr, o.cli, o.cnpj, o.cons, o.resumo || [...o.prods].join(' · '),
+    o.st || '', fmtData(o.ini), fmtData(o.fim), diasAte(o.fim), o.est ? 'Sim' : 'Não', o.n, +o.vt.toFixed(2)]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([cab].concat(linhas)), 'Contratos vigentes');
+  XLSX.writeFile(wb, 'Contratos_Vigencia_Alimentacao_' + hoje() + '.xlsx');
+  toast('Excel exportado com ' + fmtN(CTR_EXPORT.length) + ' contratos vigentes.','ok');
+}
+
+function exportarCSV_legado(){
   const d = applyFilters();
   const cab = ['Proprietário','ID da Proposta','CNPJ','Cliente','CNAE','Divisão CNAE','Atividade (CNAE)','Porte','Razão do Status','Entidade/Unidade','Produto','Data','ID do Contrato','Status do Contrato','Início do Contrato','Término do Contrato','Situação da Vigência','Valor Total'];
   const linhas = d.map(r => [r.cons, r.id, r.cnpj, r.cli, r.cnae, CNAE_DIV[r.cnae2]||'', r.cnaeD||'', r.porte, STATUS_LABEL[r.st]||r.st, r.ent, r.prod, fmtData(r.ref), r.ctr||'', r.ctrSt||'', fmtData(r.ctrIni), fmtData(r.ctrFim), situacaoContrato(r).txt, String(r.vt).replace('.',',')]);
