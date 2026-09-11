@@ -1537,9 +1537,12 @@ const META = {
     6: 6,
     7: 21,
     8: 28,
-    9: 19,
+    9: 17,
     10: 13,
   },
+  // Janela do card "Meta YTD (Plano Mensal)" e do "Gap vs Meta YTD":
+  // Janeiro a Outubro/2026 — soma exata de 156 propostas.
+  horizonteMeses: 10,   // Outubro (mês 10)
   prazoMonth: 9,        // Setembro (mês 9)
   prazoYear: 2026,
   // Metas estratégicas por categoria
@@ -1550,11 +1553,11 @@ const META = {
     'Outros setores':        104,
   },
 };
-/* Helper: meses cobertos até o fim do mês corrente, capado em setembro/2026 */
+/* Helper: janela do plano usada nos cards Meta YTD e Gap.
+   Fixa em Janeiro a Outubro/2026 (10 meses), que é onde a soma do plano
+   mensal fecha exatamente na meta oficial de 156 propostas. */
 function metaYTDMeses(){
-  const t = getToday();
-  const cur = t.getFullYear() === META.prazoYear ? Math.min(t.getMonth()+1, META.prazoMonth) : META.prazoMonth;
-  return cur;
+  return META.horizonteMeses || META.prazoMonth;
 }
 function getMetaYTDValor(){
   const meses = metaYTDMeses();
@@ -1723,7 +1726,7 @@ const pointValueLabelPlugin = {
 const STATE = {
   filters:{
     dateStart:'2026-01-01',
-    dateEnd:'2026-05-06',
+    dateEnd: hojeISO(),   // segundo quadro do filtro: sempre a data de hoje
     status:[],
     consultor:[],
     porte:[],
@@ -1751,6 +1754,13 @@ function getToday(){
   // Se desejar fixar, comente a linha abaixo e descomente a próxima.
   return new Date();
   // return new Date(2026, 4, 6); // 06/05/2026 (mês é 0-indexed)
+}
+/* Data de hoje em AAAA-MM-DD pelo calendário local (sem o deslocamento de
+   fuso que o toISOString provoca à noite no horário de Brasília). */
+function hojeISO(){
+  const t = getToday();
+  const p = n => String(n).padStart(2, '0');
+  return t.getFullYear() + '-' + p(t.getMonth() + 1) + '-' + p(t.getDate());
 }
 function getYTDFixedRange(){
   // Janeiro do ano vigente até último dia do mês corrente
@@ -1870,7 +1880,7 @@ function renderKPIs(data){
   setTextSafe('kpiTotal', fmtNum(total));
   setTextSafe('kpiAceitas', fmtNum(aceitas));
   setTextSafe('kpiMeta', fmtNum(meta));
-  setTextSafe('kpiMetaSub', `Janeiro a ${monthLabelLong(ytd.currentMonth)} · ${fmtNum(meta)} prop.`);
+  setTextSafe('kpiMetaSub', `Janeiro a ${monthLabelLong(metaYTDMeses())} · ${fmtNum(meta)} prop.`);
   setTextSafe('kpiAtingPct', fmtPct(atingPct));
   setTextSafe('kpiGap', fmtNum(gap));
   setTextSafe('kpiGapSub', gap === 0 ? 'Meta atingida ✓' : `vs Meta YTD (${meta})`);
@@ -2324,6 +2334,28 @@ function renderConsultorStatus(data){
 
 
 /* ========= Meta Mensal por Consultor · Jan-Out ========= */
+/* Distribui o total planejado do mês entre os consultores mantendo as
+   proporções do plano e fechando a soma exata no total (método do maior resto).
+   Garante que a linha do consultor sempre feche com a coluna Total. */
+function distribuirMetaConsultor(total, pesos){
+  const chaves = ['claudia','dyego','ana','fernando','paula'];
+  const somaPesos = chaves.reduce((a,k)=> a + (Number(pesos[k]) || 0), 0);
+  const out = {};
+  if(!somaPesos || !total){
+    chaves.forEach(k=> out[k] = 0);
+    return out;
+  }
+  const exatos = chaves.map(k => (Number(pesos[k]) || 0) * total / somaPesos);
+  let atribuido = 0;
+  chaves.forEach((k,i)=>{ out[k] = Math.floor(exatos[i]); atribuido += out[k]; });
+  const restos = chaves
+    .map((k,i)=> ({k, resto: exatos[i] - Math.floor(exatos[i]), ordem: i}))
+    .sort((a,b)=> (b.resto - a.resto) || (a.ordem - b.ordem));
+  let sobra = total - atribuido;
+  for(let i=0; i<restos.length && sobra>0; i++, sobra--) out[restos[i].k]++;
+  return out;
+}
+
 function renderConsultorMeta(){
   const tbody = document.getElementById('consultorMetaTableBody');
   if(!tbody) return;
@@ -2373,7 +2405,10 @@ function renderConsultorMeta(){
         paula: countReal(m.key,'PAULA')
       };
     }
-    return m;
+    // Meses do plano: a distribuição por consultor é recalculada para fechar
+    // exatamente com o total do mês, preservando as proporções originais.
+    const total = Number(m.total) || 0;
+    return { ...m, total, ...distribuirMetaConsultor(total, m) };
   });
 
   const soma = plano.reduce((acc, p) => {
@@ -3756,14 +3791,14 @@ function processImport(){
       if(datas.length){
         const minDate = datas[0];
         const maxDate = datas[datas.length-1];
-        // Manter ou estender o range visível
-        if(STATE.filters.dateStart > maxDate || STATE.filters.dateEnd < minDate){
-          STATE.filters.dateStart = minDate;
-          STATE.filters.dateEnd = maxDate;
-          document.getElementById('dateStart').value = minDate;
-          document.getElementById('dateEnd').value = maxDate;
-          updatePeriodLabel();
-        }
+        // Manter ou estender o range visível.
+        // O fim permanece sempre na data de hoje (segundo quadro do filtro).
+        const hoje = hojeISO();
+        if(STATE.filters.dateStart > maxDate) STATE.filters.dateStart = minDate;
+        STATE.filters.dateEnd = hoje;
+        document.getElementById('dateStart').value = STATE.filters.dateStart;
+        document.getElementById('dateEnd').value = STATE.filters.dateEnd;
+        updatePeriodLabel();
       }
       render();
       fill.style.width = '100%';
@@ -4164,6 +4199,13 @@ function bindClienteDropdown(){
 
 /* ========= Eventos ========= */
 function bindEvents(){
+  // Segundo quadro do filtro de datas: sempre a data de hoje.
+  const _dtIni = document.getElementById('dateStart');
+  const _dtFim = document.getElementById('dateEnd');
+  if(_dtIni) _dtIni.value = STATE.filters.dateStart;
+  if(_dtFim) _dtFim.value = STATE.filters.dateEnd;
+  if(typeof updatePeriodLabel === 'function') updatePeriodLabel();
+
   // Pills (multi-select)
   ['statusFilter','consultorFilter','porteFilter','produtoFilter'].forEach(filterId=>{
     const filterKey = filterId.replace('Filter','');
@@ -4182,7 +4224,7 @@ function bindEvents(){
       document.querySelectorAll('#periodTabs .tab').forEach(x=>x.classList.remove('active'));
       t.classList.add('active');
       const p = t.dataset.period;
-      const today = '2026-05-06';
+      const today = hojeISO();
       if(p==='ytd'){STATE.filters.dateStart='2026-01-01';STATE.filters.dateEnd=today;}
       else if(p==='m'){STATE.filters.dateStart='2026-04-01';STATE.filters.dateEnd=today;}
       else if(p==='q'){STATE.filters.dateStart='2026-02-06';STATE.filters.dateEnd=today;}
@@ -4768,15 +4810,11 @@ startChartFullscreenFeature();
       if(datas.length && typeof STATE === 'object' && STATE && STATE.filters){
         var min = datas[0], max = datas[datas.length-1];
         var mudou = false;
-        // Fora do intervalo: reposiciona por completo
-        if(STATE.filters.dateStart > max || STATE.filters.dateEnd < min){
-          STATE.filters.dateStart = min; STATE.filters.dateEnd = max; mudou = true;
-        }
-        // Chegaram dados mais recentes que o fim do período: estende ate eles,
-        // senao o dashboard continuaria parado na data em que foi criado.
-        else if(STATE.filters.dateEnd < max){
-          STATE.filters.dateEnd = max; mudou = true;
-        }
+        var hoje = (typeof hojeISO === 'function') ? hojeISO() : STATE.filters.dateEnd;
+        // Inicio: so reposiciona se estiver fora do intervalo dos dados.
+        if(STATE.filters.dateStart > max){ STATE.filters.dateStart = min; mudou = true; }
+        // Fim: sempre a data de hoje (segundo quadro do filtro).
+        if(STATE.filters.dateEnd !== hoje){ STATE.filters.dateEnd = hoje; mudou = true; }
         if(mudou){
           var a = document.getElementById('dateStart'), b = document.getElementById('dateEnd');
           if(a) a.value = STATE.filters.dateStart;
