@@ -58,11 +58,32 @@ PASTA_SITE = 'alimentacao'
 # Para ativar um novo, basta acrescentar uma entrada aqui.
 # ==========================================================================
 COLUNAS_BRUTAS = [
-    'Proprietário', 'ID da Proposta', 'CNPJ (Cliente)', 'Cliente', 'CNAE (Cliente)',
-    'Porte', 'Razão do Status', 'Entidade/Unidade', 'Produto Existente',
+    'Proprietário', 'ID da Proposta', 'ID da Revisão', 'CNPJ (Cliente)', 'Cliente',
+    'CNAE (Cliente)', 'Porte', 'Razão do Status', 'Entidade/Unidade', 'Produto Existente',
     'Data do Aceite', 'Data de Modificação', 'Valor Total',
+    'Quantidade', 'Quantidade de Pessoas Atendidas', 'Email (Contato)',
     'Endereço Principal: Bairro (Cliente)', 'Cidade (Cliente)', 'Endereço 1: Estado (Cliente)',
 ]
+
+# E-mail do contato: o repositório é público, então o endereço real NÃO sai do CRM.
+# Os dashboards (Vacinas e IEL) usam essa coluna apenas para medir qualidade de
+# cadastro — quantos contatos têm e-mail válido, vazio ou inválido. Enviamos um
+# marcador que preserva as três categorias sem revelar ninguém.
+# Mude para False se algum dia o repositório virar privado e você quiser o e-mail real.
+EMAIL_SOMENTE_INDICADOR = True
+EMAIL_MARCADOR_VALIDO   = 'contato@omitido.invalid'   # vira "OK" no painel de qualidade
+EMAIL_MARCADOR_INVALIDO = 'invalido'                  # vira "INVÁLIDO"
+
+_EMAIL_RE = re.compile(r'^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}$')
+
+
+def indicador_email(v):
+    """Converte o e-mail real no marcador equivalente, preservando a categoria."""
+    s = texto(v, '')
+    if not s:
+        return None
+    return EMAIL_MARCADOR_VALIDO if _EMAIL_RE.match(s.strip().lower().replace(' ', '')) \
+        else EMAIL_MARCADOR_INVALIDO
 
 OUTROS_DASHBOARDS = {
     'bp': {
@@ -352,6 +373,10 @@ def linha_bruta(r, df):
             out[col] = to_iso(v)
         elif col == 'Valor Total':
             out[col] = round(to_num(v), 2)
+        elif col in ('Quantidade', 'Quantidade de Pessoas Atendidas'):
+            out[col] = to_num(v)
+        elif col == 'Email (Contato)':
+            out[col] = indicador_email(v) if EMAIL_SOMENTE_INDICADOR else texto(v, None)
         else:
             out[col] = texto(v, None)
     return out
