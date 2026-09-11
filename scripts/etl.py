@@ -70,9 +70,17 @@ OUTROS_DASHBOARDS = {
         'tipo': 'produto',
         'valores': {'NOVO B P MANUFATURA ENXUTA', 'NOVO B P EFICIENCIA ENERGETICA'},
     },
-    # Para ligar os próximos, remova o # da linha correspondente:
-    # 'vacinas': {'descricao': 'Campanha de Vacinação', 'tipo': 'produto_contem', 'valores': {'VACINA'}},
-    # 'iel':     {'descricao': 'IEL', 'tipo': 'entidade_contem', 'valores': {'IEL'}},
+    'vacinas': {
+        'descricao': 'Campanha de Vacinação',
+        'tipo': 'produto_contem',
+        'valores': {'VACINA'},
+    },
+    'iel': {
+        'descricao': 'IEL',
+        'tipo': 'entidade_contem',
+        'valores': {'IEL'},
+    },
+    # Para ligar o próximo, remova o # da linha correspondente:
     # 'producao-area-mercado': {'descricao': 'Base completa', 'tipo': 'tudo', 'valores': set()},
 }
 
