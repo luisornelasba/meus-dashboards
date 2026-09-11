@@ -1,5 +1,7 @@
 name: Atualizar dashboard
 
+# Dispara sozinho quando você sobe uma planilha nova na pasta entrada/
+# e também pode ser rodado à mão pelo botão "Run workflow".
 on:
   push:
     paths:
@@ -29,11 +31,30 @@ jobs:
       - name: Processar a planilha do CRM
         run: python scripts/etl.py
 
+      - name: Conferir os arquivos gerados
+        run: |
+          echo "Arquivos de dados presentes apos o ETL:"
+          for f in alimentacao/dados.json bp/base.json vacinas/base.json iel/base.json producao-area-mercado/base.json; do
+            if [ -f "$f" ]; then
+              echo "  OK   $f  ($(du -h "$f" | cut -f1))"
+            else
+              echo "  --   $f  (nao gerado)"
+            fi
+          done
+
       - name: Publicar a base atualizada
         run: |
           git config user.name  "Robo do Dashboard"
           git config user.email "actions@github.com"
+          # O dashboard principal (Alimentacao) e os demais alimentados pela
+          # mesma planilha. Cada base.json so entra se o ETL tiver gerado.
           git add alimentacao/dados.json
+          for pasta in bp vacinas iel producao-area-mercado; do
+            if [ -f "$pasta/base.json" ]; then
+              git add "$pasta/base.json"
+              echo "Incluido no commit: $pasta/base.json"
+            fi
+          done
           if git diff --staged --quiet; then
             echo "Nenhuma mudanca nos dados - nada a publicar."
           else
