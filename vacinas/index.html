@@ -440,7 +440,7 @@
         <span>Importar Excel</span>
       </button>
       <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none">
-      <div class="last-update">Base atualizada · <span id="lastUpdate">—</span> · <span id="recordCount">0</span> reg.</div>
+      <div class="last-update">Base atualizada · <span id="lastUpdate">—</span> · <span id="recordCount">0</span> reg.<span id="carimboAuto"></span></div>
       <div>Meta de campanha: <strong style="color:var(--bg-dark)">7.000 doses</strong></div>
     </div>
   </header>
@@ -2424,5 +2424,80 @@ function bindEvents(){
   renderAll();
 })();
 </script>
+
+<!-- ═══════ CARGA AUTOMÁTICA DA BASE (gerada pelo robô a cada envio de planilha) ═══════ -->
+<script>
+(function(){
+  'use strict';
+  // Resolve o caminho do base.json a partir da URL atual, funcione ela com
+  // barra final, sem barra final ou apontando direto para o index.html.
+  var ARQ = (function(){
+    var p = location.pathname || '/';
+    if(p.charAt(p.length-1) === '/') return p + 'base.json';
+    if(/\.html?$/i.test(p)) return p.replace(/[^\/]+$/, '') + 'base.json';
+    return p + '/base.json';
+  })();
+
+  function carimbo(txt){
+    var el = document.getElementById('carimboAuto');
+    if(el) el.textContent = txt;
+  }
+
+  function aplicar(j){
+    var rows = (j && j.rows) || [];
+    if(!rows.length) throw new Error('arquivo sem linhas');
+
+    // Mesma função da importação manual (processRawRecords) — ela aplica o
+    // filtro de produtos de vacina, a exclusão de proprietários, a
+    // deduplicação por revisão e a herança de data das devoluções.
+    // Nenhuma regra foi reimplementada aqui.
+    var processed = processRawRecords(rows);
+    if(!processed || !processed.length){
+      throw new Error('nenhum registro de vacina após as regras do dashboard');
+    }
+
+    RAW_DATA = processed;
+
+    // Equivalente ao commitImport(), porém PRESERVANDO o período que o
+    // dashboard abre (2026). Só as seleções de filtro são zeradas, porque os
+    // valores disponíveis mudaram junto com a base.
+    state.status.clear(); state.owner.clear(); state.product.clear(); state.porte.clear();
+    state.cnae = ''; state.cnpjQuery = ''; state.clientQuery = ''; state.search = '';
+    state.page = 1; state.projSearch = ''; state.projPage = 1;
+    document.querySelectorAll('.ms').forEach(buildMultiSelect);
+
+    updateMetaInfo();
+    renderAll();
+
+    var g = j.gerado_em || '';
+    carimbo(g ? ' · atualizado em ' + g.slice(8,10) + '/' + g.slice(5,7) + '/' + g.slice(0,4) +
+                ' às ' + g.slice(11,16)
+              : ' · carga automática');
+  }
+
+  function iniciar(){
+    fetch(ARQ + '?v=' + Date.now(), { cache: 'no-store' })
+      .then(function(r){ if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(aplicar)
+      .catch(function(err){
+        console.warn('Carga automática indisponível (' + err.message + '). Mantendo a base embutida.');
+        carimbo(' · base automática indisponível — use Importar');
+      });
+  }
+
+  // Este bloco roda no fim do <body>, depois da IIFE que monta o dashboard.
+  // NÃO esperamos o evento "load": ele só dispara quando todo recurso externo
+  // (fontes, CDN) responde, e um CDN lento deixaria a carga pendurada.
+  var jaRodou = false;
+  function disparar(){
+    if(jaRodou) return;
+    jaRodou = true;
+    iniciar();
+  }
+  setTimeout(disparar, 60);
+  window.addEventListener('load', function(){ setTimeout(disparar, 60); });
+})();
+</script>
+<!-- ═══════ FIM CARGA AUTOMÁTICA ═══════ -->
 </body>
 </html>
