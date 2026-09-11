@@ -968,7 +968,7 @@
       <div class="brand-divider"></div>
       <div class="brand-text">
         <h1>Dashboard de Produção</h1>
-        <div class="subtitle"><span class="pulse"></span><span id="periodLabel">Período: 01/01/2026 a 06/05/2026 · Sistema FIBRA · IST</span></div>
+        <div class="subtitle"><span class="pulse"></span><span id="periodLabel">Período: 01/01/2026 a 06/05/2026 · Sistema FIBRA · IST</span><span id="carimboAuto" style="margin-left:10px;opacity:.75"></span></div>
       </div>
     </div>
     <div class="filters-bar">
@@ -4729,6 +4729,86 @@ startChartFullscreenFeature();
 })();
 </script>
 <!-- ═══════ FIM EXPORTAR PARA CHATGPT ═══════ -->
+
+
+<!-- ═══════ CARGA AUTOMÁTICA DA BASE (gerada pelo robô a cada envio de planilha) ═══════ -->
+<script>
+(function(){
+  'use strict';
+  // Resolve o caminho do base.json a partir da URL atual, funcione ela com
+  // barra final, sem barra final ou apontando direto para o index.html.
+  var ARQ = (function(){
+    var p = location.pathname || '/';
+    if(p.charAt(p.length-1) === '/') return p + 'base.json';
+    if(/\.html?$/i.test(p)) return p.replace(/[^\/]+$/, '') + 'base.json';
+    return p + '/base.json';
+  })();
+
+  function carimbo(txt){
+    var el = document.getElementById('carimboAuto');
+    if(el) el.textContent = txt;
+  }
+
+  function aplicar(j){
+    var rows = (j && j.rows) || [];
+    if(!rows.length) throw new Error('arquivo sem linhas');
+
+    // Usa exatamente a mesma função da importação manual — as regras do
+    // dashboard continuam sendo as dele, nada foi reimplementado aqui.
+    var novo = buildDatasetFromImports(null, { rows: rows });
+    if(!novo || !novo.length) throw new Error('nenhum registro válido após as regras do dashboard');
+
+    RAW_DATA_REF.data = novo;
+    if(typeof rebuildDynamicFilters === 'function') rebuildDynamicFilters(novo);
+    if(typeof STATE === 'object' && STATE) STATE.page = 1;
+
+    // Estende o período visível para cobrir os dados recebidos
+    try{
+      var datas = novo.map(function(r){ return r.Data; }).filter(Boolean).sort();
+      if(datas.length && typeof STATE === 'object' && STATE && STATE.filters){
+        var min = datas[0], max = datas[datas.length-1];
+        var mudou = false;
+        // Fora do intervalo: reposiciona por completo
+        if(STATE.filters.dateStart > max || STATE.filters.dateEnd < min){
+          STATE.filters.dateStart = min; STATE.filters.dateEnd = max; mudou = true;
+        }
+        // Chegaram dados mais recentes que o fim do período: estende ate eles,
+        // senao o dashboard continuaria parado na data em que foi criado.
+        else if(STATE.filters.dateEnd < max){
+          STATE.filters.dateEnd = max; mudou = true;
+        }
+        if(mudou){
+          var a = document.getElementById('dateStart'), b = document.getElementById('dateEnd');
+          if(a) a.value = STATE.filters.dateStart;
+          if(b) b.value = STATE.filters.dateEnd;
+          if(typeof updatePeriodLabel === 'function') updatePeriodLabel();
+        }
+      }
+    }catch(e){ console.warn('range de datas:', e); }
+
+    if(typeof render === 'function') render();
+
+    var g = j.gerado_em || '';
+    carimbo(g ? '· atualizado em ' + g.slice(8,10) + '/' + g.slice(5,7) + '/' + g.slice(0,4) +
+                ' às ' + g.slice(11,16) + ' · ' + novo.length + ' registros'
+              : '· ' + novo.length + ' registros');
+  }
+
+  function iniciar(){
+    fetch(ARQ + '?v=' + Date.now(), { cache: 'no-store' })
+      .then(function(r){ if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(aplicar)
+      .catch(function(err){
+        console.warn('Carga automática indisponível (' + err.message + '). Mantendo a base embutida.');
+        carimbo('· base automática indisponível — use Importar');
+      });
+  }
+
+  if(document.readyState === 'complete') setTimeout(iniciar, 60);
+  else window.addEventListener('load', function(){ setTimeout(iniciar, 60); });
+})();
+</script>
+<!-- ═══════ FIM CARGA AUTOMÁTICA ═══════ -->
 
 </body>
 </html>
