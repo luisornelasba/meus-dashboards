@@ -4842,8 +4842,19 @@ startChartFullscreenFeature();
       });
   }
 
-  if(document.readyState === 'complete') setTimeout(iniciar, 60);
-  else window.addEventListener('load', function(){ setTimeout(iniciar, 60); });
+  // Este bloco roda no fim do <body>, depois de bindEvents() e render() —
+  // o dashboard já está montado aqui. Por isso NÃO esperamos o evento "load":
+  // ele só dispara quando todo recurso externo (fontes, CDN, mapa) responde, e
+  // um CDN lento deixaria a carga automática pendurada para sempre.
+  var jaRodou = false;
+  function disparar(){
+    if(jaRodou) return;
+    jaRodou = true;
+    iniciar();
+  }
+  setTimeout(disparar, 60);
+  // Rede de segurança, caso algo acima tenha atrasado o DOM.
+  window.addEventListener('load', function(){ setTimeout(disparar, 60); });
 })();
 </script>
 <!-- ═══════ FIM CARGA AUTOMÁTICA ═══════ -->
