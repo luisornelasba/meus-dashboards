@@ -30,10 +30,6 @@ REMOVER_MOTIVO_RECUSA = False  # True -> o motivo da recusa sai do arquivo
 
 # Escopo do produto ALIMENTAÇÃO — lista fechada (comparação sem acento, maiúsculas).
 # Para incluir um produto novo do CRM, acrescente a linha aqui.
-# Vigência estimada: contratos sem Data de Início/Término usam a Data de Modificação
-# como início e somam este número de meses para o término.
-MESES_VIGENCIA_PADRAO = 12
-
 PRODUTOS_ESCOPO = {
     'ALMOCO PADRAO - CONSTRUCAO CIVIL',
     'ALMOCO PADRAO - EMPRESAS',
@@ -75,8 +71,6 @@ OUTROS_DASHBOARDS = {
     # 'iel':     {'descricao': 'IEL', 'tipo': 'entidade_contem', 'valores': {'IEL'}},
     # 'producao-area-mercado': {'descricao': 'Base completa', 'tipo': 'tudo', 'valores': set()},
 }
-
-CONTRATOS = {}   # preenchido em main() a partir da planilha de contratos
 
 RAIZ    = Path(__file__).resolve().parent.parent
 ENTRADA = RAIZ / 'entrada'
@@ -121,140 +115,19 @@ def sem_acento(v):
     return ''.join(c for c in txt if unicodedata.category(c) != 'Mn').upper().strip()
 
 
-def listar_planilhas():
+def achar_planilha():
+    """Pega o arquivo mais recente da pasta entrada/."""
     if not ENTRADA.exists():
         erro(f'Pasta "entrada/" não encontrada em {RAIZ}.')
-    arqs = [p for p in ENTRADA.iterdir()
-            if p.suffix.lower() in ('.xlsx', '.xlsm', '.xls') and not p.name.startswith('~$')]
-    if not arqs:
+    arquivos = [p for p in ENTRADA.iterdir()
+                if p.suffix.lower() in ('.xlsx', '.xlsm', '.xls') and not p.name.startswith('~$')]
+    if not arquivos:
         erro('Nenhuma planilha (.xlsx) encontrada na pasta "entrada/". '
              'Faça o upload da exportação do CRM e tente de novo.')
-    return sorted(arqs, key=lambda p: p.stat().st_mtime, reverse=True)
-
-
-def tipo_da_planilha(caminho):
-    """Descobre pelo conteúdo se o arquivo é a Base de Mercado ou Todos os Contratos."""
-    try:
-        topo = pd.read_excel(caminho, header=None, nrows=12, dtype=object)
-    except Exception:
-        return None, None
-    for i in range(len(topo)):
-        linha = [sem_acento(c) for c in topo.iloc[i].tolist()]
-        tem_contrato = any('ID DO CONTRATO' in c for c in linha)
-        tem_proposta = any(c == 'ID DA PROPOSTA' for c in linha)
-        tem_produto  = any('PRODUTO EXISTENTE' in c for c in linha)
-        if tem_contrato:
-            return 'contratos', i
-        if tem_proposta and tem_produto:
-            return 'mercado', i
-    return None, None
-
-
-def escolher_planilhas():
-    """Separa os arquivos da pasta entrada/ por tipo, usando o mais recente de cada."""
-    mercado = contratos = None
-    pulo_m = pulo_c = 0
-    for arq in listar_planilhas():
-        tipo, pulo = tipo_da_planilha(arq)
-        if tipo == 'mercado' and mercado is None:
-            mercado, pulo_m = arq, pulo
-        elif tipo == 'contratos' and contratos is None:
-            contratos, pulo_c = arq, pulo
-    if mercado is None:
-        erro('Nenhuma planilha reconhecida como Base de Produção Mercado na pasta "entrada/". '
-             'O arquivo precisa ter as colunas "ID da Proposta" e "Produto Existente".')
-    return mercado, pulo_m, contratos, pulo_c
-
-
-def carregar_contratos(caminho, pulo):
-    """Monta o mapa ID da Proposta -> dados do contrato (usa o contrato mais recente)."""
-    if caminho is None:
-        return {}
-    df = pd.read_excel(caminho, skiprows=pulo, dtype=object)
-    df.columns = [str(c).strip() for c in df.columns]
-
-    def achar(*chaves):
-        for col in df.columns:
-            c = sem_acento(col)
-            if all(k in c for k in chaves):
-                return col
-        return None
-
-    col_pid = achar('ID DA PROPOSTA')
-    col_ctr = achar('ID DO CONTRATO')
-    if not col_pid or not col_ctr:
-        log('AVISO: planilha de contratos sem "ID da Proposta" ou "ID do Contrato" — ignorada.')
-        return {}
-    col_st  = achar('STATUS')
-    col_ini = achar('DATA', 'INICIO')
-    col_fim = achar('DATA', 'TERMINO')
-    col_val = achar('VALOR TOTAL')
-    col_cnaed = achar('DESCRICAO DO CNAE')
-    col_prod = achar('RESUMO DE PRODUTOS')
-    # "Data de Modificação" aparece duas vezes (uma com o prefixo "(Não Modificar)").
-    # A boa é a que NÃO tem esse prefixo.
-    col_mod = None
-    for col in df.columns:
-        c = sem_acento(col)
-        if 'DATA DE MODIFICACAO' in c and 'NAO MODIFICAR' not in c:
-            col_mod = col
-            break
-
-    mapa = {}
-    for _, r in df.iterrows():
-        pid = texto(r[col_pid], '')
-        if not pid:
-            continue
-        ini = to_iso(r[col_ini]) if col_ini else None
-        fim = to_iso(r[col_fim]) if col_fim else None
-        estimado = False
-        if not ini or not fim:
-            # Regra: sem vigência informada, a Data de Modificação vira o início
-            # e o término é 12 meses depois.
-            mod = to_iso(r[col_mod]) if col_mod else None
-            if mod:
-                ini = ini or mod
-                if not fim:
-                    d = datetime.strptime(ini, '%Y-%m-%d')
-                    ano, mes = d.year + (d.month - 1 + MESES_VIGENCIA_PADRAO) // 12, \
-                               (d.month - 1 + MESES_VIGENCIA_PADRAO) % 12 + 1
-                    dia = min(d.day, [31,29 if ano%4==0 and (ano%100!=0 or ano%400==0) else 28,
-                                      31,30,31,30,31,31,30,31,30,31][mes-1])
-                    fim = f'{ano:04d}-{mes:02d}-{dia:02d}'
-                estimado = True
-        prods = texto(r[col_prod], '') if col_prod else ''
-        reg = {
-            'ctr':    texto(r[col_ctr], ''),
-            'ctrSt':  texto(r[col_st], '') if col_st else '',
-            'ctrIni': ini,
-            'ctrFim': fim,
-            'ctrEst': estimado,
-            'ctrVal': round(to_num(r[col_val]), 2) if col_val else 0,
-            'cnaeD':  texto(r[col_cnaed], '') if col_cnaed else '',
-            'ctrProd': prods,
-            'ctrAli': any(a in sem_acento(prods) for a in PRODUTOS_ESCOPO),
-        }
-        ant = mapa.get(pid)
-        if ant is None:
-            reg['ctrN'] = 1
-            mapa[pid] = reg
-        else:
-            reg['ctrN'] = ant['ctrN'] + 1
-            # fica com o de término mais distante (o contrato mais "vivo")
-            if (reg['ctrFim'] or '') >= (ant['ctrFim'] or ''):
-                mapa[pid] = reg
-            else:
-                ant['ctrN'] = reg['ctrN']
-    est = sum(1 for v in mapa.values() if v['ctrEst'])
-    ali = sum(1 for v in mapa.values() if v['ctrAli'])
-    log(f'Contratos: {len(df)} linhas lidas, {len(mapa)} propostas com contrato')
-    log(f'   vigência estimada pela Data de Modificação + {MESES_VIGENCIA_PADRAO} meses: {est}')
-    log(f'   com produto de Alimentação no Resumo de Produtos: {ali}')
-    return mapa
-
-
-def main():
-    arq = achar_planilha()
+    arq = max(arquivos, key=lambda p: p.stat().st_mtime)
+    if len(arquivos) > 1:
+        log(f'{len(arquivos)} planilhas na pasta — usando a mais recente: {arq.name}')
+    return arq
 
 
 def achar_cabecalho(caminho):
@@ -382,14 +255,11 @@ def gerar_outros_dashboards(df, idx, nome_arquivo):
 
 
 def main():
-    arq, pulo, arq_ctr, pulo_ctr = escolher_planilhas()
-    log(f'Base de Mercado: {arq.name} ({arq.stat().st_size / 1048576:.1f} MB), cabeçalho na linha {pulo + 1}')
-    if arq_ctr:
-        log(f'Contratos: {arq_ctr.name} ({arq_ctr.stat().st_size / 1048576:.1f} MB)')
-    else:
-        log('Nenhuma planilha de contratos na pasta — o dashboard fica sem os dados de contrato.')
-    CONTRATOS = carregar_contratos(arq_ctr, pulo_ctr)
-    globals()['CONTRATOS'] = CONTRATOS
+    arq = achar_planilha()
+    log(f'Lendo {arq.name} ({arq.stat().st_size / 1048576:.1f} MB)')
+
+    pulo = achar_cabecalho(arq)
+    log(f'Cabeçalho localizado na linha {pulo + 1} da planilha')
 
     df = pd.read_excel(arq, skiprows=pulo, dtype=object)
     df.columns = [str(c).strip() for c in df.columns]
@@ -436,12 +306,6 @@ def main():
             'ind':   texto(g('ind')),
             'mot':   '' if REMOVER_MOTIVO_RECUSA else texto(g('mot')),
         })
-        ct = CONTRATOS.get(texto(g('id'), ''))
-        if ct:
-            registros[-1].update({'ctr': ct['ctr'], 'ctrSt': ct['ctrSt'], 'ctrIni': ct['ctrIni'],
-                                  'ctrFim': ct['ctrFim'], 'ctrVal': ct['ctrVal'], 'ctrN': ct['ctrN'],
-                                  'cnaeD': ct['cnaeD'], 'ctrEst': ct['ctrEst'],
-                                  'ctrProd': ct['ctrProd'], 'ctrAli': ct['ctrAli']})
 
     # ---- resumo para conferência no log da automação ----
     por_status = {}
@@ -477,12 +341,6 @@ def main():
     log(f'    Status: {por_status}')
     log(f'    Aceitas: {len(aceitas)} · valor aceito R$ {valor_aceito:,.2f}'
         .replace(',', 'X').replace('.', ',').replace('X', '.'))
-    com_ctr = sum(1 for x in registros if x.get('ctr'))
-    if CONTRATOS:
-        hoje_iso = datetime.now(FUSO_BR).strftime('%Y-%m-%d')
-        venc = sum(1 for x in registros if x.get('ctrFim') and x['ctrFim'] < hoje_iso)
-        vig  = sum(1 for x in registros if x.get('ctrFim') and x['ctrFim'] >= hoje_iso)
-        log(f'    Contratos: {com_ctr} propostas com contrato · {vig} vigentes · {venc} vencidos')
     log('-' * 62)
 
 
