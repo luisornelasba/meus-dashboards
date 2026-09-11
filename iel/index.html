@@ -290,6 +290,7 @@ tbody tr:hover{background:#F9FBFD}
         <span class="badge iel"><span class="dot"></span> Entidade: IEL-DF</span>
         <span class="badge"><span class="dot"></span> <span id="period-badge">—</span></span>
         <span class="badge"><span class="dot" style="background:var(--azul)"></span> <span id="count-badge">—</span> registros</span>
+        <span class="badge" id="carimbo-auto-wrap" style="display:none"><span class="dot" style="background:var(--verde,#16a34a)"></span> <span id="carimboAuto">—</span></span>
       </div>
       <div class="import-btn-group">
         <label class="btn btn-success" title="Importar arquivo Excel (.xlsx) — propostas ou clientes">
@@ -1487,5 +1488,96 @@ function init(){
 // aguardar pintura do DOM para o Leaflet ter dimensão certa
 window.addEventListener('load', init);
 </script>
+
+<!-- ═══════ CARGA AUTOMÁTICA DA BASE (gerada pelo robô a cada envio de planilha) ═══════ -->
+<script>
+(function(){
+  'use strict';
+  // Resolve o caminho do base.json a partir da URL atual, funcione ela com
+  // barra final, sem barra final ou apontando direto para o index.html.
+  var ARQ = (function(){
+    var p = location.pathname || '/';
+    if(p.charAt(p.length-1) === '/') return p + 'base.json';
+    if(/\.html?$/i.test(p)) return p.replace(/[^\/]+$/, '') + 'base.json';
+    return p + '/base.json';
+  })();
+
+  function carimbo(txt, erro){
+    var wrap = document.getElementById('carimbo-auto-wrap');
+    var el   = document.getElementById('carimboAuto');
+    if(el) el.textContent = txt;
+    if(wrap) wrap.style.display = '';
+    if(wrap && erro) wrap.style.opacity = '.6';
+  }
+
+  var pendente = null;   // dados prontos, esperando o init() rodar
+
+  // Redesenha usando EXATAMENTE as mesmas funções do botão Importar Excel.
+  function redesenhar(){
+    try{
+      limparFiltros();              // já chama aplicarFiltros() no fim
+      rebuildSingleSelects();
+      rebuildMultiselectOptions();
+      aplicarFiltros();
+      return true;
+    }catch(e){
+      // O init() ainda não rodou (ele acontece no evento load).
+      // Os dados já estão em DATA.propostas, então o init desenha com eles.
+      return false;
+    }
+  }
+
+  function aplicar(j){
+    var rows = (j && j.rows) || [];
+    if(!rows.length) throw new Error('arquivo sem linhas');
+
+    // Mesma função da importação manual — nenhuma regra reimplementada aqui.
+    var novos = etlPropostas(rows);
+    if(!novos || !novos.length) throw new Error('nenhum registro válido após as regras do dashboard');
+    novos.forEach(function(p){ p.data_obj = p.data ? new Date(p.data) : null; });
+
+    DATA.propostas = novos;
+    joinPropostasClientes(DATA.propostas, DATA.clientes);
+
+    if(!redesenhar()) pendente = true;
+
+    var g = j.gerado_em || '';
+    carimbo(g ? 'atualizado em ' + g.slice(8,10) + '/' + g.slice(5,7) + '/' + g.slice(0,4) +
+                ' às ' + g.slice(11,16)
+              : novos.length + ' registros');
+  }
+
+  function iniciar(){
+    fetch(ARQ + '?v=' + Date.now(), { cache: 'no-store' })
+      .then(function(r){ if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(aplicar)
+      .catch(function(err){
+        console.warn('Carga automática indisponível (' + err.message + '). Mantendo a base embutida.');
+        carimbo('base automática indisponível — use Importar', true);
+      });
+  }
+
+  // Este bloco roda no fim do <body>. NÃO esperamos o evento "load": ele só
+  // dispara quando todo recurso externo (fontes, CDN, mapa) responde, e um
+  // CDN lento deixaria a carga automática pendurada para sempre.
+  var jaRodou = false;
+  function disparar(){
+    if(jaRodou) return;
+    jaRodou = true;
+    iniciar();
+  }
+  setTimeout(disparar, 60);
+
+  // O init() deste dashboard roda no evento load. Se os dados chegarem antes
+  // dele, o próprio init já desenha com eles; se chegarem depois, redesenhamos.
+  window.addEventListener('load', function(){
+    setTimeout(function(){
+      disparar();
+      if(pendente){ pendente = null; redesenhar(); }
+    }, 80);
+  });
+})();
+</script>
+<!-- ═══════ FIM CARGA AUTOMÁTICA ═══════ -->
 </body>
 </html>
