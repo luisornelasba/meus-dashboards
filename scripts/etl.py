@@ -34,6 +34,12 @@ REMOVER_MOTIVO_RECUSA = False  # True -> o motivo da recusa sai do arquivo
 # como início e somam este número de meses para o término.
 MESES_VIGENCIA_PADRAO = 12
 
+# Lista "Contratos a Corrigir no CRM": contratos sem Data de Início E sem Data de
+# Término, criados a partir desta data. Cobre TODO o CRM (todos os produtos e
+# unidades), não só o recorte de Alimentação — é a lista de cobrança aos
+# proprietários. Mude aqui para ampliar ou encurtar a janela.
+PENDENCIAS_DESDE = '2025-01-01'
+
 PRODUTOS_ESCOPO = {
     'ALMOCO PADRAO - CONSTRUCAO CIVIL',
     'ALMOCO PADRAO - EMPRESAS',
@@ -106,6 +112,7 @@ OUTROS_DASHBOARDS = {
 }
 
 CONTRATOS = {}   # preenchido em main() a partir da planilha de contratos
+PENDENCIAS = []  # contratos sem vigência cadastrada, para a lista de correção
 
 RAIZ    = Path(__file__).resolve().parent.parent
 ENTRADA = RAIZ / 'entrada'
@@ -220,6 +227,18 @@ def carregar_contratos(caminho, pulo):
     col_val = achar('VALOR TOTAL')
     col_cnaed = achar('DESCRICAO DO CNAE')
     col_prod = achar('RESUMO DE PRODUTOS')
+    col_cri = achar('DATA DE CRIACAO')
+    col_dono = achar('PROPRIETARIO')
+    col_cnpj = achar('CNPJ')
+    col_ent = achar('ENTIDADE')
+    # "Cliente" precisa de correspondência EXATA: a planilha também tem
+    # "CNPJ (Cliente) (Cliente)" e "CNAE (Cliente) (Cliente)", que casariam
+    # com uma busca por conteúdo e trariam o CNPJ no lugar da razão social.
+    col_cli = None
+    for col in df.columns:
+        if sem_acento(col) == 'CLIENTE':
+            col_cli = col
+            break
     # "Data de Modificação" aparece duas vezes (uma com o prefixo "(Não Modificar)").
     # A boa é a que NÃO tem esse prefixo.
     col_mod = None
@@ -230,12 +249,35 @@ def carregar_contratos(caminho, pulo):
             break
 
     mapa = {}
+    pendentes = []          # contratos sem início/término, para a lista de correção no CRM
+    vistos_ctr = set()      # a planilha traz uma linha por contrato, mas garantimos unicidade
     for _, r in df.iterrows():
+        ini = to_iso(r[col_ini]) if col_ini else None
+        fim = to_iso(r[col_fim]) if col_fim else None
+
+        # ---- Lista de pendências: sem NENHUMA das duas datas, criado a partir de
+        # PENDENCIAS_DESDE. Vale para TODO o CRM, não só o recorte de Alimentação.
+        cri = to_iso(r[col_cri]) if col_cri else None
+        id_ctr = texto(r[col_ctr], '')
+        if (not ini and not fim) and id_ctr and id_ctr not in vistos_ctr:
+            if cri and cri >= PENDENCIAS_DESDE:
+                vistos_ctr.add(id_ctr)
+                pendentes.append({
+                    'ctr':   id_ctr,
+                    'dono':  texto(r[col_dono], '') if col_dono else '',
+                    'cli':   texto(r[col_cli], '') if col_cli else '',
+                    'cnpj':  '' if MASCARAR_CNPJ else limpar_cnpj(r[col_cnpj]) if col_cnpj else '',
+                    'ent':   texto(r[col_ent], '') if col_ent else '',
+                    'prod':  texto(r[col_prod], '') if col_prod else '',
+                    'val':   round(to_num(r[col_val]), 2) if col_val else 0,
+                    'cri':   cri,
+                    'mod':   to_iso(r[col_mod]) if col_mod else None,
+                    'st':    texto(r[col_st], '') if col_st else '',
+                })
+
         pid = texto(r[col_pid], '')
         if not pid:
             continue
-        ini = to_iso(r[col_ini]) if col_ini else None
-        fim = to_iso(r[col_fim]) if col_fim else None
         estimado = False
         if not ini or not fim:
             # Regra: sem vigência informada, a Data de Modificação vira o início
@@ -274,9 +316,13 @@ def carregar_contratos(caminho, pulo):
                 mapa[pid] = reg
             else:
                 ant['ctrN'] = reg['ctrN']
+    pendentes.sort(key=lambda x: ((x['dono'] or 'ZZZ').upper(), x['cri'] or ''))
+    globals()['PENDENCIAS'] = pendentes
     est = sum(1 for v in mapa.values() if v['ctrEst'])
     ali = sum(1 for v in mapa.values() if v['ctrAli'])
     log(f'Contratos: {len(df)} linhas lidas, {len(mapa)} propostas com contrato')
+    log(f'   sem vigência no CRM, criados desde {PENDENCIAS_DESDE}: {len(pendentes)} '
+        f'({len(set(p["dono"] for p in pendentes))} proprietários)')
     log(f'   vigência estimada pela Data de Modificação + {MESES_VIGENCIA_PADRAO} meses: {est}')
     log(f'   com produto de Alimentação no Resumo de Produtos: {ali}')
     return mapa
@@ -496,6 +542,13 @@ def main():
             'motivo_recusa_removido': REMOVER_MOTIVO_RECUSA,
         },
         'registros': registros,
+        # Contratos sem Data de Início/Término no CRM — lista de correção.
+        # Universo: todo o CRM, criados a partir de PENDENCIAS_DESDE.
+        'pendencias_contrato': {
+            'desde': PENDENCIAS_DESDE,
+            'total': len(PENDENCIAS),
+            'itens': PENDENCIAS,
+        },
     }
 
     SAIDA.parent.mkdir(parents=True, exist_ok=True)
