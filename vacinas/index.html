@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Campanha de Vacinação 2026 — SESI</title>
+<title>Campanha de Vacinação — SESI</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -426,7 +426,7 @@
       </div>
       <div class="title-block">
         <div class="eyebrow"><span class="live-dot"></span>Sistema FIBRA · Inteligência de Mercado</div>
-        <h1>Campanha de Vacinação 2026</h1>
+        <h1 id="tituloCampanha">Campanha de Vacinação</h1>
         <div class="subtitle">Painel Executivo de Vendas, Devoluções e Projeção de Doses SESI</div>
       </div>
     </div>
@@ -441,7 +441,8 @@
       </button>
       <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none">
       <div class="last-update">Base atualizada · <span id="lastUpdate">—</span> · <span id="recordCount">0</span> reg.<span id="carimboAuto"></span></div>
-      <div>Meta de campanha: <strong style="color:var(--bg-dark)">7.000 doses</strong></div>
+      <div id="metaCabecalho">Meta de campanha: <strong style="color:var(--bg-dark)">—</strong></div>
+      <div id="avisoAno" style="display:none;margin-top:4px;font-size:11.5px;color:#C2610F;font-weight:600"></div>
     </div>
   </header>
 
@@ -452,8 +453,7 @@
         <label class="filter-label">Período rápido</label>
         <div class="preset-row">
           <button class="btn-preset" data-preset="all">Todos</button>
-          <button class="btn-preset active" data-preset="2026">2026</button>
-          <button class="btn-preset" data-preset="2025">2025</button>
+          <span id="presetsAnos"></span>
           <button class="btn-preset" data-preset="ytd">YTD</button>
         </div>
       </div>
@@ -499,15 +499,16 @@
     <div class="kpi" id="kpi-pct">
       <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12A10 10 0 1 1 12 2"/><path d="M22 12 A10 10 0 0 0 12 2 V12 Z"/></svg></div>
       <div class="kpi-label">Atingimento da Meta</div>
-      <div class="kpi-value"><span id="kpiPct">0</span><span class="kpi-suffix">%</span></div>
+      <div class="kpi-value"><span id="kpiPct">0</span><span class="kpi-suffix" id="kpiPctSufixo">%</span></div>
       <div class="kpi-progress"><div class="kpi-progress-fill" id="kpiPctBar" style="width:0%"></div></div>
+      <div class="kpi-meta" id="kpiPctSub">&nbsp;</div>
     </div>
 
     <div class="kpi" id="kpi-stock">
       <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg></div>
       <div class="kpi-label" id="kpiStockLabel">Doses em Estoque</div>
       <div class="kpi-value" id="kpiStock">0</div>
-      <div class="kpi-meta">Meta: <strong>7.000</strong> · base líquida</div>
+      <div class="kpi-meta" id="kpiStockSub">Meta: base líquida</div>
     </div>
 
     <div class="kpi dark">
@@ -529,6 +530,23 @@
       <div class="kpi-label">Clientes em Consignação</div>
       <div class="kpi-value" id="kpiConsig">0</div>
       <div class="kpi-meta">Propostas com Quant. ≥ 200</div>
+    </div>
+  </section>
+
+  <!-- Evolucao plurianual -->
+  <section class="card" id="secPlurianual" style="margin-bottom:24px;">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Evolução da Campanha ano a ano</div>
+        <div class="card-subtitle" id="pluriSub">Doses aplicadas, atingimento e devoluções em cada campanha · independe dos filtros acima</div>
+      </div>
+      <span class="card-badge">Histórico</span>
+    </div>
+    <div id="pluriCards" class="kpi-grid" style="margin-bottom:18px"></div>
+    <div class="chart-wrapper tall"><canvas id="chartPlurianual"></canvas></div>
+    <div style="margin-top:18px">
+      <div class="card-subtitle" style="margin-bottom:8px">Mesmo mês, ano a ano — a campanha concentra o volume em poucos meses, então esta é a comparação que vale</div>
+      <div class="chart-wrapper tall"><canvas id="chartMesAno"></canvas></div>
     </div>
   </section>
 
@@ -794,8 +812,41 @@
    =========================================================================== */
 
 // ----- Constantes de negócio -----
-const META_DOSES = 7000;
+/* ═══════════════════════════════════════════════════════════════════════════
+   METAS DA CAMPANHA — uma linha por ano.
+   Para preparar um ano novo, acrescente a linha aqui e salve. Nada mais.
+   Ano sem meta definida: o painel mostra o volume normalmente e marca o
+   atingimento como "meta nao definida" — nunca calcula percentual sobre
+   um numero inventado.
+   ═══════════════════════════════════════════════════════════════════════ */
+const METAS_POR_ANO = {
+  2026: 7000,
+  // 2027: 0,   <-- troque o 0 pela meta de 2027 e remova as duas barras
+};
+
 const LIMIAR_CONSIGNACAO = 200;
+
+/* Meta do ano, ou null quando o ano nao tem meta cadastrada. */
+function metaDoAno(ano){
+  const m = METAS_POR_ANO[ano];
+  return (typeof m === 'number' && m > 0) ? m : null;
+}
+
+/* Ano em foco: so existe quando o periodo filtrado cabe inteiro num ano civil.
+   Em "Todos" (ou num intervalo que cruza anos) nao ha meta unica aplicavel. */
+function anoAtivo(){
+  const de = state.dateFrom, ate = state.dateTo;
+  if (!de || !ate) return null;
+  const a1 = de.slice(0,4), a2 = ate.slice(0,4);
+  return a1 === a2 ? Number(a1) : null;
+}
+
+/* Anos presentes na base, do mais recente para o mais antigo. */
+function anosDaBase(){
+  const s = new Set();
+  RAW_DATA.forEach(r => { if (r.data) s.add(Number(String(r.data).slice(0,4))); });
+  return [...s].filter(a => a > 1900).sort((a,b) => b - a);
+}
 
 // Produtos de vacina considerados venda (sem GRATUIDADE)
 const VAC_LIST = [
@@ -1379,9 +1430,15 @@ function computeKPIs(filtered){
   const concluidas = new Set(vendas.filter(r => r.status === 'Concluída').map(r => r.id_proposta)).size;
   const propsVendedoras = new Set(fechVendas.filter(r => (r.doses||0) > 0).map(r => r.id_proposta)).size;
 
-  const estoque = META_DOSES - aplicadas;
-  const isAditivo = estoque < 0;
-  const pct = (aplicadas / META_DOSES) * 100;
+  /* Meta do ano em foco. Sem ano unico ou sem meta cadastrada, os
+     indicadores de atingimento e estoque ficam indisponiveis em vez de
+     usarem um numero que nao vale para o periodo. */
+  const ano = anoAtivo();
+  const meta = metaDoAno(ano);
+  const temMeta = meta !== null;
+  const estoque = temMeta ? meta - aplicadas : null;
+  const isAditivo = temMeta ? estoque < 0 : false;
+  const pct = temMeta ? (aplicadas / meta) * 100 : null;
 
   const receita = fechVendas.reduce((s,r) => s + (r.valor||0), 0);
   const propVenda = new Set(fechVendas.map(r => r.id_proposta)).size;
@@ -1391,7 +1448,8 @@ function computeKPIs(filtered){
   const consigCount = Object.values(consigMap).filter(d => d >= LIMIAR_CONSIGNACAO).length;
 
   return { aplicadas, devolvidas, contratado, devPct, devClientes, propostasTotal,
-           aceitas, concluidas, propsVendedoras, estoque, isAditivo, pct, ticket, consigCount };
+           aceitas, concluidas, propsVendedoras, estoque, isAditivo, pct, ticket, consigCount,
+           ano, meta, temMeta };
 }
 
 function renderKPIs(filtered){
@@ -1409,22 +1467,48 @@ function renderKPIs(filtered){
 
   document.getElementById('kpiDoses').textContent = fmtInt.format(k.aplicadas);
 
-  document.getElementById('kpiPct').textContent = k.pct.toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1});
-  document.getElementById('kpiPctBar').style.width = Math.min(100, k.pct) + '%';
-  document.getElementById('kpi-pct').classList.toggle('alert', k.pct > 100);
+  /* Atingimento e estoque so aparecem quando ha meta para o ano em foco. */
+  const pctCard = document.getElementById('kpi-pct');
+  const pctSuf  = document.getElementById('kpiPctSufixo');
+  const pctSub  = document.getElementById('kpiPctSub');
+  if (k.temMeta){
+    document.getElementById('kpiPct').textContent = k.pct.toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1});
+    document.getElementById('kpiPctBar').style.width = Math.min(100, k.pct) + '%';
+    pctCard.classList.toggle('alert', k.pct > 100);
+    if (pctSuf) pctSuf.style.display = '';
+    if (pctSub) pctSub.textContent = `Meta ${k.ano}: ${fmtInt.format(k.meta)} doses`;
+  } else {
+    document.getElementById('kpiPct').textContent = '—';
+    document.getElementById('kpiPctBar').style.width = '0%';
+    pctCard.classList.remove('alert');
+    if (pctSuf) pctSuf.style.display = 'none';
+    if (pctSub) pctSub.textContent = k.ano
+      ? `Meta de ${k.ano} nao cadastrada`
+      : 'Selecione um ano para ver o atingimento';
+  }
 
   const stockEl = document.getElementById('kpiStock');
   const stockLabel = document.getElementById('kpiStockLabel');
   const stockCard = document.getElementById('kpi-stock');
-  if (k.isAditivo){
+  const stockSub = document.getElementById('kpiStockSub');
+  if (!k.temMeta){
+    stockEl.textContent = '—';
+    stockLabel.textContent = 'Doses em Estoque';
+    stockCard.classList.remove('alert');
+    if (stockSub) stockSub.textContent = k.ano ? 'Depende da meta do ano' : 'Selecione um ano';
+  } else if (k.isAditivo){
     stockEl.textContent = fmtInt.format(Math.abs(k.estoque));
     stockLabel.textContent = 'Aditivo de doses solicitado';
     stockCard.classList.add('alert');
+    if (stockSub) stockSub.textContent = `Meta: ${fmtInt.format(k.meta)} · base liquida`;
   } else {
     stockEl.textContent = fmtInt.format(k.estoque);
     stockLabel.textContent = 'Doses em Estoque';
     stockCard.classList.remove('alert');
+    if (stockSub) stockSub.textContent = `Meta: ${fmtInt.format(k.meta)} · base liquida`;
   }
+
+  atualizarTitulos(k);
 
   document.getElementById('kpiPropostas').textContent = fmtInt.format(k.propostasTotal);
   document.getElementById('kpiAceitas').textContent = fmtInt.format(k.aceitas);
@@ -2198,7 +2282,8 @@ function exportToExcel(){
     {'Indicador':'% Devolução','Valor': `${k.devPct.toFixed(1)}%`},
     {'Indicador':'Doses Aplicadas (líquido)','Valor': k.aplicadas},
     {'Indicador':'Doses em Estoque / Aditivo','Valor': k.estoque},
-    {'Indicador':'% Atingimento Meta (7.000)','Valor': `${k.pct.toFixed(1)}%`},
+    {'Indicador': k.temMeta ? `% Atingimento Meta (${fmtInt.format(k.meta)})` : '% Atingimento Meta',
+     'Valor': k.temMeta ? `${k.pct.toFixed(1)}%` : 'meta nao cadastrada'},
     {'Indicador':'Total de Propostas','Valor': k.propostasTotal},
     {'Indicador':'Propostas Aceitas','Valor': k.aceitas},
     {'Indicador':'Propostas Concluídas','Valor': k.concluidas},
@@ -2211,7 +2296,8 @@ function exportToExcel(){
   ws2['!cols'] = [{wch:36},{wch:24}];
   XLSX.utils.book_append_sheet(wb, ws2, 'Resumo');
 
-  const fname = `Campanha_Vacinacao_2026_${stamp()}.xlsx`;
+  const _ano = anoAtivo();
+  const fname = `Campanha_Vacinacao_${_ano || 'todos-os-anos'}_${stamp()}.xlsx`;
   XLSX.writeFile(wb, fname);
   showToast('success', 'Exportação concluída', `Arquivo "${fname}" gerado com ${rows.length} propostas.`, 4000);
 }
@@ -2274,6 +2360,255 @@ function exportProjection(){
 // RENDER MASTER + EVENTOS
 // ===========================================================================
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   MULTI-ANO — titulos, botoes de ano e selecao do ano de abertura
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Titulo, meta do cabecalho e nome do arquivo de exportacao seguem o ano em foco. */
+function atualizarTitulos(k){
+  const t = document.getElementById('tituloCampanha');
+  if (t) t.textContent = k.ano ? `Campanha de Vacinação ${k.ano}` : 'Campanha de Vacinação · todos os anos';
+
+  const m = document.getElementById('metaCabecalho');
+  if (m){
+    m.innerHTML = k.temMeta
+      ? `Meta de campanha: <strong style="color:var(--bg-dark)">${fmtInt.format(k.meta)} doses</strong>`
+      : (k.ano
+          ? `Meta de ${k.ano}: <strong style="color:var(--bg-dark)">não cadastrada</strong>`
+          : `Meta: <strong style="color:var(--bg-dark)">selecione um ano</strong>`);
+  }
+}
+
+/* Liga o clique dos botoes de periodo. Usada tambem nos botoes de ano,
+   que nascem depois do bindEvents inicial. */
+function ligarPresets(botoes){
+  botoes.forEach(b => {
+    if (b.dataset.ligado) return;
+    b.dataset.ligado = '1';
+    b.addEventListener('click', () => {
+      const p = b.dataset.preset;
+      const hoje = new Date();
+      if (p === 'all'){ state.dateFrom = null; state.dateTo = null; }
+      else if (p === 'ytd'){
+        state.dateFrom = `${hoje.getFullYear()}-01-01`;
+        state.dateTo = `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}-${String(hoje.getDate()).padStart(2,'0')}`;
+      }
+      else { state.dateFrom = `${p}-01-01`; state.dateTo = `${p}-12-31`; }
+      document.getElementById('dateFrom').value = state.dateFrom || '';
+      document.getElementById('dateTo').value = state.dateTo || '';
+      state.page = 1; state.projPage = 1;
+      document.querySelectorAll('.btn-preset').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      renderAll();
+    });
+  });
+}
+
+/* Um botao por ano presente na base, do mais recente para o mais antigo. */
+function montarPresetsAnos(){
+  const box = document.getElementById('presetsAnos');
+  if (!box) return;
+  const anos = anosDaBase();
+  box.innerHTML = anos.map(a => {
+    const temMeta = metaDoAno(a) !== null;
+    const titulo = temMeta ? `Meta de ${a}: ${fmtInt.format(metaDoAno(a))} doses` : `${a} — meta não cadastrada`;
+    return `<button class="btn-preset" data-preset="${a}" title="${titulo}">${a}${temMeta ? '' : ' •'}</button>`;
+  }).join('');
+  ligarPresets(box.querySelectorAll('.btn-preset'));
+  marcarPresetAtivo();
+}
+
+/* Deixa aceso o botao que corresponde ao periodo atual. */
+function marcarPresetAtivo(){
+  const ano = anoAtivo();
+  document.querySelectorAll('.btn-preset').forEach(b => {
+    const p = b.dataset.preset;
+    const ativo = (!state.dateFrom && !state.dateTo && p === 'all') || (ano && p === String(ano));
+    b.classList.toggle('active', !!ativo);
+  });
+}
+
+/* Ano de abertura: o do calendario. Sem dados nesse ano, cai para o mais
+   recente que tenha — e a tela avisa, em vez de abrir vazia. */
+function anoDeAbertura(){
+  const anos = anosDaBase();
+  const atual = new Date().getFullYear();
+  if (!anos.length) return atual;
+  if (anos.includes(atual)) return atual;
+  /* O ano corrente ainda nao tem proposta registrada — abre no mais recente
+     que tem e avisa, em vez de mostrar uma tela vazia sem explicacao. */
+  avisarAnoSubstituto(atual, anos[0]);
+  return anos[0];
+}
+
+function avisarAnoSubstituto(atual, usado){
+  const el = document.getElementById('avisoAno');
+  if (!el) return;
+  el.textContent = `Ainda não há propostas de ${atual} na base — exibindo a campanha de ${usado}.`;
+  el.style.display = '';
+}
+
+function aplicarAno(ano){
+  state.dateFrom = `${ano}-01-01`;
+  state.dateTo   = `${ano}-12-31`;
+  const de = document.getElementById('dateFrom'), ate = document.getElementById('dateTo');
+  if (de)  de.value  = state.dateFrom;
+  if (ate) ate.value = state.dateTo;
+  state.page = 1; state.projPage = 1;
+  marcarPresetAtivo();
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   EVOLUCAO PLURIANUAL
+   Le a base inteira, nao o recorte filtrado: a leitura aqui e de historico
+   entre campanhas, nao do periodo selecionado acima.
+   ═══════════════════════════════════════════════════════════════════════ */
+function resumoPorAno(){
+  const porAno = {};
+  RAW_DATA.filter(isFechada).forEach(r => {
+    if (!r.data) return;
+    const a = Number(String(r.data).slice(0,4));
+    if (!(a > 1900)) return;
+    if (!porAno[a]) porAno[a] = { ano:a, aplicadas:0, devolvidas:0, props:new Set(), clientes:new Set(), temDev:false };
+    const o = porAno[a];
+    if (isDevolucao(r)){ o.devolvidas += (r.doses||0); if ((r.doses||0) > 0) o.temDev = true; }
+    else { o.aplicadas += (r.doses||0); o.props.add(r.id_proposta); o.clientes.add(r.cliente); }
+  });
+  return Object.values(porAno).sort((a,b) => a.ano - b.ano).map(o => {
+    const contratado = o.aplicadas + o.devolvidas;
+    const meta = metaDoAno(o.ano);
+    return {
+      ano: o.ano,
+      aplicadas: o.aplicadas,
+      devolvidas: o.devolvidas,
+      contratado,
+      devPct: contratado > 0 ? (o.devolvidas / contratado) * 100 : 0,
+      temDev: o.temDev,
+      propostas: o.props.size,
+      clientes: o.clientes.size,
+      meta,
+      pct: meta ? (o.aplicadas / meta) * 100 : null,
+    };
+  });
+}
+
+function renderPlurianual(){
+  const anos = resumoPorAno();
+  const sec = document.getElementById('secPlurianual');
+  if (!sec) return;
+  if (anos.length < 2){ sec.style.display = 'none'; return; }
+  sec.style.display = '';
+
+  const anoFoco = anoAtivo();
+
+  /* --- cartoes, um por campanha --- */
+  const cards = anos.slice().reverse().map(a => {
+    const foco = (a.ano === anoFoco);
+    const atg = a.pct === null
+      ? '<span style="color:var(--text-soft)">meta não cadastrada</span>'
+      : `<strong>${a.pct.toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})}%</strong> da meta de ${fmtInt.format(a.meta)}`;
+    const dev = a.temDev
+      ? `${fmtInt.format(a.devolvidas)} devolvidas · ${fmtPct(a.devPct)}`
+      : '<span style="color:var(--text-soft)">devolução não registrada</span>';
+    return `<div class="kpi${foco ? ' dark' : ''}">
+      <div class="kpi-label">${a.ano}${foco ? ' · em foco' : ''}</div>
+      <div class="kpi-value">${fmtInt.format(a.aplicadas)}</div>
+      <div class="kpi-meta">doses aplicadas · ${atg}</div>
+      <div class="kpi-meta">${dev}</div>
+      <div class="kpi-meta">${fmtInt.format(a.propostas)} propostas · ${fmtInt.format(a.clientes)} clientes</div>
+    </div>`;
+  }).join('');
+  document.getElementById('pluriCards').innerHTML = cards;
+
+  const semMeta = anos.filter(a => a.meta === null).map(a => a.ano);
+  const semDev  = anos.filter(a => !a.temDev).map(a => a.ano);
+  const notas = [];
+  if (semMeta.length) notas.push(`sem meta cadastrada: ${semMeta.join(', ')}`);
+  if (semDev.length)  notas.push(`sem registro de devolução: ${semDev.join(', ')}`);
+  document.getElementById('pluriSub').innerHTML =
+    'Doses aplicadas, atingimento e devoluções em cada campanha · independe dos filtros acima'
+    + (notas.length ? ` · <span style="color:var(--text-soft)">${notas.join(' · ')}</span>` : '');
+
+  /* --- barras: aplicadas x devolvidas, com a meta como linha --- */
+  destroyChart('plurianual');
+  const ctx = document.getElementById('chartPlurianual');
+  if (ctx){
+    charts.plurianual = new Chart(ctx.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: anos.map(a => String(a.ano)),
+        datasets: [
+          { label:'Doses aplicadas', data: anos.map(a => a.aplicadas),
+            backgroundColor:'rgba(62,220,116,.62)', borderColor:COL.green, borderWidth:1, borderRadius:5, stack:'d', order:3 },
+          { label:'Doses devolvidas', data: anos.map(a => a.devolvidas),
+            backgroundColor:'rgba(235,106,106,.72)', borderColor:COL.red, borderWidth:1, borderRadius:5, stack:'d', order:2 },
+          { label:'Meta do ano', type:'line', data: anos.map(a => a.meta),
+            borderColor:COL.amber, borderWidth:2, borderDash:[6,4], pointRadius:4,
+            pointBackgroundColor:COL.amber, fill:false, spanGaps:false, order:1 },
+        ]
+      },
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins:{
+          legend:{ position:'top', align:'end', labels:{ boxWidth:10, boxHeight:10, usePointStyle:true, padding:14 } },
+          tooltip:{ callbacks:{ label: c => {
+            const a = anos[c.dataIndex];
+            if (c.dataset.label === 'Meta do ano')
+              return a.meta ? `Meta: ${fmtInt.format(a.meta)} doses` : 'Meta não cadastrada';
+            if (c.dataset.label === 'Doses devolvidas' && !a.temDev)
+              return 'Devolução não registrada neste ano';
+            return `${c.dataset.label}: ${fmtInt.format(c.parsed.y)}`;
+          } } }
+        },
+        scales:{
+          x:{ stacked:true, grid:{ display:false } },
+          y:{ stacked:true, beginAtZero:true, ticks:{ callback: v => fmtInt.format(v) } }
+        }
+      }
+    });
+  }
+
+  /* --- mesmo mes, ano a ano --- */
+  const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const porAnoMes = {};
+  RAW_DATA.filter(isFechada).filter(r => !isDevolucao(r)).forEach(r => {
+    if (!r.data) return;
+    const a = Number(String(r.data).slice(0,4));
+    const m = Number(String(r.data).slice(5,7)) - 1;
+    if (!(a > 1900) || !(m >= 0 && m < 12)) return;
+    if (!porAnoMes[a]) porAnoMes[a] = new Array(12).fill(0);
+    porAnoMes[a][m] += (r.doses||0);
+  });
+  const tons = [COL.petrol, COL.greenDeep, COL.green, COL.amber, COL.orange, COL.red];
+  const listaAnos = Object.keys(porAnoMes).map(Number).sort((a,b) => a - b);
+  destroyChart('mesAno');
+  const ctx2 = document.getElementById('chartMesAno');
+  if (ctx2){
+    charts.mesAno = new Chart(ctx2.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: MESES,
+        datasets: listaAnos.map((a, i) => ({
+          label: String(a),
+          data: porAnoMes[a],
+          backgroundColor: tons[i % tons.length],
+          borderRadius: 4,
+          borderWidth: a === anoFoco ? 2 : 0,
+          borderColor: a === anoFoco ? COL.petrol : 'transparent',
+        }))
+      },
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins:{
+          legend:{ position:'top', align:'end', labels:{ boxWidth:10, boxHeight:10, usePointStyle:true, padding:14 } },
+          tooltip:{ callbacks:{ label: c => `${c.dataset.label}: ${fmtInt.format(c.parsed.y)} doses` } }
+        },
+        scales:{ x:{ grid:{ display:false } }, y:{ beginAtZero:true, ticks:{ callback: v => fmtInt.format(v) } } }
+      }
+    });
+  }
+}
+
 function renderAll(){
   const filtered = getFiltered();
   renderKPIs(filtered);
@@ -2285,23 +2620,11 @@ function renderAll(){
   renderConsig(filtered);
   renderProjection(filtered);
   renderTable(filtered);
+  renderPlurianual();
 }
 
 function bindEvents(){
-  document.querySelectorAll('.btn-preset').forEach(b => {
-    b.addEventListener('click', () => {
-      document.querySelectorAll('.btn-preset').forEach(x => x.classList.remove('active'));
-      b.classList.add('active');
-      const p = b.dataset.preset;
-      const today = new Date();
-      if (p === 'all'){ state.dateFrom = null; state.dateTo = null; }
-      else if (p === 'ytd'){ state.dateFrom = `${today.getFullYear()}-01-01`; state.dateTo = today.toISOString().slice(0,10); }
-      else { state.dateFrom = `${p}-01-01`; state.dateTo = `${p}-12-31`; }
-      document.getElementById('dateFrom').value = state.dateFrom || '';
-      document.getElementById('dateTo').value = state.dateTo || '';
-      state.page = 1; state.projPage = 1; renderAll();
-    });
-  });
+  ligarPresets(document.querySelectorAll('.btn-preset'));
 
   document.getElementById('dateFrom').addEventListener('change', e => {
     state.dateFrom = e.target.value || null; state.page = 1; state.projPage = 1;
@@ -2416,11 +2739,9 @@ function bindEvents(){
 (function init(){
   updateMetaInfo();
   document.querySelectorAll('.ms').forEach(buildMultiSelect);
-  state.dateFrom = '2026-01-01';
-  state.dateTo = '2026-12-31';
-  document.getElementById('dateFrom').value = '2026-01-01';
-  document.getElementById('dateTo').value = '2026-12-31';
   bindEvents();
+  montarPresetsAnos();
+  aplicarAno(anoDeAbertura());   /* ano do calendario, ou o mais recente com dados */
   renderAll();
 })();
 </script>
@@ -2458,13 +2779,23 @@ function bindEvents(){
 
     RAW_DATA = processed;
 
-    // Equivalente ao commitImport(), porém PRESERVANDO o período que o
-    // dashboard abre (2026). Só as seleções de filtro são zeradas, porque os
-    // valores disponíveis mudaram junto com a base.
+    // Equivalente ao commitImport(), mas sem resetar o periodo para "Todos".
+    // So as selecoes de filtro sao zeradas, porque os valores disponiveis
+    // mudaram junto com a base.
     state.status.clear(); state.owner.clear(); state.product.clear(); state.porte.clear();
     state.cnae = ''; state.cnpjQuery = ''; state.clientQuery = ''; state.search = '';
     state.page = 1; state.projSearch = ''; state.projPage = 1;
     document.querySelectorAll('.ms').forEach(buildMultiSelect);
+
+    // A base embutida no arquivo e antiga: os anos de verdade so aparecem
+    // agora. Refaz os botoes de ano e reposiciona a abertura sobre a base nova
+    // — sem isso o painel ficaria preso no ultimo ano do arquivo estatico.
+    if (typeof montarPresetsAnos === 'function'){
+      var avisoEl = document.getElementById('avisoAno');
+      if (avisoEl){ avisoEl.style.display = 'none'; avisoEl.textContent = ''; }
+      montarPresetsAnos();
+      aplicarAno(anoDeAbertura());
+    }
 
     updateMetaInfo();
     renderAll();
