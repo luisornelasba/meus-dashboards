@@ -1843,21 +1843,35 @@ function setHtmlSafe(id, value){
 /* ========= Renderização principal ========= */
 function render(){
   const data = applyFilters();
-  renderKPIs(data);
-  renderEvolucao(data);
-  renderGauge();
-  renderConsultores(data);
-  renderProdutos(data);
-  renderPorte(data);
-  renderTop5(data);
-  renderConsultorStatus(data);
-  renderConsultorMeta();
-  renderMilestones();
-  renderStrategyCards();
-  renderExecutiveInsights(data);
-  renderMap(data);
-  renderPorteTable(data);
-  renderDataTable(data);
+  /* CORREcAO DO DRILL-DOWN — a Tabela de Propostas passa a responder a TODOS os
+     filtros em qualquer combinacao.
+     Antes, render() executava os componentes em sequencia direta e a tabela era
+     o ULTIMO da fila. Bastava um grafico lancar excecao (acontecia sempre que a
+     combinacao de filtros zerava o recorte) para a execucao parar ali: a tabela
+     nunca era redesenhada e permanecia com as linhas e a contagem do filtro
+     ANTERIOR, enquanto os KPIs ja mostravam o novo recorte.
+     Agora a tabela e desenhada PRIMEIRO, com o mesmo applyFilters() que alimenta
+     todo o painel, e cada componente roda isolado: a falha de um nao derruba os
+     demais. Nenhum calculo, filtro, cor ou layout foi alterado. */
+  const passo = (nome, fn) => {
+    try { fn(); }
+    catch(e){ console.error('[render] falha em ' + nome + ':', e); }
+  };
+  passo('drill-down',        ()=>renderDataTable(data));
+  passo('kpis',              ()=>renderKPIs(data));
+  passo('evolucao',          ()=>renderEvolucao(data));
+  passo('gauge',             ()=>renderGauge());
+  passo('consultores',       ()=>renderConsultores(data));
+  passo('produtos',          ()=>renderProdutos(data));
+  passo('porte',             ()=>renderPorte(data));
+  passo('top5',              ()=>renderTop5(data));
+  passo('consultorStatus',   ()=>renderConsultorStatus(data));
+  passo('consultorMeta',     ()=>renderConsultorMeta());
+  passo('milestones',        ()=>renderMilestones());
+  passo('strategyCards',     ()=>renderStrategyCards());
+  passo('executiveInsights', ()=>renderExecutiveInsights(data));
+  passo('mapa',              ()=>renderMap(data));
+  passo('porteTable',        ()=>renderPorteTable(data));
 }
 
 /* ========= KPIs ========= */
@@ -2079,12 +2093,12 @@ function renderConsultores(data){
     data:{labels,datasets:[{
       data:values,
       backgroundColor: (c)=>{
-        const i = c.dataIndex;
+        const i = (c.dataIndex == null ? 0 : c.dataIndex);   /* dataset vazio: o Chart.js chama sem dataIndex */
         const pal = palettes[i % palettes.length];
         return makeGradientH(c.chart.ctx, c.chart.chartArea, pal[0], pal[1]);
       },
       hoverBackgroundColor: (c)=>{
-        const i = c.dataIndex;
+        const i = (c.dataIndex == null ? 0 : c.dataIndex);   /* dataset vazio: o Chart.js chama sem dataIndex */
         const pal = palettes[i % palettes.length];
         return makeGradientH(c.chart.ctx, c.chart.chartArea, pal[1], pal[0]);
       },
@@ -2134,12 +2148,12 @@ function renderProdutos(data){
     data:{labels,datasets:[{
       data:values,
       backgroundColor: (c)=>{
-        const i = c.dataIndex;
+        const i = (c.dataIndex == null ? 0 : c.dataIndex);   /* dataset vazio: o Chart.js chama sem dataIndex */
         const pal = donutPalettes[i % donutPalettes.length];
         return makeRadialGradient(c.chart.ctx, c.chart.chartArea, pal[0], pal[1]);
       },
       hoverBackgroundColor: (c)=>{
-        const i = c.dataIndex;
+        const i = (c.dataIndex == null ? 0 : c.dataIndex);   /* dataset vazio: o Chart.js chama sem dataIndex */
         const pal = donutPalettes[i % donutPalettes.length];
         return makeRadialGradient(c.chart.ctx, c.chart.chartArea, pal[1], pal[0]);
       },
@@ -2193,12 +2207,12 @@ function renderPorte(data){
     data:{labels,datasets:[{
       data:values,
       backgroundColor:(c)=>{
-        const i = c.dataIndex;
+        const i = (c.dataIndex == null ? 0 : c.dataIndex);   /* dataset vazio: o Chart.js chama sem dataIndex */
         const pal = portePalettes[i % portePalettes.length];
         return makeGradient(c.chart.ctx, c.chart.chartArea, pal[0], pal[1]);
       },
       hoverBackgroundColor:(c)=>{
-        const i = c.dataIndex;
+        const i = (c.dataIndex == null ? 0 : c.dataIndex);   /* dataset vazio: o Chart.js chama sem dataIndex */
         const pal = portePalettes[i % portePalettes.length];
         return makeGradient(c.chart.ctx, c.chart.chartArea, pal[1], pal[0]);
       },
@@ -2242,12 +2256,12 @@ function renderTop5(data){
     data:{labels,datasets:[{
       data:values,
       backgroundColor:(c)=>{
-        const i = c.dataIndex;
+        const i = (c.dataIndex == null ? 0 : c.dataIndex);   /* dataset vazio: o Chart.js chama sem dataIndex */
         const pal = top5Palettes[i % top5Palettes.length];
         return makeGradientH(c.chart.ctx, c.chart.chartArea, pal[0], pal[1]);
       },
       hoverBackgroundColor:(c)=>{
-        const i = c.dataIndex;
+        const i = (c.dataIndex == null ? 0 : c.dataIndex);   /* dataset vazio: o Chart.js chama sem dataIndex */
         const pal = top5Palettes[i % top5Palettes.length];
         return makeGradientH(c.chart.ctx, c.chart.chartArea, pal[1], pal[0]);
       },
