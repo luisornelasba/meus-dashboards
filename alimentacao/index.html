@@ -1089,7 +1089,16 @@ function renderContratos(d){
   const comCtr = d.filter(r => r.ctr && r.ctrAli);
   const ganhas = d.filter(r => r.ganha);
   const ganhasSem = ganhas.filter(r => !r.ctr);
-  const comFim = comCtr.filter(r => r.ctrFim);
+
+  /* VIGÊNCIA REAL: este bloco se baseia SOMENTE na Data de Início e na Data de
+     Término do Contrato informadas no CRM. Contratos cuja vigência foi estimada
+     pelo ETL (Data de Modificação + 12 meses, marcados com ctrEst) não entram
+     como vigentes nem como vencidos — eles contam em "Sem data de vigência",
+     porque a data real não existe no cadastro.
+     Os demais componentes do dashboard seguem inalterados. */
+  const vigenciaReal = r => !!r.ctrIni && !!r.ctrFim && !r.ctrEst;
+  const comFim = comCtr.filter(vigenciaReal);
+  const semVigencia = comCtr.filter(r => !vigenciaReal(r));
   const vencidos = comFim.filter(r => diasAte(r.ctrFim) < 0);
   const vigentes = comFim.filter(r => diasAte(r.ctrFim) >= 0);
   const em30 = vigentes.filter(r => diasAte(r.ctrFim) <= 30);
@@ -1101,10 +1110,11 @@ function renderContratos(d){
       '<div class="cs">Suba a planilha Todos os Contratos na pasta entrada para preencher este bloco.</div></div>';
     prox.innerHTML = ''; return;
   }
-  const estimados = comCtr.filter(r => r.ctrEst).length;
-  sub.innerHTML = 'Contratos com produto de Alimentação no Resumo de Produtos · vigência apurada em ' +
-    fmtData(HOJE_ISO) + (estimados ? ' · <b>' + fmtN(estimados) + '</b> com vigência estimada ' +
-    '(Data de Modificação + 12 meses, por não ter início/término no CRM)' : '');
+  const semData = semVigencia.length;
+  sub.innerHTML = 'Contratos com produto de Alimentação no Resumo de Produtos · ' +
+    'vigência apurada em ' + fmtData(HOJE_ISO) + ' <b>somente pelas datas de Início e ' +
+    'Término informadas no CRM</b>' +
+    (semData ? ' · <b>' + fmtN(semData) + '</b> sem essas datas ficam fora de vigentes e vencidos' : '');
 
   const cx = (cls,l,v,s2) => '<div class="ctr-box '+cls+'"><div class="cl">'+l+'</div><div class="cv">'+v+'</div><div class="cs">'+s2+'</div></div>';
   grid.innerHTML =
@@ -1113,7 +1123,7 @@ function renderContratos(d){
     cx('ok',    'Vigentes hoje', fmtN(vigentes.length), fmtMk(soma(vigentes,r=>r.vt))) +
     cx('warn',  'Vencem em 90 dias', fmtN(em90.length), fmtN(em30.length)+' nos próximos 30 dias') +
     cx('neutro','Vencidos', fmtN(vencidos.length), 'Base de renovação') +
-    cx('neutro','Sem data de vigência', fmtN(comCtr.length - comFim.length), 'Contrato sem término informado');
+    cx('neutro','Sem data de vigência', fmtN(semVigencia.length), 'Início ou término não informado no CRM');
 
   /* Uma linha por CONTRATO — é assim que a renovação é negociada, não por proposta */
   const porCtr = new Map();
