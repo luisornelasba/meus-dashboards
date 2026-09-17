@@ -360,6 +360,11 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         <button class="btn btn-ghost" id="btnXlsCtr" style="margin-left:auto">⤓ Excel</button></div>
       <div class="ctr-grid" id="ctrKpis"></div>
       <div id="ctrProximos"></div>
+      <div class="chead" style="margin-top:22px;border-top:1px solid var(--line);padding-top:16px">
+        <div><h3 style="font-size:14.5px"><i style="background:#E11D48"></i><span id="ctrAnoVenc">Contratos Vencidos</span></h3>
+        <div class="sub" id="ctrVencSub">Vencimento dentro do ano atual, pelas datas informadas no CRM</div></div>
+        <button class="btn btn-ghost" id="btnXlsCtrVenc" style="margin-left:auto">⤓ Excel</button></div>
+      <div id="ctrVencidos"></div>
     </div>
   </section>
 
@@ -1155,6 +1160,84 @@ function renderContratos(d){
       }).join('') + '</tbody></table></div>' +
       '<div style="font-size:11.5px;color:var(--txt3);margin-top:9px">' + fmtN(porCtr.size) +
       ' contratos vigentes no recorte · exibindo os ' + Math.min(15, porCtr.size) + ' primeiros a vencer.</div>';
+
+  /* ---- CONTRATOS VENCIDOS DO ANO ATUAL --------------------------------
+     Lista os contratos cujo Término do Contrato caiu dentro do ano
+     corrente. Segue a mesma regra do bloco: só entra quem tem Data de
+     Início e Data de Término reais informadas no CRM. */
+  renderContratosVencidosAno(vencidos);
+}
+
+let CTR_VENC_EXPORT = [];   /* contratos vencidos no ano atual, para exportação */
+
+function renderContratosVencidosAno(vencidos){
+  const alvo = document.getElementById('ctrVencidos');
+  const subV = document.getElementById('ctrVencSub');
+  const tit  = document.getElementById('ctrAnoVenc');
+  if(!alvo) return;
+
+  const ANO = HOJE_ISO.slice(0,4);
+  if(tit) tit.textContent = 'Contratos Vencidos em ' + ANO;
+
+  const doAno = (vencidos || []).filter(r => String(r.ctrFim || '').slice(0,4) === ANO);
+
+  /* uma linha por contrato, como no quadro de vigentes */
+  const porCtrV = new Map();
+  doAno.forEach(r => {
+    let o = porCtrV.get(r.ctr);
+    if(!o){ o = { ctr:r.ctr, cli:r.cli, cnpj:r.cnpj, cons:r.cons, ini:r.ctrIni, fim:r.ctrFim,
+                  st:r.ctrSt, resumo:r.ctrProd, ent:r.ent, vt:0, prods:new Set(), n:0 }; porCtrV.set(r.ctr,o); }
+    o.vt += r.vt; o.n++; o.prods.add(r.prod);
+  });
+  /* mais recentes primeiro: quem venceu por último é a renovação mais quente */
+  const todosVenc = [...porCtrV.values()].sort((a,b) => (b.fim||'').localeCompare(a.fim||''));
+  CTR_VENC_EXPORT = todosVenc;
+
+  if(subV){
+    subV.innerHTML = todosVenc.length
+      ? 'Término do contrato entre 01/01/' + ANO + ' e ' + fmtData(HOJE_ISO) +
+        ' · <b>' + fmtN(todosVenc.length) + '</b> contratos · <b>' + fmtMk(soma(todosVenc, o => o.vt)) +
+        '</b> em base de renovação'
+      : 'Nenhum contrato venceu em ' + ANO + ' dentro do recorte atual.';
+  }
+  if(!todosVenc.length){
+    alvo.innerHTML = '<div style="font-size:12.5px;color:var(--txt3);padding:10px 2px">' +
+      'Nenhum contrato com término em ' + ANO + ' no filtro aplicado.</div>';
+    return;
+  }
+  const lista = todosVenc.slice(0,15);
+  alvo.innerHTML =
+    '<div class="tw"><table><thead><tr><th>Cliente</th><th>Contrato</th><th>Produtos</th>' +
+    '<th>Consultor</th><th>Início</th><th>Venceu em</th><th class="num">Valor</th></tr></thead><tbody>' +
+    lista.map(o => {
+      const dd = Math.abs(diasAte(o.fim));
+      const nome = o.resumo || [...o.prods].join(' · ');
+      return '<tr><td class="strong"><span class="trunc" title="'+esc(o.cli)+'">'+esc(o.cli)+'</span></td>' +
+        '<td>'+esc(o.ctr)+'</td>' +
+        '<td><span class="trunc" style="max-width:230px" title="'+esc(nome)+'">'+esc(nome)+'</span>' +
+          (o.n > 1 ? ' <span class="badge b-semctr">'+o.n+' propostas</span>' : '') + '</td>' +
+        '<td>'+esc(o.cons)+'</td>' +
+        '<td>'+fmtData(o.ini)+'</td>' +
+        '<td>'+fmtData(o.fim)+' <span class="badge b-venc">há '+dd+'d</span></td>' +
+        '<td class="num strong">'+fmtM(o.vt)+'</td></tr>';
+    }).join('') + '</tbody></table></div>' +
+    '<div style="font-size:11.5px;color:var(--txt3);margin-top:9px">' + fmtN(todosVenc.length) +
+    ' contratos venceram em ' + ANO + ' · exibindo os ' + Math.min(15, todosVenc.length) +
+    ' mais recentes · use o botão Excel para a lista completa.</div>';
+}
+
+function exportarContratosVencidosXLSX(){
+  if(!CTR_VENC_EXPORT.length){ toast('Nenhum contrato vencido no ano atual dentro do filtro.','err'); return; }
+  const ANO = HOJE_ISO.slice(0,4);
+  const cab = ['ID do Contrato','Cliente','CNPJ','Consultor','Entidade/Unidade','Resumo de Produtos',
+    'Status do Contrato','Início','Término','Dias vencido','Propostas','Valor Total'];
+  const linhas = CTR_VENC_EXPORT.map(o => [o.ctr, o.cli, o.cnpj, o.cons, o.ent || '',
+    o.resumo || [...o.prods].join(' · '), o.st || '', fmtData(o.ini), fmtData(o.fim),
+    Math.abs(diasAte(o.fim)), o.n, +o.vt.toFixed(2)]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([cab].concat(linhas)), 'Vencidos ' + ANO);
+  XLSX.writeFile(wb, 'Contratos_Vencidos_' + ANO + '_Alimentacao_' + hoje() + '.xlsx');
+  toast('Excel exportado com ' + fmtN(CTR_VENC_EXPORT.length) + ' contratos vencidos em ' + ANO + '.','ok');
 }
 
 /* ==========================================================================
@@ -1408,6 +1491,8 @@ function ligarEventos(){
   document.getElementById('btnExport').onclick = exportarRelatorio;
   document.getElementById('btnXlsDrill').onclick = exportarDrillXLSX;
   document.getElementById('btnXlsCtr').onclick = exportarContratosXLSX;
+  const bVenc = document.getElementById('btnXlsCtrVenc');
+  if(bVenc) bVenc.onclick = exportarContratosVencidosXLSX;
   document.getElementById('btnXlsPend').onclick = exportarPendenciasXLSX;
 }
 
