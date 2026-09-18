@@ -362,7 +362,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
       <div id="ctrProximos"></div>
       <div class="chead" style="margin-top:22px;border-top:1px solid var(--line);padding-top:16px">
         <div><h3 style="font-size:14.5px"><i style="background:#E11D48"></i><span id="ctrAnoVenc">Contratos Vencidos</span></h3>
-        <div class="sub" id="ctrVencSub">Vencimento dentro do ano atual, pelas datas informadas no CRM</div></div>
+        <div class="sub" id="ctrVencSub">Contratos ativos com término já vencido, pelas datas informadas no CRM</div></div>
         <button class="btn btn-ghost" id="btnXlsCtrVenc" style="margin-left:auto">⤓ Excel</button></div>
       <div id="ctrVencidos"></div>
     </div>
@@ -1161,14 +1161,27 @@ function renderContratos(d){
       '<div style="font-size:11.5px;color:var(--txt3);margin-top:9px">' + fmtN(porCtr.size) +
       ' contratos vigentes no recorte · exibindo os ' + Math.min(15, porCtr.size) + ' primeiros a vencer.</div>';
 
-  /* ---- CONTRATOS VENCIDOS DO ANO ATUAL --------------------------------
-     Lista os contratos cujo Término do Contrato caiu dentro do ano
-     corrente. Segue a mesma regra do bloco: só entra quem tem Data de
-     Início e Data de Término reais informadas no CRM. */
+  /* ---- CONTRATOS VENCIDOS ---------------------------------------------
+     Lista TODOS os contratos ATIVOS cujo Término do Contrato já passou,
+     de qualquer ano. Segue a mesma regra do bloco: só entra quem tem Data
+     de Início e Data de Término reais informadas no CRM. */
   renderContratosVencidosAno(vencidos);
 }
 
-let CTR_VENC_EXPORT = [];   /* contratos vencidos no ano atual, para exportação */
+let CTR_VENC_EXPORT = [];   /* contratos ATIVOS já vencidos, todos os anos, para exportação */
+
+/* Quantos PRODUTOS o contrato traz. O Resumo de Produtos do CRM vem com os
+   produtos separados por vírgula; quando ele não existe, usa-se a lista de
+   produtos das propostas vinculadas. Serve para o selo da coluna Produtos. */
+function contarProdutos(resumo, prods){
+  const doResumo = String(resumo || '').split(',').map(x => x.trim()).filter(Boolean);
+  const distintos = new Set(doResumo.map(x => semAcento(x).replace(/\s+/g,' ')));
+  if(distintos.size) return distintos.size;
+  return (prods && prods.size) ? prods.size : 1;
+}
+
+/* Status do contrato considerado "Ativo" no CRM (ignora caixa e acentuação). */
+const ctrStatusAtivo = r => semAcento(r && r.ctrSt).trim() === 'ATIVO';
 
 function renderContratosVencidosAno(vencidos){
   const alvo = document.getElementById('ctrVencidos');
@@ -1176,10 +1189,12 @@ function renderContratosVencidosAno(vencidos){
   const tit  = document.getElementById('ctrAnoVenc');
   if(!alvo) return;
 
-  const ANO = HOJE_ISO.slice(0,4);
-  if(tit) tit.textContent = 'Contratos Vencidos em ' + ANO;
+  if(tit) tit.textContent = 'Contratos Vencidos';
 
-  const doAno = (vencidos || []).filter(r => String(r.ctrFim || '').slice(0,4) === ANO);
+  /* TODOS os anos · somente contratos com Status Ativo no CRM · Data de Término
+     anterior a hoje. A vigência já vem apurada somente pelas datas reais de
+     Início e Término (ver renderContratos). */
+  const doAno = (vencidos || []).filter(ctrStatusAtivo);
 
   /* uma linha por contrato, como no quadro de vigentes */
   const porCtrV = new Map();
@@ -1195,14 +1210,14 @@ function renderContratosVencidosAno(vencidos){
 
   if(subV){
     subV.innerHTML = todosVenc.length
-      ? 'Término do contrato entre 01/01/' + ANO + ' e ' + fmtData(HOJE_ISO) +
-        ' · <b>' + fmtN(todosVenc.length) + '</b> contratos · <b>' + fmtMk(soma(todosVenc, o => o.vt)) +
-        '</b> em base de renovação'
-      : 'Nenhum contrato venceu em ' + ANO + ' dentro do recorte atual.';
+      ? 'Contratos com <b>Status Ativo</b> no CRM e Data de Término anterior a ' + fmtData(HOJE_ISO) +
+        ' · <b>todos os anos</b> · <b>' + fmtN(todosVenc.length) + '</b> contratos · <b>' +
+        fmtMk(soma(todosVenc, o => o.vt)) + '</b> em base de renovação'
+      : 'Nenhum contrato ativo vencido dentro do recorte atual.';
   }
   if(!todosVenc.length){
     alvo.innerHTML = '<div style="font-size:12.5px;color:var(--txt3);padding:10px 2px">' +
-      'Nenhum contrato com término em ' + ANO + ' no filtro aplicado.</div>';
+      'Nenhum contrato com Status Ativo e término já vencido no filtro aplicado.</div>';
     return;
   }
   const lista = todosVenc.slice(0,15);
@@ -1212,42 +1227,56 @@ function renderContratosVencidosAno(vencidos){
     lista.map(o => {
       const dd = Math.abs(diasAte(o.fim));
       const nome = o.resumo || [...o.prods].join(' · ');
+      const nProd = contarProdutos(nome, o.prods);   /* quantos PRODUTOS o contrato tem */
       return '<tr><td class="strong"><span class="trunc" title="'+esc(o.cli)+'">'+esc(o.cli)+'</span></td>' +
         '<td>'+esc(o.ctr)+'</td>' +
         '<td><span class="trunc" style="max-width:230px" title="'+esc(nome)+'">'+esc(nome)+'</span>' +
-          (o.n > 1 ? ' <span class="badge b-semctr">'+o.n+' propostas</span>' : '') + '</td>' +
+          (nProd > 1 ? ' <span class="badge b-semctr">'+nProd+' produtos</span>' : '') + '</td>' +
         '<td>'+esc(o.cons)+'</td>' +
         '<td>'+fmtData(o.ini)+'</td>' +
         '<td>'+fmtData(o.fim)+' <span class="badge b-venc">há '+dd+'d</span></td>' +
         '<td class="num strong">'+fmtM(o.vt)+'</td></tr>';
     }).join('') + '</tbody></table></div>' +
     '<div style="font-size:11.5px;color:var(--txt3);margin-top:9px">' + fmtN(todosVenc.length) +
-    ' contratos venceram em ' + ANO + ' · exibindo os ' + Math.min(15, todosVenc.length) +
+    ' contratos ativos já vencidos · exibindo os ' + Math.min(15, todosVenc.length) +
     ' mais recentes · use o botão Excel para a lista completa.</div>';
 }
 
 function exportarContratosVencidosXLSX(){
-  if(!CTR_VENC_EXPORT.length){ toast('Nenhum contrato vencido no ano atual dentro do filtro.','err'); return; }
-  const ANO = HOJE_ISO.slice(0,4);
+  if(!CTR_VENC_EXPORT.length){ toast('Nenhum contrato ativo vencido dentro do filtro.','err'); return; }
   const cab = ['ID do Contrato','Cliente','CNPJ','Consultor','Entidade/Unidade','Resumo de Produtos',
-    'Status do Contrato','Início','Término','Dias vencido','Propostas','Valor Total'];
-  const linhas = CTR_VENC_EXPORT.map(o => [o.ctr, o.cli, o.cnpj, o.cons, o.ent || '',
-    o.resumo || [...o.prods].join(' · '), o.st || '', fmtData(o.ini), fmtData(o.fim),
-    Math.abs(diasAte(o.fim)), o.n, +o.vt.toFixed(2)]);
+    'Produtos','Status do Contrato','Início','Término','Dias vencido','Propostas','Valor Total'];
+  const linhas = CTR_VENC_EXPORT.map(o => {
+    const nome = o.resumo || [...o.prods].join(' · ');
+    return [o.ctr, o.cli, o.cnpj, o.cons, o.ent || '', nome, contarProdutos(nome, o.prods),
+      o.st || '', fmtData(o.ini), fmtData(o.fim), Math.abs(diasAte(o.fim)), o.n, +o.vt.toFixed(2)];
+  });
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([cab].concat(linhas)), 'Vencidos ' + ANO);
-  XLSX.writeFile(wb, 'Contratos_Vencidos_' + ANO + '_Alimentacao_' + hoje() + '.xlsx');
-  toast('Excel exportado com ' + fmtN(CTR_VENC_EXPORT.length) + ' contratos vencidos em ' + ANO + '.','ok');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([cab].concat(linhas)), 'Contratos vencidos');
+  XLSX.writeFile(wb, 'Contratos_Vencidos_Alimentacao_' + hoje() + '.xlsx');
+  toast('Excel exportado com ' + fmtN(CTR_VENC_EXPORT.length) + ' contratos ativos vencidos.','ok');
 }
 
 /* ==========================================================================
    CONTRATOS A CORRIGIR NO CRM — sem Data de Início e sem Data de Término.
-   ATENÇÃO: este bloco NÃO segue os filtros do dashboard. Ele é uma lista de
-   trabalho do CRM inteiro (todos os produtos e unidades), criada a partir da
-   janela definida no ETL (PENDENCIAS_DESDE), pela Data de Criação do contrato.
+   ATENÇÃO: este bloco NÃO segue os filtros do dashboard (data, consultor,
+   status etc.). Ele é uma lista de trabalho criada a partir da janela definida
+   no ETL (PENDENCIAS_DESDE), pela Data de Criação do contrato.
+   RECORTE DE PRODUTO: entram SOMENTE os contratos cujo Resumo de Produtos
+   contém algum dos seis produtos de Alimentação (PRODUTOS_ESCOPO) — os mesmos
+   que definem o escopo do dashboard. Contratos de outros produtos do CRM
+   (SST, vacinas, cursos, locação…) ficam de fora.
    Por isso é renderizado uma vez, na carga, e não dentro de renderAll().
    ========================================================================== */
 let PEND_EXPORT = [];
+
+/* O Resumo de Produtos vem com vários produtos separados por vírgula.
+   Basta um deles estar no escopo de Alimentação para o contrato entrar. */
+function pendenciaDeAlimentacao(p){
+  const resumo = semAcento(p && p.prod).replace(/\s+/g,' ');
+  if(!resumo.trim()) return false;
+  return PRODUTOS_ESCOPO.some(a => resumo.indexOf(a) >= 0);
+}
 
 /* CNPJ 14 dígitos -> 00.000.000/0000-00 (só para exibição e exportação) */
 const fmtCnpj = v => {
@@ -1265,7 +1294,8 @@ function renderPendencias(){
   if(!sec || !grid) return;
 
   const bloco = (META && META.pendencias_contrato) || null;
-  const itens = (bloco && bloco.itens) || [];
+  const todos = (bloco && bloco.itens) || [];
+  const itens = todos.filter(pendenciaDeAlimentacao);   /* só os produtos de Alimentação */
   PEND_EXPORT = itens;
 
   if(!bloco){
@@ -1275,9 +1305,10 @@ function renderPendencias(){
   sec.style.display = '';
 
   if(!itens.length){
-    sub.textContent = 'Nenhum contrato sem vigência desde ' + fmtData(bloco.desde) + ' — cadastro em dia.';
+    sub.textContent = 'Nenhum contrato de Alimentação sem vigência desde ' + fmtData(bloco.desde) +
+      ' — cadastro em dia.';
     grid.innerHTML = '<div class="ctr-box ok"><div class="cl">Pendências</div><div class="cv">0</div>' +
-      '<div class="cs">Todos os contratos do período têm início e término informados.</div></div>';
+      '<div class="cs">Todos os contratos de Alimentação do período têm início e término informados.</div></div>';
     lst.innerHTML = ''; return;
   }
 
@@ -1292,12 +1323,12 @@ function renderPendencias(){
   const unidades = new Set(itens.map(p => p.ent).filter(Boolean)).size;
 
   sub.innerHTML = 'Contratos sem Data de Início <b>e</b> sem Data de Término no CRM, criados a partir de ' +
-    fmtData(bloco.desde) + ' · <b>todo o CRM</b>, não apenas Alimentação · ' +
+    fmtData(bloco.desde) + ' · <b>somente os seis produtos de Alimentação</b> · ' +
     '<span style="color:var(--txt3)">este bloco não segue os filtros acima</span>';
 
   const cx = (cls,l,v,s2) => '<div class="ctr-box '+cls+'"><div class="cl">'+l+'</div><div class="cv">'+v+'</div><div class="cs">'+s2+'</div></div>';
   grid.innerHTML =
-    cx('warn',  'Contratos a corrigir', fmtN(itens.length), 'desde ' + fmtData(bloco.desde)) +
+    cx('warn',  'Contratos a corrigir', fmtN(itens.length), 'produtos de Alimentação · desde ' + fmtData(bloco.desde)) +
     cx('info',  'Proprietários', fmtN(donos.length), 'responsáveis pelo preenchimento') +
     cx('neutro','Unidades', fmtN(unidades), 'entidades envolvidas') +
     cx('warn',  'Valor sem vigência', fmtMk(valor), 'soma dos contratos listados');
