@@ -368,16 +368,6 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
     </div>
   </section>
 
-  <section class="sec" id="secPendencias">
-    <div class="card">
-      <div class="chead"><div><h3><i style="background:#E11D48"></i>Contratos a Corrigir no CRM · Sem Vigência Cadastrada</h3>
-        <div class="sub" id="pendSub">Contratos sem Data de Início e sem Data de Término, para cobrança junto aos proprietários</div></div>
-        <button class="btn btn-ghost" id="btnXlsPend" style="margin-left:auto">⤓ Excel</button></div>
-      <div class="ctr-grid" id="pendKpis"></div>
-      <div id="pendLista"></div>
-    </div>
-  </section>
-
   <section class="sec">
     <div class="card">
       <div class="chead">
@@ -1524,7 +1514,10 @@ function ligarEventos(){
   document.getElementById('btnXlsCtr').onclick = exportarContratosXLSX;
   const bVenc = document.getElementById('btnXlsCtrVenc');
   if(bVenc) bVenc.onclick = exportarContratosVencidosXLSX;
-  document.getElementById('btnXlsPend').onclick = exportarPendenciasXLSX;
+  /* Bloco 'Contratos a Corrigir no CRM' retirado do painel em 21/09/2026:
+     o botão não existe mais, então a ligação só acontece se ele voltar. */
+  const bPend = document.getElementById('btnXlsPend');
+  if(bPend) bPend.onclick = exportarPendenciasXLSX;
 }
 
 /* ---------- MODAL ---------- */
