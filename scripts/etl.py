@@ -107,8 +107,24 @@ OUTROS_DASHBOARDS = {
         'tipo': 'entidade_contem',
         'valores': {'IEL'},
     },
-    # Para ligar o próximo, remova o # da linha correspondente:
-    # 'producao-area-mercado': {'descricao': 'Base completa', 'tipo': 'tudo', 'valores': set()},
+    'producao-area-mercado': {
+        'descricao': 'Produção da Área de Mercado',
+        'tipo': 'tudo',              # sem recorte: o dashboard aplica a própria carteira
+        'valores': set(),
+        # Formato colunar: em vez de repetir o nome da coluna em cada linha, o arquivo
+        # traz o cabeçalho UMA vez e as linhas como listas. Esta é a maior base do
+        # repositório (~18 mil linhas) e o ganho é de mais da metade do tamanho.
+        'formato': 'colunar',
+        # Só as colunas que este dashboard realmente lê (as 11 obrigatórias do
+        # importador + Bairro/Cidade/UF, usadas para posicionar o cliente no mapa).
+        'colunas': [
+            'ID da Proposta', 'Proprietário', 'Cliente', 'CNPJ (Cliente)',
+            'Entidade/Unidade', 'Razão do Status', 'Produto Existente', 'Porte',
+            'Valor Total', 'Data do Aceite', 'Data de Modificação',
+            'Endereço Principal: Bairro (Cliente)', 'Cidade (Cliente)',
+            'Endereço 1: Estado (Cliente)',
+        ],
+    },
 }
 
 CONTRATOS = {}   # preenchido em main() a partir da planilha de contratos
@@ -408,6 +424,19 @@ def texto(v, padrao=''):
     return padrao if s.lower() in ('nan', 'none', 'nat') else s
 
 
+def valor_bruto(col, v):
+    """Converte UMA célula para o tipo que os dashboards esperam."""
+    if col.startswith('Data'):
+        return to_iso(v)
+    if col == 'Valor Total':
+        return round(to_num(v), 2)
+    if col in ('Quantidade', 'Quantidade de Pessoas Atendidas'):
+        return to_num(v)
+    if col == 'Email (Contato)':
+        return indicador_email(v) if EMAIL_SOMENTE_INDICADOR else texto(v, None)
+    return texto(v, None)
+
+
 def linha_bruta(r, df):
     """Converte uma linha da planilha nas colunas originais que os outros dashboards leem."""
     out = {}
@@ -448,14 +477,27 @@ def gerar_outros_dashboards(df, idx, nome_arquivo):
             m = pd.Series(True, index=df.index)
 
         sub = df[m]
-        linhas = [linha_bruta(r, df) for _, r in sub.iterrows()]
         destino = RAIZ / pasta / 'base.json'
         if not destino.parent.exists():
             log(f'AVISO: pasta "{pasta}" não existe no repositório — pulando.')
             continue
-        destino.write_text(json.dumps(
-            {'gerado_em': carimbo, 'origem': nome_arquivo, 'total': len(linhas), 'rows': linhas},
-            ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
+
+        if cfg.get('formato') == 'colunar':
+            # Cabeçalho uma vez + linhas como listas. Vale a pena em bases grandes.
+            cols = [c for c in cfg.get('colunas', COLUNAS_BRUTAS) if c in df.columns]
+            faltando = [c for c in cfg.get('colunas', []) if c not in df.columns]
+            if faltando:
+                log(f'   AVISO ({pasta}): colunas ausentes na planilha: {", ".join(faltando)}')
+            linhas = [[valor_bruto(c, r[c]) for c in cols] for _, r in sub.iterrows()]
+            pacote = {'gerado_em': carimbo, 'origem': nome_arquivo, 'formato': 'colunar',
+                      'total': len(linhas), 'cols': cols, 'rows': linhas}
+        else:
+            linhas = [linha_bruta(r, df) for _, r in sub.iterrows()]
+            pacote = {'gerado_em': carimbo, 'origem': nome_arquivo,
+                      'total': len(linhas), 'rows': linhas}
+
+        destino.write_text(json.dumps(pacote, ensure_ascii=False, separators=(',', ':')),
+                           encoding='utf-8')
         log(f'   + {pasta}/base.json  ({cfg["descricao"]}): {len(linhas)} linhas, '
             f'{destino.stat().st_size / 1024:.0f} KB')
 
