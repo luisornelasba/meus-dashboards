@@ -728,15 +728,16 @@ html, body {
   overflow: hidden; text-overflow: ellipsis;
 }
 /* larguras fixas: sem isso os titulos das colunas se encavalam */
-#tab-porte th:nth-child(1), #tab-porte td:nth-child(1) { width: 23%; }
+/* 6 colunas desde 05/10/2026 (saiu o Ticket Médio); a coluna de valor ficou
+   larga porque passou a mostrar o número cheio, com centavos. */
+#tab-porte th:nth-child(1), #tab-porte td:nth-child(1) { width: 22%; }
 #tab-porte th:nth-child(2), #tab-porte td:nth-child(2) { width: 12%; }
-#tab-porte th:nth-child(3), #tab-porte td:nth-child(3) { width: 10%; }
+#tab-porte th:nth-child(3), #tab-porte td:nth-child(3) { width: 11%; }
 #tab-porte th:nth-child(4), #tab-porte td:nth-child(4) { width: 13%; }
-#tab-porte th:nth-child(5), #tab-porte td:nth-child(5) { width: 16%; }
-#tab-porte th:nth-child(6), #tab-porte td:nth-child(6) { width: 14%; }
-#tab-porte th:nth-child(7), #tab-porte td:nth-child(7) { width: 12%; }
-#tab-porte td:nth-child(7) .part-bar { min-width: 20px; }
-#tab-porte td:nth-child(7) .part-num { min-width: 32px; font-size: 10px; }
+#tab-porte th:nth-child(5), #tab-porte td:nth-child(5) { width: 27%; }
+#tab-porte th:nth-child(6), #tab-porte td:nth-child(6) { width: 15%; }
+#tab-porte td:nth-child(6) .part-bar { min-width: 22px; }
+#tab-porte td:nth-child(6) .part-num { min-width: 34px; font-size: 10px; }
 
 #tab-entidade th:nth-child(1), #tab-entidade td:nth-child(1) { width: 28%; }
 #tab-entidade th:nth-child(2), #tab-entidade td:nth-child(2) { width: 13%; }
@@ -767,6 +768,38 @@ html, body {
 #tab-consolidado th:nth-child(7), #tab-consolidado td:nth-child(7) { width: 13%; }
 #tab-consolidado th:nth-child(8), #tab-consolidado td:nth-child(8) { width: 13%; }
 #tab-consolidado .part-num { min-width: 42px; }
+
+/* ===== Top 20 em tabela (05/10/2026) ===== */
+/* Tres colunas. A do meio e larga de proposito: precisa caber a barra mais
+   "R$ 7.573.479,85" sem quebrar a linha, na metade da largura da tela. */
+/* sem rolagem interna: as 20 linhas cabem de uma vez, como nos graficos antigos */
+.top20-wrap { max-height: none; }
+.top20-table th, .top20-table td { padding: 7px 8px; }
+.top20-table th:nth-child(1), .top20-table td:nth-child(1) { width: 36%; }
+.top20-table th:nth-child(2), .top20-table td:nth-child(2) { width: 39%; }
+.top20-table th:nth-child(3), .top20-table td:nth-child(3) { width: 25%; }
+.top20-table .b2 { display: flex; align-items: center; gap: 7px; }
+.top20-table .b2 .trilho {
+  flex: 1; height: 8px; border-radius: 4px; min-width: 20px;
+  background: var(--border-soft); overflow: hidden;
+}
+.top20-table .b2 .fill { height: 100%; border-radius: 4px; }
+.top20-table .b2 .fill-rec { background: linear-gradient(90deg, var(--fibra-azul-claro), var(--fibra-azul-escuro)); }
+.top20-table .b2 .fill-qtd { background: linear-gradient(90deg, var(--fibra-verde-agua), var(--fibra-verde)); }
+.top20-table .b2 .bv {
+  font-size: 11.5px; color: var(--text-secondary); text-align: right;
+  font-variant-numeric: tabular-nums; white-space: nowrap; min-width: 104px;
+}
+.top20-table .b2 .bq { min-width: 38px; }
+.top20-table tbody tr:hover td { background: var(--bg-azul-claro); }
+@media (max-width: 1350px) {
+  .top20-table .b2 .bv { min-width: 92px; font-size: 11px; }
+  .top20-table .b2 .bq { min-width: 32px; }
+}
+@media (max-width: 900px) {
+  .top20-table th:nth-child(1), .top20-table td:nth-child(1) { width: 34%; }
+  .top20-table th:nth-child(2), .top20-table td:nth-child(2) { width: 41%; }
+}
 #tab-consolidado .unid-cell { color: var(--text-tertiary); font-size: 12px; }
 #nota-consolidado { margin-top: 12px; }
 /* quadro estatico dos indicadores */
@@ -1924,52 +1957,47 @@ html, body {
       <div class="chart-canvas-wrap"><canvas id="chart-sistema"></canvas></div>
     </div>
 
-    <div class="chart-card">
+    <!-- TOP 20 EM TABELA (05/10/2026) — substituiu os quatro graficos de barras
+         horizontais, que tinham a mesma forma e quase os mesmos nomes. Agora
+         receita e quantidade ficam na MESMA linha. Clicando no cabecalho
+         "Propostas" a tabela passa a mostrar o Top 20 por quantidade; clicando
+         em "Receita Aceita", volta ao Top 20 por receita. -->
+    <div class="table-card">
       <div class="chart-header">
-        <div class="chart-title">Receita por Categoria de Serviço</div>
-        <div class="chart-insight" id="insight-categoria">Composição da receita por linha de produto/serviço.</div>
+        <div class="chart-title">Top 20 Produtos — Receita e Quantidade</div>
+        <div class="chart-insight" id="insight-top-prod">Receita e número de propostas aceitas na mesma linha.</div>
       </div>
-      <div class="chart-canvas-wrap"><canvas id="chart-categoria"></canvas></div>
+      <div class="table-wrap top20-wrap">
+        <table class="exec-table resumo-table top20-table" id="tab-top-prod">
+          <thead>
+            <tr>
+              <th class="sortable" data-sort="nome">Produto</th>
+              <th class="sortable" data-sort="receita">Receita Aceita</th>
+              <th class="sortable" data-sort="qtd">Propostas</th>
+            </tr>
+          </thead>
+          <tbody id="tab-top-prod-body"></tbody>
+        </table>
+      </div>
     </div>
 
-    <div class="chart-card">
+    <div class="table-card">
       <div class="chart-header">
-        <div class="chart-title">Receita por Porte da Empresa</div>
-        <div class="chart-insight" id="insight-porte">Concentração de faturamento por classificação de cliente.</div>
+        <div class="chart-title">Top 20 Clientes — Receita e Quantidade</div>
+        <div class="chart-insight" id="insight-top-cli">Receita e número de propostas aceitas na mesma linha.</div>
       </div>
-      <div class="chart-canvas-wrap"><canvas id="chart-porte"></canvas></div>
-    </div>
-
-    <div class="chart-card">
-      <div class="chart-header">
-        <div class="chart-title">Top 20 Produtos com Maior Receita</div>
-        <div class="chart-insight" id="insight-prod">Itens com maior contribuição financeira no período.</div>
+      <div class="table-wrap top20-wrap">
+        <table class="exec-table resumo-table top20-table" id="tab-top-cli">
+          <thead>
+            <tr>
+              <th class="sortable" data-sort="nome">Cliente</th>
+              <th class="sortable" data-sort="receita">Receita Aceita</th>
+              <th class="sortable" data-sort="qtd">Propostas</th>
+            </tr>
+          </thead>
+          <tbody id="tab-top-cli-body"></tbody>
+        </table>
       </div>
-      <div class="chart-canvas-wrap top20"><canvas id="chart-produtos"></canvas></div>
-    </div>
-
-    <div class="chart-card">
-      <div class="chart-header">
-        <div class="chart-title">Top 20 Clientes com Maior Volume</div>
-        <div class="chart-insight" id="insight-emp">Empresas que mais contrataram no período.</div>
-      </div>
-      <div class="chart-canvas-wrap top20"><canvas id="chart-empresas"></canvas></div>
-    </div>
-
-    <div class="chart-card">
-      <div class="chart-header">
-        <div class="chart-title">Top 20 Produtos com Maior Quantidade</div>
-        <div class="chart-insight" id="insight-prod-qtd">Produtos com maior número de propostas no período.</div>
-      </div>
-      <div class="chart-canvas-wrap top20"><canvas id="chart-produtos-qtd"></canvas></div>
-    </div>
-
-    <div class="chart-card">
-      <div class="chart-header">
-        <div class="chart-title">Top 20 Clientes com Maior Quantidade</div>
-        <div class="chart-insight" id="insight-emp-qtd">Empresas com maior número de propostas no período.</div>
-      </div>
-      <div class="chart-canvas-wrap top20"><canvas id="chart-empresas-qtd"></canvas></div>
     </div>
 
     <!-- NOVOS GRÁFICOS: RANKING DE PROPRIETÁRIO -->
@@ -2035,7 +2063,7 @@ html, body {
     <div class="table-card">
       <div class="chart-header">
         <div class="chart-title">Resumo por Porte</div>
-        <div class="chart-insight" id="insight-porte">Consolidado com taxa de conversão e ticket médio.</div>
+        <div class="chart-insight" id="insight-porte">Consolidado com taxa de conversão, em valores cheios.</div>
       </div>
       <div class="table-wrap">
         <table class="exec-table resumo-table" id="tab-porte">
@@ -2046,7 +2074,6 @@ html, body {
               <th class="sortable num" data-sort="aceitas">Aceitas</th>
               <th class="sortable num" data-sort="conversao">Conversão</th>
               <th class="sortable num" data-sort="valor">Valor Aceito</th>
-              <th class="sortable num" data-sort="ticket">Ticket Méd.</th>
               <th>Part.</th>
             </tr>
           </thead>
@@ -3047,11 +3074,17 @@ function pillConversao(pct) {
   return '<span class="conv-pill ' + cls + '">' + fmtPct(pct) + '</span>';
 }
 
-function desenharResumo(idTabela, linhas, ordem, comTicket) {
+/* opcoes = { ticket: mostra a coluna Ticket Médio, cheio: valor por extenso } */
+function desenharResumo(idTabela, linhas, ordem, opcoes) {
+  const o = opcoes || {};
+  const comTicket = !!o.ticket;
+  /* R$ 27.025.000,00 em vez de R$ 27,03 Mi */
+  const dinheiro = o.cheio ? fmtBRL : fmtBRLshort;
   const corpo = document.getElementById(idTabela + '-body');
   if (!corpo) return;
+  const nCols = 5 + (comTicket ? 1 : 0) + 1;
   if (!linhas.length) {
-    corpo.innerHTML = '<tr><td colspan="' + (comTicket ? 7 : 6) + '" style="text-align:center;padding:28px;color:var(--text-tertiary)">Sem dados para o filtro selecionado.</td></tr>';
+    corpo.innerHTML = '<tr><td colspan="' + nCols + '" style="text-align:center;padding:28px;color:var(--text-tertiary)">Sem dados para o filtro selecionado.</td></tr>';
     return;
   }
   const totalValor = linhas.reduce((a, o) => a + o.valor, 0) || 1;
@@ -3069,8 +3102,8 @@ function desenharResumo(idTabela, linhas, ordem, comTicket) {
       '<td class="num">' + fmtNum(o.propostas) + '</td>' +
       '<td class="num">' + fmtNum(o.aceitas) + '</td>' +
       '<td class="num">' + pillConversao(o.conversao) + '</td>' +
-      '<td class="num">' + fmtBRLshort(o.valor) + '</td>' +
-      (comTicket ? '<td class="num">' + fmtBRLshort(o.ticket) + '</td>' : '') +
+      '<td class="num">' + dinheiro(o.valor) + '</td>' +
+      (comTicket ? '<td class="num">' + dinheiro(o.ticket) + '</td>' : '') +
       '<td><div class="part-wrap"><div class="part-bar"><div class="part-fill" style="width:' +
         part.toFixed(1) + '%"></div></div><span class="part-num">' + fmtPct(part) + '</span></div></td>' +
     '</tr>';
@@ -3082,8 +3115,8 @@ function desenharResumo(idTabela, linhas, ordem, comTicket) {
   html += '<tr class="row-total">' +
     '<td>TOTAL</td><td class="num">' + fmtNum(tP) + '</td><td class="num">' + fmtNum(tA) + '</td>' +
     '<td class="num">' + (tP ? fmtPct(tA/tP*100) : '—') + '</td>' +
-    '<td class="num">' + fmtBRLshort(tV) + '</td>' +
-    (comTicket ? '<td class="num">' + (tA ? fmtBRLshort(tV/tA) : '—') + '</td>' : '') +
+    '<td class="num">' + dinheiro(tV) + '</td>' +
+    (comTicket ? '<td class="num">' + (tA ? dinheiro(tV/tA) : '—') + '</td>' : '') +
     '<td><div class="part-wrap"><div class="part-bar"><div class="part-fill" style="width:100%"></div></div>' +
       '<span class="part-num">100,0%</span></div></td></tr>';
   corpo.innerHTML = html;
@@ -3126,10 +3159,10 @@ function renderResumoPorte(props) {
   const lider = [...linhas].sort((a,b) => b.valor - a.valor)[0];
   const el = document.getElementById('insight-porte');
   if (el) el.innerHTML = lider
-    ? 'Consolidado com taxa de conversão e ticket médio. <strong>' + truncar(lider.chave, 34) +
-      '</strong> responde por ' + fmtBRLshort(lider.valor) + ' em valor aceito.'
-    : 'Consolidado com taxa de conversão e ticket médio.';
-  desenharResumo('tab-porte', linhas, RESUMO_ORDEM.porte, true);
+    ? 'Consolidado com taxa de conversão, em valores cheios. <strong>' + truncar(lider.chave, 34) +
+      '</strong> responde por ' + fmtBRL(lider.valor) + ' em valor aceito.'
+    : 'Consolidado com taxa de conversão, em valores cheios.';
+  desenharResumo('tab-porte', linhas, RESUMO_ORDEM.porte, { ticket: false, cheio: true });
 }
 
 function renderResumoEntidade(props) {
@@ -3140,7 +3173,7 @@ function renderResumoEntidade(props) {
     ? 'Onde o produto é comercializado. <strong>' + truncar(lider.chave, 34) + '</strong> lidera com ' +
       fmtBRLshort(lider.valor) + ' (' + fmtPct(lider.valor / (linhas.reduce((a,o)=>a+o.valor,0) || 1) * 100) + ' do total).'
     : 'Onde o produto é comercializado.';
-  desenharResumo('tab-entidade', linhas, RESUMO_ORDEM.entidade, false);
+  desenharResumo('tab-entidade', linhas, RESUMO_ORDEM.entidade, { ticket: false, cheio: false });
 }
 
 function renderResumoConsolidado(props) {
@@ -3222,6 +3255,132 @@ function renderResumoConsolidado(props) {
   if (nota) {
     nota.innerHTML = ord.map(o => '<b>' + o.chave + '</b> = ' + o.listaUnidades.join(' + ')).join(' &nbsp;·&nbsp; ');
   }
+}
+
+/* ============================================================
+   TOP 20 EM TABELA (05/10/2026)
+   Troca os quatro graficos de barras por duas tabelas. Receita e quantidade
+   passam a ficar na mesma linha, para o mesmo nome.
+   RECORTE: somente propostas Aceitas (statusIdx === 0) — igual ao que os
+   quatro graficos faziam. Todos os outros filtros continuam valendo, porque
+   as duas funcoes recebem o recorte que ignora apenas o filtro de Status.
+   SELECAO DAS 20 LINHAS: segue a coluna ordenada. Ordenado por receita, mostra
+   o Top 20 por receita; ordenado por Propostas, mostra o Top 20 por quantidade.
+   Assim as duas tabelas cobrem o que antes exigia quatro graficos.
+   ============================================================ */
+const TOP20_ORDEM = { prod: {campo: 'receita', dir: 'desc'}, cli: {campo: 'receita', dir: 'desc'} };
+let _baseTopProd = [], _baseTopCli = [];
+
+/* Receita por produto vem dos ITENS (valor do item). Quantidade vem da lista de
+   produtos de cada proposta (p[9]), que ja esta deduplicada por ID da Proposta.
+   Sao duas fontes diferentes, por isso o merge por indice de produto. */
+function basePorProduto(itensSemStatus, propsSemStatus) {
+  const rec = {}, qtd = {};
+  for (const it of itensSemStatus) {
+    if (it[4] !== 0) continue;              // so Aceitas
+    rec[it[1]] = (rec[it[1]] || 0) + it[3];
+  }
+  for (const p of propsSemStatus) {
+    if (p[1] !== 0) continue;               // so Aceitas
+    for (const prodIdx of p[9]) { qtd[prodIdx] = (qtd[prodIdx] || 0) + 1; }
+  }
+  const idxs = new Set(Object.keys(rec).concat(Object.keys(qtd)));
+  const saida = [];
+  idxs.forEach(i => saida.push({ nome: PRODUTOS[i], receita: rec[i] || 0, qtd: qtd[i] || 0 }));
+  return saida;
+}
+
+function basePorCliente(propsSemStatus) {
+  const mapa = new Map();
+  for (const p of propsSemStatus) {
+    if (p[1] !== 0) continue;               // so Aceitas
+    if (p[5] < 0) continue;
+    const c = CLIENTES[p[5]];
+    const o = mapa.get(c) || { nome: c, receita: 0, qtd: 0 };
+    o.receita += p[2]; o.qtd += 1;
+    mapa.set(c, o);
+  }
+  return [...mapa.values()];
+}
+
+function desenharTop20(idTabela, linhas, ordem) {
+  const corpo = document.getElementById(idTabela + '-body');
+  if (!corpo) return;
+  if (!linhas.length) {
+    corpo.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:28px;color:var(--text-tertiary)">Sem dados para o filtro selecionado.</td></tr>';
+    return;
+  }
+  /* 1o escolhe QUEM entra no Top 20 (pelo critério da coluna ordenada) */
+  const crit = (ordem.campo === 'qtd') ? 'qtd' : 'receita';
+  const vinte = [...linhas].sort((a, b) => (b[crit] || 0) - (a[crit] || 0)).slice(0, 20);
+  /* 2o ordena as 20 escolhidas, respeitando a direcao do clique */
+  const sinal = ordem.dir === 'asc' ? 1 : -1;
+  const ord = [...vinte].sort((a, b) => ordem.campo === 'nome'
+    ? sinal * String(a.nome).localeCompare(String(b.nome), 'pt-BR')
+    : sinal * ((a[ordem.campo] || 0) - (b[ordem.campo] || 0)));
+
+  const maxR = Math.max.apply(null, vinte.map(d => d.receita).concat([1]));
+  const maxQ = Math.max.apply(null, vinte.map(d => d.qtd).concat([1]));
+
+  let html = ord.map(d =>
+    '<tr>' +
+      '<td class="chave-cell" title="' + d.nome + '">' + truncar(d.nome, 38) + '</td>' +
+      '<td><div class="b2"><div class="trilho"><div class="fill fill-rec" style="width:' +
+        (d.receita / maxR * 100).toFixed(1) + '%"></div></div><span class="bv">' + fmtBRL(d.receita) + '</span></div></td>' +
+      '<td><div class="b2"><div class="trilho"><div class="fill fill-qtd" style="width:' +
+        (d.qtd / maxQ * 100).toFixed(1) + '%"></div></div><span class="bv bq">' + fmtNum(d.qtd) + '</span></div></td>' +
+    '</tr>').join('');
+
+  const tR = vinte.reduce((a, d) => a + d.receita, 0);
+  const tQ = vinte.reduce((a, d) => a + d.qtd, 0);
+  html += '<tr class="row-total"><td>TOTAL DO TOP 20</td>' +
+    '<td class="num">' + fmtBRL(tR) + '</td><td class="num">' + fmtNum(tQ) + '</td></tr>';
+  corpo.innerHTML = html;
+}
+
+function renderTopProdutos(itensSemStatus, propsSemStatus) {
+  _baseTopProd = basePorProduto(itensSemStatus, propsSemStatus);
+  const el = document.getElementById('insight-top-prod');
+  const lider = [..._baseTopProd].sort((a, b) => b.receita - a.receita)[0];
+  if (el) el.innerHTML = lider
+    ? 'Receita e número de propostas aceitas na mesma linha. <strong>' + truncar(lider.nome, 34) +
+      '</strong> lidera com ' + fmtBRL(lider.receita) + ' em ' + fmtNum(lider.qtd) + ' propostas. ' +
+      '<strong>Clique em “Propostas”</strong> para ver o Top 20 por quantidade.'
+    : 'Receita e número de propostas aceitas na mesma linha.';
+  desenharTop20('tab-top-prod', _baseTopProd, TOP20_ORDEM.prod);
+}
+
+function renderTopClientes(propsSemStatus) {
+  _baseTopCli = basePorCliente(propsSemStatus);
+  const el = document.getElementById('insight-top-cli');
+  const lider = [..._baseTopCli].sort((a, b) => b.receita - a.receita)[0];
+  if (el) el.innerHTML = lider
+    ? 'Receita e número de propostas aceitas na mesma linha. <strong>' + truncar(lider.nome, 34) +
+      '</strong> lidera com ' + fmtBRL(lider.receita) + ' em ' + fmtNum(lider.qtd) + ' propostas. ' +
+      '<strong>Clique em “Propostas”</strong> para ver o Top 20 por quantidade.'
+    : 'Receita e número de propostas aceitas na mesma linha.';
+  desenharTop20('tab-top-cli', _baseTopCli, TOP20_ORDEM.cli);
+}
+
+function ligarOrdenacaoTop20() {
+  [['tab-top-prod', 'prod', () => desenharTop20('tab-top-prod', _baseTopProd, TOP20_ORDEM.prod)],
+   ['tab-top-cli',  'cli',  () => desenharTop20('tab-top-cli',  _baseTopCli,  TOP20_ORDEM.cli)]]
+  .forEach(([id, chave, redesenhar]) => {
+    const tab = document.getElementById(id);
+    if (!tab) return;
+    tab.querySelectorAll('th.sortable').forEach(th => {
+      th.style.cursor = 'pointer';
+      th.onclick = () => {
+        const o = TOP20_ORDEM[chave];
+        const campo = th.dataset.sort;
+        if (o.campo === campo) o.dir = (o.dir === 'asc' ? 'desc' : 'asc');
+        else { o.campo = campo; o.dir = (campo === 'nome' ? 'asc' : 'desc'); }
+        tab.querySelectorAll('th.sortable').forEach(x => x.classList.remove('asc', 'desc'));
+        th.classList.add(o.dir);
+        redesenhar();
+      };
+    });
+  });
 }
 
 /* cabecalhos clicaveis para reordenar, como na Tabela Executiva */
@@ -5727,17 +5886,28 @@ function renderTudo(iniDias, fimDias, label) {
   renderEvolQtd(agregaQtdMensalAceitasAcumulada(propsSemStatus, iniDias, fimDias));
   renderAR(agregaAceitaRecusada(propsSemStatus));
   renderSistema(agregaSistema(propsSemStatus));
-  renderCategoria(agregaCategoria(itensSemStatus));   /* somente Aceitas, sempre */
-  renderPorte(agregaPorte(propsSemStatus));           /* somente Aceitas, sempre */
+  /* Gráficos "Receita por Categoria de Serviço" e "Receita por Porte da Empresa"
+     retirados do painel em 05/10/2026, a pedido. As funções agregaCategoria /
+     renderCategoria e agregaPorte / renderPorte continuam no arquivo, sem uso:
+     para trazer os quadros de volta, recoloque o HTML dos dois cards e
+     descomente as duas linhas abaixo.
+       renderCategoria(agregaCategoria(itensSemStatus));
+       renderPorte(agregaPorte(propsSemStatus));                              */
   /* Os quatro Top 20 e os dois Rankings mostram SOMENTE Aceitas (30/09/2026).
      Recebem propsSemStatus para que o recorte de Aceitas valha sempre — se
      recebessem props e você marcasse "Recusada" no filtro de Status, os seis
      gráficos ficariam vazios. Todos os outros filtros (data, unidade,
      proprietário, produto) continuam valendo normalmente. */
-  renderProdutos(agregaTopProdutos(itensSemStatus));
-  renderEmpresas(agregaTopEmpresas(propsSemStatus));
-  renderProdutosQtd(agregaTopProdutosQtd(propsSemStatus));
-  renderEmpresasQtd(agregaTopEmpresasQtd(propsSemStatus));
+  /* Os quatro graficos Top 20 viraram duas tabelas em 05/10/2026. As funcoes
+     renderProdutos / renderEmpresas / renderProdutosQtd / renderEmpresasQtd e
+     suas agregacoes continuam no arquivo, sem uso: para trazer os graficos de
+     volta, recoloque o HTML dos quatro cards e descomente as quatro linhas.
+       renderProdutos(agregaTopProdutos(itensSemStatus));
+       renderEmpresas(agregaTopEmpresas(propsSemStatus));
+       renderProdutosQtd(agregaTopProdutosQtd(propsSemStatus));
+       renderEmpresasQtd(agregaTopEmpresasQtd(propsSemStatus));               */
+  renderTopProdutos(itensSemStatus, propsSemStatus);
+  renderTopClientes(propsSemStatus);
   renderPropQtd(agregaPropQtdAceitas(propsSemStatus));
   renderPropValor(agregaPropValor(propsSemStatus));
   renderMapa(agregaPorRegiao(props));
@@ -5854,6 +6024,7 @@ MS_INSTANCES.produtos = buildMultiSelect({
 document.getElementById('data-ref').textContent = RAW.meta.data_referencia;
 console.log('▶ Renderizando dashboard inicial');
 ligarOrdenacaoResumos();   /* cabecalhos clicaveis dos dois resumos novos */
+ligarOrdenacaoTop20();     /* cabecalhos clicaveis das duas tabelas Top 20 */
 renderTudo(isoParaDias('2026-01-01'), HOJE_DIAS, 'Ano vigente (YTD)');
 
 document.addEventListener('click', e => {
