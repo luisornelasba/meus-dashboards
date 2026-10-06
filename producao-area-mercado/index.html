@@ -769,6 +769,89 @@ html, body {
 #tab-consolidado th:nth-child(8), #tab-consolidado td:nth-child(8) { width: 13%; }
 #tab-consolidado .part-num { min-width: 42px; }
 
+/* ===== Leitura da Carteira e Desempenho por Proprietario (06/10/2026) ===== */
+.lc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 22px; }
+@media (max-width: 980px) { .lc-grid { grid-template-columns: 1fr; } }
+.lc-item { display: flex; gap: 11px; align-items: flex-start; padding: 11px 13px; border-radius: var(--radius-sm); background: var(--bg-azul-claro); }
+.lc-item.at { background: var(--bg-laranja); }
+.lc-item.ri { background: var(--bg-vermelho); }
+.lc-item.ok { background: var(--bg-verde); }
+.lc-tag {
+  flex: none; width: 24px; height: 24px; border-radius: 7px; display: grid; place-items: center;
+  font-size: 12px; font-weight: 800; color: #fff; background: var(--fibra-azul-claro);
+}
+.lc-item.at .lc-tag { background: #B23E07; }
+.lc-item.ri .lc-tag { background: #B91C1C; }
+.lc-item.ok .lc-tag { background: var(--fibra-verde); }
+.lc-txt { font-size: 13px; line-height: 1.55; color: var(--text-secondary); min-width: 0; }
+.lc-txt strong { color: var(--text-primary); font-weight: 700; }
+.lc-txt b.t { display: block; font-size: 10.5px; letter-spacing: .6px; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 2px; }
+
+/* 8 colunas desde 06/10/2026 (sairam Conversao, Ticket Medio e Parado) */
+.desemp-table th:nth-child(1), .desemp-table td:nth-child(1) { width: 22%; }
+.desemp-table th:nth-child(2), .desemp-table td:nth-child(2) { width: 9%; }
+.desemp-table th:nth-child(3), .desemp-table td:nth-child(3) { width: 8%; }
+.desemp-table th:nth-child(4), .desemp-table td:nth-child(4) { width: 9%; }
+.desemp-table th:nth-child(5), .desemp-table td:nth-child(5) { width: 14%; }
+.desemp-table th:nth-child(6), .desemp-table td:nth-child(6) { width: 9%; }
+.desemp-table th:nth-child(7), .desemp-table td:nth-child(7) { width: 17%; }
+.desemp-table th:nth-child(8), .desemp-table td:nth-child(8) { width: 12%; }
+.desemp-table td:nth-child(8) .part-num { min-width: 40px; }
+
+/* ===== Funil Comercial e Propostas Paradas (06/10/2026) ===== */
+/* Barras em HTML puro, sem canvas: respondem melhor ao redimensionamento e
+   nao dependem da mini-lib de charts. */
+.fx-lista { display: flex; flex-direction: column; gap: 10px; }
+.fx-linha { display: grid; grid-template-columns: 118px 1fr 152px; align-items: center; gap: 11px; }
+.fx-rot { min-width: 0; }
+.fx-rot strong {
+  display: block; font-size: 12px; font-weight: 800; letter-spacing: .4px;
+  color: var(--text-primary); text-transform: uppercase;
+}
+.fx-rot span { display: block; font-size: 10.5px; color: var(--text-tertiary); line-height: 1.35; }
+.fx-trilho { height: 20px; border-radius: 4px; background: var(--border-soft); overflow: hidden; }
+.fx-fill { height: 100%; border-radius: 4px; transition: width .45s cubic-bezier(.4,0,.2,1); }
+.fx-val { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.fx-val b { display: block; font-size: 13px; font-weight: 700; color: var(--text-primary); }
+.fx-val span { display: block; font-size: 10.5px; color: var(--text-tertiary); }
+
+/* faixa de leitura embaixo de cada bloco */
+.fx-sep {
+  margin: 16px 0 12px; font-size: 10.5px; font-weight: 700; letter-spacing: .8px;
+  text-transform: uppercase; color: var(--text-tertiary);
+  display: flex; align-items: center; gap: 10px;
+}
+.fx-sep::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.fx-chips { display: grid; grid-template-columns: 1fr 1fr; gap: 9px 16px; }
+.fx-chip { display: flex; align-items: center; gap: 8px; font-size: 12px; min-width: 0; }
+.fx-pt { width: 11px; height: 11px; border-radius: 3px; flex: none; }
+.fx-chip .nm { color: var(--text-secondary); flex: none; }
+.fx-chip .vl {
+  margin-left: auto; text-align: right; font-variant-numeric: tabular-nums;
+  color: var(--text-primary); font-weight: 700; white-space: nowrap;
+}
+.fx-chip .vl i { display: block; font-style: normal; font-weight: 500; font-size: 10.5px; color: var(--text-tertiary); }
+
+/* numero-sintese de cada cartao */
+.fx-hero {
+  margin-top: 16px; padding: 13px 16px; border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--bg-azul) 0%, var(--bg-azul-claro) 100%);
+  border-left: 4px solid var(--fibra-azul-escuro);
+}
+.fx-hero.alerta {
+  background: linear-gradient(135deg, var(--bg-laranja) 0%, #fff4ec 100%);
+  border-left-color: #B23E07;
+}
+.fx-hero .rot { font-size: 10.5px; font-weight: 700; letter-spacing: .7px; text-transform: uppercase; color: var(--text-secondary); }
+.fx-hero .num { font-size: 24px; font-weight: 800; color: var(--fibra-azul-escuro); line-height: 1.2; font-variant-numeric: tabular-nums; }
+.fx-hero.alerta .num { color: #8F2F06; }
+.fx-hero .sub { font-size: 11.5px; color: var(--text-secondary); margin-top: 2px; }
+.fx-vazio { text-align: center; padding: 34px 10px; color: var(--text-tertiary); font-size: 13px; }
+.fx-nota { margin-top: 11px; font-size: 11px; color: var(--text-tertiary); line-height: 1.5; }
+
+@media (max-width: 1350px) { .fx-linha { grid-template-columns: 118px 1fr 148px; gap: 9px; } }
+@media (max-width: 780px)  { .fx-linha { grid-template-columns: 104px 1fr 128px; } .fx-chips { grid-template-columns: 1fr; } }
+
 /* ===== Top 20 em tabela (05/10/2026) ===== */
 /* Tres colunas. A do meio e larga de proposito: precisa caber a barra mais
    "R$ 7.573.479,85" sem quebrar a linha, na metade da largura da tela. */
@@ -2059,6 +2142,41 @@ html, body {
   </div>
 
   <!-- RESUMOS CONSOLIDADOS (29/09/2026): PORTE e ENTIDADE/UNIDADE -->
+  <!-- ============================================================
+       FUNIL COMERCIAL E PROPOSTAS PARADAS (06/10/2026)
+       Duas leituras novas, construidas so com o que a base ja traz.
+       O funil usa a Razao do Status; as paradas usam a Data de Modificacao,
+       que e a data de referencia de toda proposta ainda nao aceita.
+       ============================================================ -->
+  <section class="charts-grid row-2" id="sec-funil">
+    <div class="table-card">
+      <div class="chart-header">
+        <div class="chart-title">Funil Comercial — do Emitido ao Ganho</div>
+        <div class="chart-insight" id="insight-funil">Quanto do valor proposto chega ao fim do processo.</div>
+      </div>
+      <div id="funil-corpo"></div>
+    </div>
+
+    <div class="table-card">
+      <div class="chart-header">
+        <div class="chart-title">Propostas Paradas — Tempo sem Movimentação</div>
+        <div class="chart-insight" id="insight-paradas">Propostas Em Desenvolvimento, pelo tempo desde a última movimentação no CRM.</div>
+      </div>
+      <div id="paradas-corpo"></div>
+    </div>
+  </section>
+
+  <!-- LEITURA DA CARTEIRA (06/10/2026) — texto gerado dos proprios dados -->
+  <section class="charts-grid larga" id="sec-leitura">
+    <div class="table-card">
+      <div class="chart-header">
+        <div class="chart-title">Leitura da Carteira</div>
+        <div class="chart-insight">O diagnóstico do recorte selecionado, escrito automaticamente a cada filtro aplicado.</div>
+      </div>
+      <div id="leitura-corpo"></div>
+    </div>
+  </section>
+
   <section class="charts-grid row-2" id="sec-resumos">
     <div class="table-card">
       <div class="chart-header">
@@ -2102,6 +2220,37 @@ html, body {
           <tbody id="tab-entidade-body"></tbody>
         </table>
       </div>
+    </div>
+  </section>
+
+  <!-- DESEMPENHO POR PROPRIETARIO (06/10/2026) -->
+  <section class="charts-grid larga" id="sec-desemp">
+    <div class="table-card">
+      <div class="chart-header">
+        <div class="chart-title">Desempenho por Proprietário</div>
+        <div class="chart-insight" id="insight-desemp">Distribuição das propostas por responsável, com a receita das Aceitas.</div>
+      </div>
+      <div class="table-wrap">
+        <table class="exec-table resumo-table desemp-table" id="tab-desemp">
+          <thead>
+            <tr>
+              <th class="sortable" data-sort="chave">Proprietário</th>
+              <th class="sortable num" data-sort="propostas">Propostas</th>
+              <th class="sortable num" data-sort="aceitas">Aceita</th>
+              <th class="sortable num" data-sort="concluidas">Concluída</th>
+              <th class="sortable num" data-sort="aberto">Em Desenvolvimento</th>
+              <th class="sortable num" data-sort="recusadas">Recusada</th>
+              <th class="sortable num" data-sort="valor">Receita Aceita</th>
+              <th class="sortable num" data-sort="aceitas">% das Aceitas</th>
+            </tr>
+          </thead>
+          <tbody id="tab-desemp-body"></tbody>
+        </table>
+      </div>
+      <p class="fx-nota"><strong>Receita Aceita</strong> soma o Valor Total somente das propostas com Razão do Status
+        <strong>Aceita</strong> — a mesma conta do card Receita Contratada, no topo do painel.
+        <strong>% das Aceitas</strong> é a quantidade de propostas aceitas do responsável dividida pelo total geral
+        de propostas aceitas do recorte.</p>
     </div>
   </section>
 
@@ -3255,6 +3404,421 @@ function renderResumoConsolidado(props) {
   if (nota) {
     nota.innerHTML = ord.map(o => '<b>' + o.chave + '</b> = ' + o.listaUnidades.join(' + ')).join(' &nbsp;·&nbsp; ');
   }
+}
+
+/* ============================================================
+   LEITURA DA CARTEIRA (06/10/2026)
+   Escreve o diagnostico do recorte em frases curtas, com os numeros do
+   proprio painel. Nao inventa nada: cada frase e uma conta sobre o recorte
+   filtrado. Se algum dado nao existir no recorte, a frase simplesmente nao
+   aparece — nunca sai texto com buraco.
+   ============================================================ */
+function _pctSeguro(a, b) { return b ? (a / b * 100) : 0; }
+
+function montaLeitura(propsSemStatus, itensSemStatus, kpisAnt) {
+  const f = agregaFunil(propsSemStatus);
+  const L = [];
+  if (!f.emitido.q) return L;
+
+  /* 1 — o resultado do recorte */
+  const taxa = _pctSeguro(f.ganho.v, f.decidido.v);
+  L.push({ t: 'ok', titulo: 'Resultado do recorte',
+    txt: '<strong>' + fmtNum(f.emitido.q) + '</strong> propostas emitidas somando <strong>' + fmtBRL(f.emitido.v) +
+      '</strong>. Foram contratados <strong>' + fmtBRL(f.aceita.v) + '</strong> em ' + fmtNum(f.aceita.q) +
+      ' propostas aceitas, com taxa de ganho de <strong>' + fmtPct(taxa) + '</strong> sobre o que já foi decidido.' });
+
+  /* 2 — comparativo com o periodo anterior de mesma duracao */
+  if (kpisAnt && kpisAnt.receita_total > 0) {
+    const var_ = _pctSeguro(f.aceita.v - kpisAnt.receita_total, kpisAnt.receita_total);
+    const subiu = var_ >= 0;
+    L.push({ t: subiu ? 'ok' : 'at', titulo: 'Contra o período anterior',
+      txt: 'A receita contratada ' + (subiu ? '<strong>subiu</strong>' : '<strong>caiu</strong>') + ' ' +
+        fmtPct(Math.abs(var_)) + ' — de ' + fmtBRL(kpisAnt.receita_total) + ' para ' + fmtBRL(f.aceita.v) +
+        '. Comparação com um intervalo anterior de mesma duração.' });
+  }
+
+  /* 3 — concentracao de receita nos maiores clientes */
+  const porCli = basePorCliente(propsSemStatus).sort((a, b) => b.receita - a.receita);
+  if (porCli.length >= 5) {
+    const top5 = porCli.slice(0, 5).reduce((a, c) => a + c.receita, 0);
+    const pc = _pctSeguro(top5, f.aceita.v);
+    L.push({ t: pc >= 50 ? 'ri' : pc >= 35 ? 'at' : 'ok', titulo: 'Concentração de clientes',
+      txt: 'Os <strong>5 maiores clientes</strong> respondem por <strong>' + fmtPct(pc) +
+        '</strong> da receita aceita (' + fmtBRL(top5) + '). O maior deles é <strong>' +
+        truncar(porCli[0].nome, 46) + '</strong>, com ' + fmtBRL(porCli[0].receita) + '.' +
+        (pc >= 50 ? ' Perder um único cliente desse grupo move o resultado do ano.' : '') });
+  }
+
+  /* 4 — o produto que puxa a receita */
+  const porProd = basePorProduto(itensSemStatus, propsSemStatus).sort((a, b) => b.receita - a.receita);
+  if (porProd.length) {
+    const p0 = porProd[0];
+    L.push({ t: 'ok', titulo: 'Produto motor',
+      txt: '<strong>' + truncar(p0.nome, 46) + '</strong> sozinho responde por <strong>' +
+        fmtPct(_pctSeguro(p0.receita, f.aceita.v)) + '</strong> da receita aceita, em ' + fmtNum(p0.qtd) + ' propostas.' });
+    /* produto que consome esforco sem retorno */
+    const esforco = porProd.filter(p => p.qtd >= 30)
+      .map(p => ({ ...p, tk: p.receita / Math.max(1, p.qtd) }))
+      .sort((a, b) => a.tk - b.tk)[0];
+    if (esforco && esforco.tk < (f.aceita.v / Math.max(1, f.aceita.q)) * 0.25) {
+      L.push({ t: 'at', titulo: 'Esforço sem retorno',
+        txt: '<strong>' + truncar(esforco.nome, 46) + '</strong> consumiu <strong>' + fmtNum(esforco.qtd) +
+          ' propostas</strong> e trouxe ' + fmtBRL(esforco.receita) + ' — ticket de ' + fmtBRL(esforco.tk) +
+          ', bem abaixo da média da carteira.' });
+    }
+  }
+
+  /* 5 — quem vende */
+  const porProp = agrupaDesempenho(propsSemStatus).sort((a, b) => b.valor - a.valor);
+  if (porProp.length) {
+    const lider = porProp[0];
+    const tres = porProp.slice(0, 3).reduce((a, o) => a + o.valor, 0);
+    L.push({ t: _pctSeguro(lider.valor, f.aceita.v) >= 50 ? 'at' : 'ok', titulo: 'Quem puxa a receita',
+      txt: '<strong>' + truncar(lider.chave, 34) + '</strong> lidera com ' + fmtBRL(lider.valor) + ' (' +
+        fmtPct(_pctSeguro(lider.valor, f.aceita.v)) + ' do total). Os <strong>três primeiros</strong> somam ' +
+        fmtPct(_pctSeguro(tres, f.aceita.v)) + ' da receita aceita.' });
+
+    /* melhor e pior conversao entre quem tem volume */
+    const comVolume = porProp.filter(o => o.propostas >= 30);
+    if (comVolume.length >= 2) {
+      const melhor = [...comVolume].sort((a, b) => b.conversao - a.conversao)[0];
+      const pior = [...comVolume].sort((a, b) => a.conversao - b.conversao)[0];
+      L.push({ t: 'at', titulo: 'Conversão — melhor e pior',
+        txt: '<strong>' + truncar(melhor.chave, 28) + '</strong> converte ' + fmtPct(melhor.conversao) +
+          ' de ' + fmtNum(melhor.propostas) + ' propostas; <strong>' + truncar(pior.chave, 28) + '</strong> converte ' +
+          fmtPct(pior.conversao) + ' de ' + fmtNum(pior.propostas) +
+          '. A diferença é de <strong>' + fmtNum(Math.round(melhor.conversao - pior.conversao)) + ' pontos percentuais</strong>.' });
+    }
+  }
+
+  /* 6 — o que esta parado */
+  const paradas = agregaParadas(propsSemStatus);
+  const vencQ = paradas[3].q + paradas[4].q, vencV = paradas[3].v + paradas[4].v;
+  if (vencQ) {
+    L.push({ t: 'ri', titulo: 'Pipeline parado',
+      txt: '<strong>' + fmtBRL(vencV) + '</strong> em <strong>' + fmtNum(vencQ) +
+        ' propostas</strong> sem movimentação há mais de 90 dias. Ou são negócios a retomar, ou são baixas pendentes no CRM.' });
+  }
+
+  /* 7 — onde o produto e vendido */
+  const porUnid = agruparResumo(propsSemStatus, p => (p[6] >= 0 ? UNIDADES[p[6]] : 'NÃO INFORMADO'))
+    .sort((a, b) => b.valor - a.valor);
+  if (porUnid.length) {
+    L.push({ t: 'ok', titulo: 'Unidade líder',
+      txt: '<strong>' + truncar(porUnid[0].chave, 40) + '</strong> concentra ' +
+        fmtPct(_pctSeguro(porUnid[0].valor, f.aceita.v)) + ' da receita aceita, com ' + fmtBRL(porUnid[0].valor) + '.' });
+  }
+
+  return L;
+}
+
+function renderLeitura(propsSemStatus, itensSemStatus, kpisAnt) {
+  const el = document.getElementById('leitura-corpo');
+  if (!el) return;
+  const L = montaLeitura(propsSemStatus, itensSemStatus, kpisAnt);
+  if (!L.length) { el.innerHTML = '<div class="fx-vazio">Sem dados para o filtro selecionado.</div>'; return; }
+  const sigla = { ok: '✓', at: '!', ri: '▲' };
+  el.innerHTML = '<div class="lc-grid">' + L.map(o =>
+    '<div class="lc-item ' + o.t + '"><span class="lc-tag">' + (sigla[o.t] || '·') + '</span>' +
+    '<span class="lc-txt"><b class="t">' + o.titulo + '</b>' + o.txt + '</span></div>').join('') + '</div>';
+}
+
+/* ============================================================
+   DESEMPENHO POR PROPRIETARIO (06/10/2026)
+   A tabela do modelo apresentado, com as colunas que a base sustenta.
+   Visitas e atividades nao entram: dependem da entidade Atividades do CRM,
+   que nao esta nesta exportacao.
+   ============================================================ */
+const DESEMP_ORDEM = { campo: 'valor', dir: 'desc' };
+let _baseDesemp = [];
+
+function agrupaDesempenho(props) {
+  const iA = _ixStatus('Aceita'), iC = _ixStatus('Concluída'),
+        iD = _ixStatus('Em Desenvolvimento'), iR = _ixStatus('Recusada');
+  const mapa = new Map();
+  for (const p of props) {
+    if (p[7] < 0) continue;
+    const nome = PROPRIETARIOS[p[7]];
+    let o = mapa.get(nome);
+    if (!o) { o = { chave: nome, propostas: 0, aceitas: 0, concluidas: 0, recusadas: 0,
+                    aberto: 0, valor: 0, _dias: [] }; mapa.set(nome, o); }
+    o.propostas += 1;
+    if (p[1] === iA) { o.aceitas += 1; o.valor += p[2]; }
+    else if (p[1] === iC) o.concluidas += 1;
+    else if (p[1] === iR) o.recusadas += 1;
+    else if (p[1] === iD) { o.aberto += 1; o._dias.push(Math.max(0, HOJE_DIAS - p[0])); }
+  }
+  const linhas = [...mapa.values()];
+  linhas.forEach(o => {
+    o.conversao = _pctSeguro(o.aceitas, o.propostas);
+    o.ticket = o.aceitas ? o.valor / o.aceitas : 0;
+    if (o._dias.length) {
+      const d = o._dias.slice().sort((a, b) => a - b);
+      const m = Math.floor(d.length / 2);
+      o.parado = d.length % 2 ? d[m] : Math.round((d[m - 1] + d[m]) / 2);
+    } else o.parado = null;
+  });
+  return linhas;
+}
+
+function pillParado(dias) {
+  if (dias == null) return '<span style="color:var(--text-tertiary)">—</span>';
+  const cls = dias <= 60 ? 'par-ok' : dias <= 180 ? 'par-med' : 'par-rui';
+  return '<span class="par-pill ' + cls + '">' + fmtNum(dias) + ' d</span>';
+}
+
+function desenharDesemp(linhas, ordem) {
+  const corpo = document.getElementById('tab-desemp-body');
+  if (!corpo) return;
+  if (!linhas.length) {
+    corpo.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:28px;color:var(--text-tertiary)">Sem dados para o filtro selecionado.</td></tr>';
+    return;
+  }
+  const sinal = ordem.dir === 'asc' ? 1 : -1;
+  const ord = [...linhas].sort((a, b) => {
+    const x = a[ordem.campo], y = b[ordem.campo];
+    if (ordem.campo === 'chave') return sinal * String(x).localeCompare(String(y), 'pt-BR');
+    /* quem nao tem proposta parada vai sempre para o fim, nos dois sentidos */
+    if (ordem.campo === 'parado') {
+      if (x == null && y == null) return 0;
+      if (x == null) return 1;
+      if (y == null) return -1;
+    }
+    return sinal * ((x || 0) - (y || 0));
+  });
+
+  /* o percentual e sobre a QUANTIDADE de aceitas do recorte inteiro, nao sobre valor */
+  const totalAceitas = ord.reduce((a, o) => a + o.aceitas, 0) || 1;
+
+  let html = ord.map(o => {
+    const part = o.aceitas / totalAceitas * 100;
+    return '<tr>' +
+      '<td class="chave-cell" title="' + o.chave + '">' + truncar(o.chave, 34) + '</td>' +
+      '<td class="num">' + fmtNum(o.propostas) + '</td>' +
+      '<td class="num">' + fmtNum(o.aceitas) + '</td>' +
+      '<td class="num">' + fmtNum(o.concluidas) + '</td>' +
+      '<td class="num">' + fmtNum(o.aberto) + '</td>' +
+      '<td class="num">' + fmtNum(o.recusadas) + '</td>' +
+      '<td class="num">' + fmtBRL(o.valor) + '</td>' +
+      '<td><div class="part-wrap"><div class="part-bar"><div class="part-fill" style="width:' +
+        part.toFixed(1) + '%"></div></div><span class="part-num">' + fmtPct(part) + '</span></div></td>' +
+    '</tr>';
+  }).join('');
+
+  const t = ord.reduce((a, o) => ({
+    propostas: a.propostas + o.propostas, aceitas: a.aceitas + o.aceitas,
+    concluidas: a.concluidas + o.concluidas, recusadas: a.recusadas + o.recusadas,
+    aberto: a.aberto + o.aberto, valor: a.valor + o.valor,
+  }), { propostas: 0, aceitas: 0, concluidas: 0, recusadas: 0, aberto: 0, valor: 0 });
+  html += '<tr class="row-total"><td>TOTAL</td>' +
+    '<td class="num">' + fmtNum(t.propostas) + '</td>' +
+    '<td class="num">' + fmtNum(t.aceitas) + '</td>' +
+    '<td class="num">' + fmtNum(t.concluidas) + '</td>' +
+    '<td class="num">' + fmtNum(t.aberto) + '</td>' +
+    '<td class="num">' + fmtNum(t.recusadas) + '</td>' +
+    '<td class="num">' + fmtBRL(t.valor) + '</td>' +
+    '<td><div class="part-wrap"><div class="part-bar"><div class="part-fill" style="width:100%"></div></div>' +
+      '<span class="part-num">100,0%</span></div></td></tr>';
+  corpo.innerHTML = html;
+}
+
+function renderDesempenho(props) {
+  _baseDesemp = agrupaDesempenho(props);
+  const el = document.getElementById('insight-desemp');
+  const lider = [..._baseDesemp].sort((a, b) => b.valor - a.valor)[0];
+  /* a frase sobre tempo parado saiu junto com a coluna (06/10/2026) */
+  if (el) {
+    const totAce = _baseDesemp.reduce((a, o) => a + o.aceitas, 0);
+    let t = 'Distribuição das propostas por responsável, com a receita das Aceitas.';
+    if (lider) t += ' <strong>' + truncar(lider.chave, 30) + '</strong> lidera em receita com ' + fmtBRL(lider.valor) +
+      ' e responde por ' + fmtPct(_pctSeguro(lider.aceitas, totAce)) + ' das propostas aceitas.';
+    el.innerHTML = t;
+  }
+  desenharDesemp(_baseDesemp, DESEMP_ORDEM);
+}
+
+function ligarOrdenacaoDesemp() {
+  const tab = document.getElementById('tab-desemp');
+  if (!tab) return;
+  tab.querySelectorAll('th.sortable').forEach(th => {
+    th.style.cursor = 'pointer';
+    th.onclick = () => {
+      const campo = th.dataset.sort;
+      if (DESEMP_ORDEM.campo === campo) DESEMP_ORDEM.dir = (DESEMP_ORDEM.dir === 'asc' ? 'desc' : 'asc');
+      else { DESEMP_ORDEM.campo = campo; DESEMP_ORDEM.dir = (campo === 'chave' ? 'asc' : 'desc'); }
+      tab.querySelectorAll('th.sortable').forEach(x => x.classList.remove('asc', 'desc'));
+      th.classList.add(DESEMP_ORDEM.dir);
+      desenharDesemp(_baseDesemp, DESEMP_ORDEM);
+    };
+  });
+}
+
+/* ============================================================
+   FUNIL COMERCIAL E PROPOSTAS PARADAS (06/10/2026)
+
+   ORIGEM DOS DADOS — nada de novo foi pedido ao CRM:
+   · o funil sai da coluna "Razao do Status" (Aceita / Concluida /
+     Em Desenvolvimento / Recusada);
+   · o tempo parado sai da data de referencia da proposta (p[0]), que para
+     tudo que NAO esta Aceita e a propria "Data de Modificacao".
+
+   RECORTE: os dois blocos recebem propsSemStatus, porque ambos MOSTRAM a
+   distribuicao entre status — se recebessem a lista ja filtrada por Status,
+   marcar "Aceita" no filtro zeraria o funil inteiro. Todos os demais filtros
+   (data, unidade, proprietario, produto) continuam valendo.
+
+   PALETA — validada com o script da skill dataviz (modo claro):
+   · funil  = rampa ordinal de um unico tom, clara -> escura (3 degraus),
+              porque cada degrau e um subconjunto do anterior;
+   · ganho x perda = par divergente azul/laranja (CVD deltaE 23,2 protan);
+   · paradas = rampa ordinal laranja de 5 passos (faixas de dias sao ordinais).
+   ============================================================ */
+const COR_FUNIL   = ['#6FB8E4', '#1C7FC4', '#16428F'];
+const COR_GANHO   = '#1C7FC4', COR_GANHO2 = '#6FB8E4';
+const COR_PERDA   = '#E05616', COR_PERDA2 = '#F4A179';
+const COR_PARADAS = ['#F4A179', '#ED7C45', '#E05616', '#B23E07', '#7D2A04'];
+const FAIXAS_PARADAS = [
+  { rot: '0 a 30 dias',      min: 0,   max: 30 },
+  { rot: '31 a 60 dias',     min: 31,  max: 60 },
+  { rot: '61 a 90 dias',     min: 61,  max: 90 },
+  { rot: '91 a 180 dias',    min: 91,  max: 180 },
+  { rot: 'mais de 180 dias', min: 181, max: Infinity },
+];
+
+function _ixStatus(nome) { return STATUS_LIST.indexOf(nome); }
+
+function linhaFx(rotulo, nota, pct, cor, valor, qtd, pctTexto) {
+  return '<div class="fx-linha">' +
+    '<div class="fx-rot"><strong>' + rotulo + '</strong><span>' + nota + '</span></div>' +
+    '<div class="fx-trilho"><div class="fx-fill" style="width:' + Math.max(0, pct).toFixed(1) +
+      '%;background:' + cor + '"></div></div>' +
+    '<div class="fx-val"><b>' + fmtBRL(valor) + '</b><span>' + fmtNum(qtd) + (qtd === 1 ? ' proposta' : ' propostas') + ' · ' + pctTexto + '</span></div>' +
+  '</div>';
+}
+
+function chipFx(cor, nome, valor, qtd) {
+  return '<div class="fx-chip"><span class="fx-pt" style="background:' + cor + '"></span>' +
+    '<span class="nm">' + nome + '</span>' +
+    '<span class="vl">' + fmtBRL(valor) + '<i>' + fmtNum(qtd) + (qtd === 1 ? ' proposta' : ' propostas') + '</i></span></div>';
+}
+
+/* ---------------- A) FUNIL COMERCIAL ---------------- */
+function agregaFunil(props) {
+  const iA = _ixStatus('Aceita'), iC = _ixStatus('Concluída'),
+        iD = _ixStatus('Em Desenvolvimento'), iR = _ixStatus('Recusada');
+  const zero = () => ({ q: 0, v: 0 });
+  const b = { aceita: zero(), concluida: zero(), aberto: zero(), recusada: zero() };
+  for (const p of props) {
+    const alvo = p[1] === iA ? b.aceita : p[1] === iC ? b.concluida
+               : p[1] === iD ? b.aberto : p[1] === iR ? b.recusada : null;
+    if (!alvo) continue;
+    alvo.q += 1; alvo.v += p[2];
+  }
+  b.emitido  = { q: b.aceita.q + b.concluida.q + b.aberto.q + b.recusada.q,
+                 v: b.aceita.v + b.concluida.v + b.aberto.v + b.recusada.v };
+  b.decidido = { q: b.emitido.q - b.aberto.q, v: b.emitido.v - b.aberto.v };
+  b.ganho    = { q: b.aceita.q + b.concluida.q, v: b.aceita.v + b.concluida.v };
+  return b;
+}
+
+function renderFunil(props) {
+  const el = document.getElementById('funil-corpo');
+  if (!el) return;
+  const f = agregaFunil(props);
+  if (!f.emitido.q) {
+    el.innerHTML = '<div class="fx-vazio">Sem propostas no filtro selecionado.</div>';
+    return;
+  }
+  const base = f.emitido.v || 1;
+  const p = o => o.v / base * 100;
+
+  let html = '<div class="fx-lista">' +
+    linhaFx('Emitido',  'todo valor proposto no recorte',            p(f.emitido),  COR_FUNIL[0], f.emitido.v,  f.emitido.q,  '100,0%') +
+    linhaFx('Decidido', 'saiu do limbo: aceita, concluída ou recusada', p(f.decidido), COR_FUNIL[1], f.decidido.v, f.decidido.q, fmtPct(p(f.decidido))) +
+    linhaFx('Ganho',    'aceita + concluída',                         p(f.ganho),    COR_FUNIL[2], f.ganho.v,    f.ganho.q,    fmtPct(p(f.ganho))) +
+  '</div>';
+
+  html += '<div class="fx-sep">Onde o valor ficou</div><div class="fx-chips">' +
+    chipFx(COR_GANHO,  'Aceitas',    f.aceita.v,    f.aceita.q) +
+    chipFx(COR_PERDA,  'Recusadas',  f.recusada.v,  f.recusada.q) +
+    chipFx(COR_GANHO2, 'Concluídas', f.concluida.v, f.concluida.q) +
+    chipFx(COR_PERDA2, 'Em aberto',  f.aberto.v,    f.aberto.q) +
+  '</div>';
+
+  const taxa = f.decidido.v ? f.ganho.v / f.decidido.v * 100 : 0;
+  html += '<div class="fx-hero"><div class="rot">Taxa de ganho sobre o decidido</div>' +
+    '<div class="num">' + fmtPct(taxa) + '</div>' +
+    '<div class="sub">De cada R$ 100 que saíram do limbo, R$ ' +
+      (taxa).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) +
+      ' viraram contrato.</div></div>';
+
+  html += '<p class="fx-nota">O card <strong>Receita Contratada</strong>, no topo do painel, conta somente as ' +
+    'propostas <strong>Aceitas</strong> (' + fmtBRL(f.aceita.v) + '). Aqui o degrau <em>Ganho</em> soma também as ' +
+    '<strong>Concluídas</strong>, por isso o número é maior. São duas perguntas diferentes: ' +
+    'quanto foi contratado, e quanto o processo comercial converteu.</p>';
+
+  el.innerHTML = html;
+
+  const ins = document.getElementById('insight-funil');
+  if (ins) ins.innerHTML = 'Quanto do valor proposto chega ao fim do processo. De <strong>' +
+    fmtBRL(f.emitido.v) + '</strong> emitidos, <strong>' + fmtBRL(f.ganho.v) + '</strong> viraram contrato e <strong>' +
+    fmtBRL(f.recusada.v) + '</strong> foram recusados.';
+}
+
+/* ---------------- B) PROPOSTAS PARADAS ---------------- */
+function agregaParadas(props) {
+  const iD = _ixStatus('Em Desenvolvimento');
+  const faixas = FAIXAS_PARADAS.map(f => ({ rot: f.rot, q: 0, v: 0 }));
+  for (const p of props) {
+    if (p[1] !== iD) continue;
+    const dias = Math.max(0, HOJE_DIAS - p[0]);
+    for (let i = 0; i < FAIXAS_PARADAS.length; i++) {
+      if (dias >= FAIXAS_PARADAS[i].min && dias <= FAIXAS_PARADAS[i].max) {
+        faixas[i].q += 1; faixas[i].v += p[2];
+        break;
+      }
+    }
+  }
+  return faixas;
+}
+
+function renderParadas(props) {
+  const el = document.getElementById('paradas-corpo');
+  if (!el) return;
+  const faixas = agregaParadas(props);
+  const totQ = faixas.reduce((a, f) => a + f.q, 0);
+  if (!totQ) {
+    el.innerHTML = '<div class="fx-vazio">Nenhuma proposta Em Desenvolvimento no filtro selecionado.</div>';
+    const i0 = document.getElementById('insight-paradas');
+    if (i0) i0.textContent = 'Propostas Em Desenvolvimento, pelo tempo desde a última movimentação no CRM.';
+    return;
+  }
+  const maxV = Math.max.apply(null, faixas.map(f => f.v).concat([1]));
+  const totV = faixas.reduce((a, f) => a + f.v, 0);
+
+  let html = '<div class="fx-lista">';
+  faixas.forEach((f, i) => {
+    html += linhaFx(f.rot, i >= 3 ? 'exige decisão' : 'dentro do ciclo normal',
+      f.v / maxV * 100, COR_PARADAS[i], f.v, f.q, fmtPct(totV ? f.v / totV * 100 : 0));
+  });
+  html += '</div>';
+
+  const vencQ = faixas[3].q + faixas[4].q, vencV = faixas[3].v + faixas[4].v;
+  html += '<div class="fx-hero alerta"><div class="rot">Parado há mais de 90 dias</div>' +
+    '<div class="num">' + fmtBRL(vencV) + '</div>' +
+    '<div class="sub"><strong>' + fmtNum(vencQ) + '</strong> propostas de um total de ' + fmtNum(totQ) +
+    ' em desenvolvimento — ' + fmtPct(totQ ? vencQ / totQ * 100 : 0) + ' do pipeline aberto.</div></div>';
+
+  html += '<p class="fx-nota">O relógio conta a partir da <strong>Data de Modificação</strong> do CRM. ' +
+    'Como o filtro de período também usa essa data, selecione um intervalo largo em ' +
+    '<strong>Personalizado</strong> para enxergar o estoque completo de propostas paradas.</p>';
+
+  el.innerHTML = html;
+
+  const ins = document.getElementById('insight-paradas');
+  if (ins) ins.innerHTML = 'Propostas Em Desenvolvimento, pelo tempo desde a última movimentação no CRM. ' +
+    '<strong>' + fmtNum(vencQ) + '</strong> delas, somando <strong>' + fmtBRL(vencV) +
+    '</strong>, não se mexem há mais de 90 dias.';
 }
 
 /* ============================================================
@@ -5908,6 +6472,16 @@ function renderTudo(iniDias, fimDias, label) {
        renderEmpresasQtd(agregaTopEmpresasQtd(propsSemStatus));               */
   renderTopProdutos(itensSemStatus, propsSemStatus);
   renderTopClientes(propsSemStatus);
+  /* Funil e Propostas Paradas (06/10/2026) — ver comentario do bloco para o
+     motivo de receberem propsSemStatus. */
+  renderFunil(propsSemStatus);
+  renderParadas(propsSemStatus);
+  /* Leitura da Carteira e Desempenho por Proprietario (06/10/2026).
+     A Leitura recebe kpisAnt para conseguir escrever a frase do comparativo;
+     quando nao existe periodo anterior no intervalo, a frase simplesmente
+     nao e gerada. */
+  renderLeitura(propsSemStatus, itensSemStatus, kpisAnt);
+  renderDesempenho(propsSemStatus);
   renderPropQtd(agregaPropQtdAceitas(propsSemStatus));
   renderPropValor(agregaPropValor(propsSemStatus));
   renderMapa(agregaPorRegiao(props));
@@ -6025,6 +6599,7 @@ document.getElementById('data-ref').textContent = RAW.meta.data_referencia;
 console.log('▶ Renderizando dashboard inicial');
 ligarOrdenacaoResumos();   /* cabecalhos clicaveis dos dois resumos novos */
 ligarOrdenacaoTop20();     /* cabecalhos clicaveis das duas tabelas Top 20 */
+ligarOrdenacaoDesemp();    /* cabecalhos clicaveis do Desempenho por Proprietario */
 renderTudo(isoParaDias('2026-01-01'), HOJE_DIAS, 'Ano vigente (YTD)');
 
 document.addEventListener('click', e => {
