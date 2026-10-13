@@ -34,7 +34,7 @@ jobs:
       - name: Conferir os arquivos gerados
         run: |
           echo "Arquivos de dados presentes apos o ETL:"
-          for f in alimentacao/dados.json bp/base.json vacinas/base.json iel/base.json producao-area-mercado/base.json; do
+          for f in alimentacao/dados.json bp/base.json vacinas/base.json iel/base.json producao-area-mercado/base.json contratos/base.json; do
             if [ -f "$f" ]; then
               echo "  OK   $f  ($(du -h "$f" | cut -f1))"
             else
@@ -49,7 +49,7 @@ jobs:
           # O dashboard principal (Alimentacao) e os demais alimentados pela
           # mesma planilha. Cada base.json so entra se o ETL tiver gerado.
           git add alimentacao/dados.json
-          for pasta in bp vacinas iel producao-area-mercado; do
+          for pasta in bp vacinas iel producao-area-mercado contratos; do
             if [ -f "$pasta/base.json" ]; then
               git add "$pasta/base.json"
               echo "Incluido no commit: $pasta/base.json"
