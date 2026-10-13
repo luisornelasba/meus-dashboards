@@ -14,7 +14,7 @@ import json
 import re
 import sys
 import unicodedata
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone, timedelta, date
 from pathlib import Path
 
 import pandas as pd
@@ -502,6 +502,284 @@ def gerar_outros_dashboards(df, idx, nome_arquivo):
             f'{destino.stat().st_size / 1024:.0f} KB')
 
 
+# ============================================================================
+# PAINEL DE CONTRATOS  (contratos/base.json)  — 13/10/2026
+# ----------------------------------------------------------------------------
+# Sai da MESMA planilha "Todos os Contratos" que ja alimenta o bloco de
+# contratos do painel de Alimentacao. Nenhum upload novo e necessario.
+#
+# Regras combinadas com a area:
+#   · 1 linha da planilha = 1 contrato (os IDs sao unicos).
+#   · Contratos com Valor Total <= 0 CONTAM no volume, mas ficam fora dos
+#     indicadores financeiros. Sao gratuidades e termos institucionais.
+#   · A coluna "E Industria" nao e usada.
+#   · Todos os proprietarios entram; so as grafias duplicadas sao unificadas.
+#   · Entidade/Unidade e normalizada e agrupada por entidade, na mesma regra
+#     do painel Producao de Mercado.
+#
+# Formato de saida (compacto, para o arquivo ficar pequeno):
+#   contratos = [criacaoDias, inicioDias, fimDias, statusIdx, valor,
+#                propIdx, cliIdx, cnpjIdx, unidIdx, porteIdx, cnaeIdx, [prodIdxs]]
+#   inicioDias / fimDias = -1 quando a data nao esta cadastrada.
+# ============================================================================
+CTR_PASTA       = 'contratos'
+CTR_EPOCH       = date(2022, 1, 1)
+CTR_STATUS      = ['Ativo', 'Cumprido', 'Faturado', 'Cancelado']
+CTR_PORTE       = ['MICRO EMPRESA', 'EMPRESA DE PEQUENO PORTE', 'DEMAIS', 'Não informado']
+CTR_ENTIDADES   = ['SESI', 'SENAI', 'ALIMENTAÇÃO', 'IST', 'IEL', 'FIBRA', 'OUTRAS']
+
+# grafias diferentes da mesma pessoa / da mesma unidade no CRM
+CTR_MERGE_PROP  = {'ALESSANDRA CAMPOS': 'Alessandra Campos Castanheira'}
+CTR_MERGE_UNID  = {'IST': 'Instituto Senai de Tecnologia (IST)',
+                   'SISTEMAFIBRA': 'FIBRA',
+                   'SESI SIG': 'SESI-SIG',
+                   'SESI CENTRAL PARK': 'SESI-CENTRAL PARK'}
+
+_CTR_PEQUENAS = {'de', 'da', 'do', 'das', 'dos', 'e', 'em', 'para', 'a', 'o',
+                 'as', 'os', 'com', 'sem', 'por', 'ou', 'na', 'no', 'nas', 'nos'}
+
+
+def ctr_chave(v):
+    s = sem_acento(v)
+    return re.sub(r'\s+', ' ', re.sub(r'[^A-Z0-9]+', ' ', s)).strip()
+
+
+def ctr_entidade(unidade):
+    """A ORDEM DOS TESTES IMPORTA: Alimentacao vem antes de SESI porque
+    SESI-GUARA comeca com SESI; IST vem antes de SENAI pelo mesmo motivo."""
+    u = ctr_chave(unidade)
+    if not u:
+        return 'OUTRAS'
+    if 'RESTAURANTE SESI' in u or 'SESI GUARA' in u:
+        return 'ALIMENTAÇÃO'
+    if 'INSTITUTO SENAI' in u or re.search(r'(^| )IST( |$)', u):
+        return 'IST'
+    if 'FIBRA' in u or 'FEDERACAO DAS IND' in u:
+        return 'FIBRA'
+    if 'IEL' in u:
+        return 'IEL'
+    if 'SENAI' in u:
+        return 'SENAI'
+    if 'SESI' in u:
+        return 'SESI'
+    return 'OUTRAS'
+
+
+def ctr_cnae(v):
+    """O CRM grava o mesmo setor ora em caixa alta, ora em caixa mista. Sem
+    baixar tudo para minusculas antes do Title Case, o painel mostrava
+    "CONSTRUCAO DE EDIFICIOS" e "Construcao de edificios" como dois setores."""
+    s = texto(v, '').strip()
+    if not s:
+        return ''
+    partes = re.sub(r'\s+', ' ', s).lower().split(' ')
+    return ' '.join(p if (i and p in _CTR_PEQUENAS) else p.capitalize()
+                    for i, p in enumerate(partes))
+
+
+def ctr_desaspa(s):
+    # o export as vezes vem com aspas de CSV, dobradas por dentro do texto.
+    # texto() tambem derruba os NaN do pandas — sem isso 18 contratos sem
+    # produto viravam um produto chamado "nan".
+    s = texto(s, '').strip()
+    if len(s) >= 2 and s.startswith('"') and s.endswith('"'):
+        s = s[1:-1]
+    return s.replace('""', '"').strip()
+
+
+def ctr_vocabulario(valores):
+    """Existe nome de produto com virgula dentro (ex.: 'Consultoria para
+    atendimento a Legislacoes, Normas e Regulamentos Tecnicos'), entao nao da
+    para separar por virgula na marra. O vocabulario sai das linhas que tem UM
+    produto so — essas sao seguras."""
+    vocab = set()
+    for v in valores:
+        v = ctr_desaspa(v)
+        if v and ',' not in v:
+            vocab.add(v)
+    return vocab
+
+
+def ctr_produtos(txt, vocab):
+    """Casamento mais longo nos limites de virgula. O que nao casar volta
+    inteiro, para nunca inventar um produto que nao existe na planilha."""
+    t = ctr_desaspa(txt)
+    if not t:
+        return []
+    if ',' not in t:
+        return [t]
+    partes = [p.strip() for p in t.split(',')]
+    saida, i = [], 0
+    while i < len(partes):
+        casou = False
+        for j in range(len(partes), i, -1):
+            cand = ', '.join(partes[i:j]).strip()
+            if cand in vocab:
+                saida.append(cand)
+                i = j
+                casou = True
+                break
+        if not casou:
+            saida.append(partes[i])
+            i += 1
+    vistos, unicos = set(), []
+    for p in saida:                       # o mesmo produto repete na mesma linha
+        if p and p not in vistos:
+            vistos.add(p)
+            unicos.append(p)
+    return unicos
+
+
+def ctr_dias(v):
+    iso = to_iso(v)
+    if not iso:
+        return -1
+    try:
+        a, m, d = (int(x) for x in iso[:10].split('-'))
+        return (date(a, m, d) - CTR_EPOCH).days
+    except Exception:
+        return -1
+
+
+def gerar_contratos(caminho, pulo):
+    """Le a planilha de contratos e grava contratos/base.json."""
+    if caminho is None:
+        log('AVISO: sem planilha de contratos — painel de Contratos nao gerado.')
+        return
+    df = pd.read_excel(caminho, skiprows=pulo, dtype=object)
+    df.columns = [str(c).strip() for c in df.columns]
+
+    def achar(*chaves, exato=None):
+        if exato:
+            for col in df.columns:
+                if sem_acento(col) == exato:
+                    return col
+            return None
+        for col in df.columns:
+            c = sem_acento(col)
+            if all(k in c for k in chaves) and 'NAO MODIFICAR' not in c:
+                return col
+        return None
+
+    col = {
+        'ctr':  achar('ID DO CONTRATO'),
+        'prop': achar('PROPRIETARIO'),
+        'cli':  achar(exato='CLIENTE'),
+        'cnpj': achar('CNPJ'),
+        'cnae': achar('DESCRICAO DO CNAE'),
+        'porte': achar('PORTE'),
+        'prod': achar('RESUMO DE PRODUTOS'),
+        'unid': achar('ENTIDADE'),
+        'val':  achar('VALOR TOTAL'),
+        'cri':  achar('DATA DE CRIACAO'),
+        'ini':  achar('DATA', 'INICIO'),
+        'fim':  achar('DATA', 'TERMINO'),
+        'st':   achar('STATUS'),
+    }
+    faltando = [k for k, v in col.items() if v is None]
+    if faltando:
+        log(f'AVISO: planilha de contratos sem as colunas {faltando} — painel de Contratos nao gerado.')
+        return
+
+    vocab = ctr_vocabulario(df[col['prod']].tolist())
+
+    props, clis, cnpjs, unids, cnaes, prods = {}, {}, {}, {}, {}, {}
+
+    def idx(dic, valor):
+        if valor not in dic:
+            dic[valor] = len(dic)
+        return dic[valor]
+
+    linhas, vistos, fora = [], set(), 0
+    for _, r in df.iterrows():
+        idc = texto(r[col['ctr']], '')
+        if not idc or idc in vistos:
+            continue
+        vistos.add(idc)
+
+        st = texto(r[col['st']], '')
+        if st not in CTR_STATUS:
+            fora += 1
+            continue
+
+        nome = texto(r[col['prop']], '') or 'Não informado'
+        nome = CTR_MERGE_PROP.get(ctr_chave(nome), nome)
+
+        un = texto(r[col['unid']], '') or 'Não informado'
+        un = CTR_MERGE_UNID.get(ctr_chave(un), un)
+
+        porte = texto(r[col['porte']], '')
+        if porte not in CTR_PORTE:
+            porte = 'Não informado'
+
+        cnae = ctr_cnae(r[col['cnae']])
+        cnpj = limpar_cnpj(r[col['cnpj']])
+        lista = ctr_produtos(r[col['prod']], vocab)
+
+        linhas.append([
+            ctr_dias(r[col['cri']]),
+            ctr_dias(r[col['ini']]),
+            ctr_dias(r[col['fim']]),
+            CTR_STATUS.index(st),
+            round(to_num(r[col['val']]), 2),
+            idx(props, nome),
+            idx(clis, texto(r[col['cli']], '') or 'Não informado'),
+            idx(cnpjs, cnpj) if cnpj else -1,
+            idx(unids, un),
+            CTR_PORTE.index(porte),
+            idx(cnaes, cnae) if cnae else -1,
+            [idx(prods, p) for p in lista],
+        ])
+
+    if len(linhas) < 100:
+        log(f'AVISO: apenas {len(linhas)} contratos lidos — abaixo do minimo de seguranca. '
+            'O painel de Contratos segue com a base anterior.')
+        return
+
+    def chaves(d):
+        return [k for k, _ in sorted(d.items(), key=lambda kv: kv[1])]
+
+    criacoes = [c[0] for c in linhas if c[0] >= 0]
+    hoje = datetime.now(FUSO_BR).date()
+    saida = {
+        'gerado_em': datetime.now(FUSO_BR).strftime('%Y-%m-%dT%H:%M:%S'),
+        'origem': caminho.name,
+        'meta': {
+            'epoch': CTR_EPOCH.isoformat(),
+            'hoje_dias': (hoje - CTR_EPOCH).days,
+            'hoje_iso': hoje.isoformat(),
+            'total': len(linhas),
+            'data_min_dias': min(criacoes) if criacoes else 0,
+            'data_max_dias': max(criacoes) if criacoes else 0,
+            'anos': sorted({(CTR_EPOCH + timedelta(days=d)).year for d in criacoes}),
+            'avisos': ([f'{fora} linhas com status fora da lista'] if fora else []),
+        },
+        'lookups': {
+            'status': CTR_STATUS, 'porte': CTR_PORTE,
+            'proprietarios': chaves(props), 'clientes': chaves(clis),
+            'cnpjs': chaves(cnpjs), 'unidades': chaves(unids),
+            'cnaes': chaves(cnaes), 'produtos': chaves(prods),
+            'entidades': CTR_ENTIDADES,
+            'entidadePorUnidade': [ctr_entidade(u) for u in chaves(unids)],
+        },
+        'contratos': linhas,
+    }
+
+    destino = RAIZ / CTR_PASTA / 'base.json'
+    destino.parent.mkdir(parents=True, exist_ok=True)
+    destino.write_text(json.dumps(saida, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
+
+    ativos = sum(1 for c in linhas if c[3] == CTR_STATUS.index('Ativo'))
+    valor = sum(c[4] for c in linhas if c[4] > 0)
+    semvig = sum(1 for c in linhas if c[3] == CTR_STATUS.index('Ativo') and c[2] < 0)
+    log(f'OK  {len(linhas)} contratos gravados em {CTR_PASTA}/base.json '
+        f'({destino.stat().st_size / 1024:.0f} KB)')
+    log(f'    Ativos: {ativos} · sem vigencia cadastrada: {semvig}')
+    log(('    Valor contratado: R$ %s' % format(valor, ',.2f'))
+        .replace(',', 'X').replace('.', ',').replace('X', '.'))
+
+
+
 def main():
     arq, pulo, arq_ctr, pulo_ctr = escolher_planilhas()
     log(f'Base de Mercado: {arq.name} ({arq.stat().st_size / 1048576:.1f} MB), cabeçalho na linha {pulo + 1}')
@@ -597,6 +875,15 @@ def main():
     SAIDA.write_text(json.dumps(saida, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
 
     gerar_outros_dashboards(df, idx, arq.name)
+
+    # Painel de Contratos (13/10/2026). Vai dentro de try/except de proposito:
+    # se algo mudar na planilha de contratos, os outros cinco paineis continuam
+    # sendo publicados normalmente e o log avisa o que aconteceu.
+    try:
+        gerar_contratos(arq_ctr, pulo_ctr)
+    except Exception as e:
+        log(f'AVISO: painel de Contratos nao gerado ({e.__class__.__name__}: {e}). '
+            'Os demais dashboards nao foram afetados.')
 
     log('-' * 62)
     log(f'OK  {len(registros)} propostas gravadas em {PASTA_SITE}/dados.json '
