@@ -1,0 +1,1445 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Monitoramento de Contratos · Sistema FIBRA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* ============================================================
+   PALETA — validada com o script da skill dataviz, modo escuro,
+   superficie do cartao #1E1235.
+     categorica (5): ALL CHECKS PASS
+     rampa de vencimento (5 passos, um unico matiz): ALL CHECKS PASS
+   O gradiente laranja->rosa->roxo e ornamento (numeros, bordas, selos).
+   Ele NUNCA codifica dado: isso e trabalho da paleta validada acima.
+   ============================================================ */
+:root{
+  --pg:#110A1E; --pg2:#160D27;
+  --card:#1E1235; --card2:#261746; --card3:#2E1C54;
+  --bd:rgba(167,110,248,.16); --bd2:rgba(167,110,248,.30);
+  --tx:#F4F0FB; --tx2:#C9BEDF; --tx3:#9B8CBB; --tx4:#7C6DA0;
+
+  /* serie categorica validada */
+  --c1:#d27830; --c2:#fc3977; --c3:#a76ef8; --c4:#00a2d2; --c5:#47aa62;
+  /* rampa ordinal de vencimento: claro = urgente, escuro = distante */
+  --v1:#FBCFE8; --v2:#F9A8D4; --v3:#F2518F; --v4:#C026A3; --v5:#86198F;
+
+  --grad:linear-gradient(135deg,#FF8A3D 0%,#F2518F 48%,#A78BFA 100%);
+  --grad-sutil:linear-gradient(135deg,rgba(255,138,61,.16) 0%,rgba(242,81,143,.16) 48%,rgba(167,139,250,.16) 100%);
+
+  --r:18px; --r2:12px; --r3:8px;
+  --tt:'Archivo','Helvetica Neue',Arial,sans-serif;
+  --tp:'IBM Plex Sans',-apple-system,'Segoe UI',Roboto,sans-serif;
+  --sh:0 10px 34px rgba(0,0,0,.42);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--pg); color:var(--tx);
+  font-family:var(--tp); font-size:15px; line-height:1.55;
+  background-image:
+    radial-gradient(1100px 620px at 12% -8%, rgba(255,138,61,.09), transparent 62%),
+    radial-gradient(1000px 560px at 88% 2%, rgba(167,139,250,.11), transparent 60%),
+    radial-gradient(900px 520px at 50% 108%, rgba(242,81,143,.07), transparent 62%);
+  background-attachment:fixed;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+.wrap{max-width:1420px;margin:0 auto;padding:22px 18px 70px}
+
+/* ---------- cabecalho ---------- */
+.topo{margin-bottom:22px}
+.eyebrow{
+  font-family:var(--tt); font-size:11px; font-weight:700; letter-spacing:.16em;
+  text-transform:uppercase; margin-bottom:9px;
+  background:var(--grad); -webkit-background-clip:text; background-clip:text; color:transparent;
+}
+h1{
+  font-family:var(--tt); font-weight:900; font-size:clamp(26px,5.4vw,42px);
+  line-height:1.06; letter-spacing:-.025em; margin:0 0 10px; text-wrap:balance;
+}
+.sub{color:var(--tx2); max-width:68ch; margin:0 0 14px; font-size:15px}
+.selo{
+  display:inline-flex; align-items:center; gap:9px; flex-wrap:wrap;
+  background:var(--card); border:1px solid var(--bd); border-radius:999px;
+  padding:7px 15px; font-size:12.5px; color:var(--tx2);
+}
+.selo b{color:var(--tx)}
+.pt-grad{width:9px;height:9px;border-radius:50%;background:var(--grad);flex:none}
+
+/* ---------- filtros ---------- */
+.filtros{
+  background:var(--card); border:1px solid var(--bd); border-radius:var(--r);
+  padding:16px; margin:20px 0 24px; box-shadow:var(--sh);
+}
+.filtro-linha{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end}
+.fgrupo{min-width:0}
+.flabel{
+  font-family:var(--tt); font-size:10px; font-weight:700; letter-spacing:.13em;
+  text-transform:uppercase; color:var(--tx3); margin-bottom:7px; display:block;
+}
+.abas{display:flex;flex-wrap:wrap;gap:6px}
+.aba{
+  font-family:var(--tp); font-size:13px; font-weight:600; cursor:pointer;
+  background:var(--card2); color:var(--tx2); border:1px solid var(--bd);
+  border-radius:999px; padding:7px 15px; transition:.16s; white-space:nowrap;
+}
+.aba:hover{background:var(--card3);color:var(--tx);border-color:var(--bd2)}
+.aba.on{background:var(--grad);color:#1A0F26;border-color:transparent;font-weight:700}
+select,input[type=date]{
+  font-family:var(--tp); font-size:13px; background:var(--card2); color:var(--tx);
+  border:1px solid var(--bd); border-radius:var(--r3); padding:8px 11px; min-width:0; max-width:100%;
+}
+select:focus,input:focus{outline:2px solid var(--bd2);outline-offset:1px}
+select[multiple]{min-height:84px;min-width:190px}
+.btn{
+  font-family:var(--tp); font-size:13px; font-weight:700; cursor:pointer;
+  background:var(--grad); color:#1A0F26; border:none; border-radius:var(--r3); padding:9px 17px;
+}
+.btn.ghost{background:var(--card2);color:var(--tx2);border:1px solid var(--bd)}
+.btn:active{transform:translateY(1px)}
+
+/* ---------- KPIs ---------- */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(196px,1fr));gap:14px;margin-bottom:26px}
+.kpi{
+  position:relative; background:var(--card); border:1px solid var(--bd);
+  border-radius:var(--r); padding:19px 18px 17px; overflow:hidden; box-shadow:var(--sh);
+}
+.kpi::before{content:'';position:absolute;inset:0 0 auto 0;height:3px;background:var(--grad)}
+.kpi .rot{
+  font-family:var(--tt); font-size:10.5px; font-weight:700; letter-spacing:.11em;
+  text-transform:uppercase; color:var(--tx3); margin-bottom:9px;
+}
+.kpi .num{
+  font-family:var(--tt); font-weight:900; font-size:clamp(23px,3.1vw,31px);
+  line-height:1.08; letter-spacing:-.02em; font-variant-numeric:tabular-nums;
+  background:var(--grad); -webkit-background-clip:text; background-clip:text; color:transparent;
+  word-break:break-word;
+}
+.kpi .num.simples{background:none;color:var(--tx);-webkit-text-fill-color:var(--tx)}
+.kpi .pe{font-size:12px;color:var(--tx3);margin-top:7px}
+.kpi .pe b{color:var(--tx2)}
+
+/* ---------- cartoes ---------- */
+.grade{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin-bottom:22px}
+.grade.larga{grid-template-columns:1fr}
+.cartao{
+  background:var(--card); border:1px solid var(--bd); border-radius:var(--r);
+  padding:20px; box-shadow:var(--sh); min-width:0;
+}
+.ch{margin-bottom:16px}
+.ch h2{
+  font-family:var(--tt); font-weight:800; font-size:18px; letter-spacing:-.015em;
+  margin:0 0 5px; text-wrap:balance;
+}
+.ch p{margin:0;font-size:13px;color:var(--tx3);line-height:1.5}
+.ch p b,.ch p strong{color:var(--tx2)}
+
+/* ---------- barras ---------- */
+.lista{display:flex;flex-direction:column;gap:9px}
+.lin{display:grid;grid-template-columns:132px 1fr 150px;align-items:center;gap:11px}
+/* nos blocos de largura inteira o rotulo tem espaco para respirar: sem isso
+   uma descricao de CNAE virava "Incorporacao de E..." */
+.lista.larga .lin{grid-template-columns:330px 1fr 180px}
+.lista.larga .lin .rot b{white-space:normal;line-height:1.25}
+.lin.clic{cursor:pointer;border-radius:var(--r3);transition:background .14s}
+.lin.clic:hover{background:var(--card2)}
+.lin .rot{min-width:0}
+.lin .rot b{display:block;font-family:var(--tt);font-size:12.5px;font-weight:700;letter-spacing:.02em;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lin .rot i{display:block;font-style:normal;font-size:10.5px;color:var(--tx4);line-height:1.3}
+.trilho{height:20px;border-radius:5px;background:rgba(255,255,255,.06);overflow:hidden}
+.fill{height:100%;border-radius:5px;transition:width .5s cubic-bezier(.4,0,.2,1)}
+.lin .val{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.lin .val b{display:block;font-size:13.5px;font-weight:700}
+.lin .val i{display:block;font-style:normal;font-size:10.5px;color:var(--tx4)}
+
+/* ---------- destaque dentro do cartao ---------- */
+.hero{
+  margin-top:17px; padding:15px 17px; border-radius:var(--r2);
+  background:var(--grad-sutil); border:1px solid var(--bd2);
+}
+.hero .rot{font-family:var(--tt);font-size:10.5px;font-weight:700;letter-spacing:.11em;
+  text-transform:uppercase;color:var(--tx3)}
+.hero .num{font-family:var(--tt);font-weight:900;font-size:clamp(22px,3.4vw,30px);line-height:1.12;
+  font-variant-numeric:tabular-nums;background:var(--grad);-webkit-background-clip:text;
+  background-clip:text;color:transparent}
+.hero .sub{font-size:12.5px;color:var(--tx2);margin-top:3px}
+.nota{margin-top:13px;font-size:11.5px;color:var(--tx4);line-height:1.5}
+.nota b,.nota strong{color:var(--tx3)}
+.vazio{text-align:center;padding:34px 12px;color:var(--tx4);font-size:13.5px}
+
+/* ---------- tabelas ---------- */
+.tw{overflow-x:auto;border-radius:var(--r2);border:1px solid var(--bd);-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{
+  position:sticky; top:0; z-index:1; background:var(--card3);
+  font-family:var(--tt); font-size:10px; font-weight:700; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--tx2); text-align:left;
+  padding:11px 10px; white-space:nowrap; border-bottom:1px solid var(--bd2);
+}
+thead th.num,tbody td.num{text-align:right}
+thead th.ord{cursor:pointer;user-select:none}
+thead th.ord:hover{color:var(--tx)}
+thead th.ord::after{content:' ⇅';opacity:.4;font-size:9px}
+tbody td{padding:10px;border-bottom:1px solid rgba(167,110,248,.09);white-space:nowrap;
+  font-variant-numeric:tabular-nums;color:var(--tx2)}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:var(--card2)}
+td.nome{color:var(--tx);font-weight:600;max-width:270px;overflow:hidden;text-overflow:ellipsis}
+tr.total td{
+  background:var(--grad-sutil); border-top:1px solid var(--bd2);
+  font-weight:800; color:var(--tx);
+}
+.b2{display:flex;align-items:center;gap:7px}
+.b2 .t{flex:1;height:7px;border-radius:4px;background:rgba(255,255,255,.07);overflow:hidden;min-width:22px}
+.b2 .f{height:100%;border-radius:4px}
+.b2 .v{font-size:11px;color:var(--tx3);min-width:42px;text-align:right}
+.pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap}
+
+/* ---------- leitura da carteira ---------- */
+.lc{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.lci{display:flex;gap:11px;align-items:flex-start;padding:13px 15px;border-radius:var(--r2);
+  background:var(--card2);border:1px solid var(--bd)}
+.lci .tg{flex:none;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;
+  font-size:12px;font-weight:800;color:#160D27}
+.lci.ok .tg{background:var(--c5)} .lci.at .tg{background:var(--c1)}
+.lci.ri .tg{background:var(--c2)} .lci.in .tg{background:var(--c3)}
+.lci.at{border-color:rgba(210,120,48,.35)} .lci.ri{border-color:rgba(252,57,119,.35)}
+.lct{font-size:13.5px;line-height:1.55;color:var(--tx2);min-width:0}
+.lct b.t{display:block;font-family:var(--tt);font-size:10px;letter-spacing:.11em;
+  text-transform:uppercase;color:var(--tx4);margin-bottom:3px}
+.lct strong{color:var(--tx);font-weight:700}
+
+/* ---------- grafico svg ---------- */
+.svgwrap{width:100%;overflow-x:auto}
+svg.ch{display:block;width:100%;height:auto;min-width:420px}
+.leg{display:flex;flex-wrap:wrap;gap:14px;margin-top:12px;font-size:12px;color:var(--tx3)}
+.leg span{display:flex;align-items:center;gap:6px}
+.leg i{width:11px;height:11px;border-radius:3px;display:inline-block}
+
+/* ---------- modal ---------- */
+.modal{position:fixed;inset:0;background:rgba(10,5,20,.78);backdrop-filter:blur(5px);
+  display:none;align-items:center;justify-content:center;z-index:60;padding:18px}
+.modal.on{display:flex}
+.mbox{background:var(--card);border:1px solid var(--bd2);border-radius:var(--r);
+  max-width:1060px;width:100%;max-height:86vh;display:flex;flex-direction:column;box-shadow:var(--sh)}
+.mtopo{display:flex;align-items:flex-start;gap:14px;padding:18px 20px;border-bottom:1px solid var(--bd)}
+.mtopo h3{font-family:var(--tt);font-size:17px;margin:0 0 3px;font-weight:800}
+.mtopo p{margin:0;font-size:12.5px;color:var(--tx3)}
+.mfechar{margin-left:auto;background:var(--card2);border:1px solid var(--bd);color:var(--tx2);
+  font-size:19px;line-height:1;cursor:pointer;border-radius:var(--r3);padding:5px 11px}
+.mcorpo{overflow:auto;padding:16px 20px 20px}
+
+/* ---------- carga ---------- */
+#aviso{
+  display:none;background:var(--card);border:1px solid var(--bd2);border-left:4px solid var(--c2);
+  border-radius:var(--r2);padding:15px 17px;margin-bottom:20px;font-size:13.5px;color:var(--tx2);
+}
+#aviso b{color:var(--tx)}
+#carregando{text-align:center;padding:90px 20px;color:var(--tx3)}
+#carregando .barra{width:190px;height:4px;border-radius:4px;background:var(--card2);
+  margin:18px auto 0;overflow:hidden;position:relative}
+#carregando .barra::after{content:'';position:absolute;inset:0;background:var(--grad);
+  transform:translateX(-100%);animation:desliza 1.15s ease-in-out infinite}
+@keyframes desliza{to{transform:translateX(100%)}}
+#painel{display:none}
+
+.rodape{margin-top:40px;padding-top:20px;border-top:1px solid var(--bd);
+  font-size:12.5px;color:var(--tx4);line-height:1.65}
+
+/* ---------- celular ---------- */
+@media (max-width:1180px){ .lin{grid-template-columns:118px 1fr 132px;gap:9px} .lista.larga .lin{grid-template-columns:230px 1fr 150px} }
+@media (max-width:860px){
+  .grade{grid-template-columns:1fr}
+  .lc{grid-template-columns:1fr}
+}
+@media (max-width:620px){
+  .wrap{padding:16px 14px 56px}
+  .cartao{padding:16px;border-radius:14px}
+  .kpis{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:11px}
+  .kpi{padding:15px 14px 13px}
+  .lin,.lista.larga .lin{grid-template-columns:1fr;gap:5px;padding:9px 0;border-bottom:1px solid rgba(167,110,248,.09)}
+  .lin .val{text-align:left;display:flex;gap:9px;align-items:baseline}
+  .lin .val i{display:inline}
+  .trilho{height:14px}
+  select[multiple]{min-width:100%;width:100%}
+  .filtro-linha{gap:13px}
+  .fgrupo{width:100%}
+  svg.ch{min-width:340px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="topo">
+    <div class="eyebrow">Sistema FIBRA · SESI · SENAI · IEL — Área de Mercado</div>
+    <h1>Monitoramento de Contratos</h1>
+    <p class="sub">A carteira contratada da área, do fechamento à renovação. Todos os números saem
+      direto do export de contratos do Dynamics 365 — nada é estimado.</p>
+    <div class="selo"><span class="pt-grad"></span><span id="selo-txt">carregando a base…</span></div>
+  </header>
+
+  <div id="aviso"></div>
+
+  <div id="carregando">
+    <div style="font-family:var(--tt);font-weight:800;font-size:17px">Montando o painel</div>
+    <div style="font-size:13px;margin-top:5px">lendo a base de contratos…</div>
+    <div class="barra"></div>
+  </div>
+
+  <div id="painel">
+
+    <!-- ============== FILTROS ============== -->
+    <section class="filtros">
+      <div class="filtro-linha">
+        <div class="fgrupo">
+          <span class="flabel">Período de fechamento</span>
+          <div class="abas" id="abas-ano"></div>
+        </div>
+        <div class="fgrupo">
+          <span class="flabel">Personalizado</span>
+          <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap">
+            <input type="date" id="dt-ini"><span style="color:var(--tx4);font-size:12px">até</span>
+            <input type="date" id="dt-fim">
+            <button class="btn" id="btn-aplicar">Aplicar</button>
+          </div>
+        </div>
+      </div>
+      <div class="filtro-linha" style="margin-top:15px">
+        <div class="fgrupo"><span class="flabel">Status</span><select id="f-status" multiple></select></div>
+        <div class="fgrupo"><span class="flabel">Entidade</span><select id="f-entidade" multiple></select></div>
+        <div class="fgrupo"><span class="flabel">Unidade</span><select id="f-unidade" multiple></select></div>
+        <div class="fgrupo"><span class="flabel">Proprietário</span><select id="f-prop" multiple></select></div>
+        <div class="fgrupo"><span class="flabel">Porte</span><select id="f-porte" multiple></select></div>
+        <div class="fgrupo">
+          <span class="flabel">&nbsp;</span>
+          <button class="btn ghost" id="btn-limpar">✕ Limpar filtros</button>
+        </div>
+      </div>
+      <p class="nota" style="margin-top:12px">Segure <b>Ctrl</b> (ou <b>Cmd</b>) para marcar mais de um item
+        na mesma lista. O período filtra pela <b>Data de Criação do contrato</b>.</p>
+    </section>
+
+    <!-- ============== KPIs ============== -->
+    <section class="kpis" id="kpis"></section>
+
+    <!-- ============== VENCIMENTOS + SEM VIGENCIA ============== -->
+    <section class="grade">
+      <div class="cartao">
+        <div class="ch">
+          <h2>Radar de Vencimentos</h2>
+          <p id="ins-venc">Contratos <b>Ativos</b>, pelo tempo que falta até a Data de Término.</p>
+        </div>
+        <div id="venc-corpo"></div>
+      </div>
+      <div class="cartao">
+        <div class="ch">
+          <h2>Ativos sem Vigência Cadastrada</h2>
+          <p id="ins-semvig">Contratos Ativos sem Data de Término no CRM — invisíveis para qualquer rotina de renovação.</p>
+        </div>
+        <div id="semvig-corpo"></div>
+      </div>
+    </section>
+
+    <!-- ============== EVOLUCAO ============== -->
+    <section class="grade">
+      <div class="cartao">
+        <div class="ch">
+          <h2>Contratos Fechados por Mês</h2>
+          <p id="ins-evoq">Quantidade de contratos criados a cada mês do recorte.</p>
+        </div>
+        <div class="svgwrap" id="evo-qtd"></div>
+      </div>
+      <div class="cartao">
+        <div class="ch">
+          <h2>Valor Contratado por Mês</h2>
+          <p id="ins-evov">Soma do Valor Total dos contratos criados a cada mês. Contratos sem valor não entram.</p>
+        </div>
+        <div class="svgwrap" id="evo-val"></div>
+      </div>
+    </section>
+
+    <!-- ============== ENTIDADE + PORTE ============== -->
+    <section class="grade">
+      <div class="cartao">
+        <div class="ch">
+          <h2>Composição por Entidade</h2>
+          <p id="ins-ent">Onde o contrato foi assinado, com as unidades agrupadas por entidade.</p>
+        </div>
+        <div id="ent-corpo"></div>
+      </div>
+      <div class="cartao">
+        <div class="ch">
+          <h2>Distribuição por Status</h2>
+          <p id="ins-st">Quantidade e valor de contratos em cada estado do ciclo de vida.</p>
+        </div>
+        <div id="st-corpo"></div>
+      </div>
+    </section>
+
+    <!-- ============== TOP CLIENTES / PRODUTOS ============== -->
+    <section class="grade">
+      <div class="cartao">
+        <div class="ch">
+          <h2>Top 20 Clientes</h2>
+          <p id="ins-cli">Valor contratado e número de contratos na mesma linha. Clique em <b>Contratos</b> para ordenar por volume.</p>
+        </div>
+        <div class="tw"><table id="t-cli"><thead><tr>
+          <th class="ord" data-s="nome">Cliente</th>
+          <th class="ord" data-s="valor">Valor Contratado</th>
+          <th class="ord" data-s="qtd">Contratos</th>
+        </tr></thead><tbody id="t-cli-b"></tbody></table></div>
+      </div>
+      <div class="cartao">
+        <div class="ch">
+          <h2>Top 20 Produtos</h2>
+          <p id="ins-prod">Um contrato pode ter mais de um produto; cada produto é contado uma vez por contrato.</p>
+        </div>
+        <div class="tw"><table id="t-prod"><thead><tr>
+          <th class="ord" data-s="nome">Produto</th>
+          <th class="ord" data-s="valor">Valor Contratado</th>
+          <th class="ord" data-s="qtd">Contratos</th>
+        </tr></thead><tbody id="t-prod-b"></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- ============== CNAE ============== -->
+    <section class="grade larga">
+      <div class="cartao">
+        <div class="ch">
+          <h2>Mapa Setorial — Top 15 CNAEs</h2>
+          <p id="ins-cnae">Em quais setores da economia a carteira está concentrada, pela atividade principal do cliente.</p>
+        </div>
+        <div id="cnae-corpo"></div>
+      </div>
+    </section>
+
+    <!-- ============== RECORRENCIA ============== -->
+    <section class="grade">
+      <div class="cartao">
+        <div class="ch">
+          <h2>Recorrência de Clientes</h2>
+          <p id="ins-rec">Quantos contratos cada CNPJ assinou no recorte. Clique numa faixa para ver quem está nela.</p>
+        </div>
+        <div id="rec-corpo"></div>
+      </div>
+      <div class="cartao">
+        <div class="ch">
+          <h2>Clientes Âncora</h2>
+          <p id="ins-anc">Os 15 CNPJs com mais contratos assinados no recorte.</p>
+        </div>
+        <div class="tw"><table id="t-anc"><thead><tr>
+          <th>Cliente</th><th class="num">Contratos</th><th class="num">Valor</th><th class="num">Ativos</th>
+        </tr></thead><tbody id="t-anc-b"></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- ============== PROPRIETARIOS ============== -->
+    <section class="grade larga">
+      <div class="cartao">
+        <div class="ch">
+          <h2>Desempenho por Proprietário</h2>
+          <p id="ins-pro">Contratos assinados, carteira ativa e valor, por responsável.</p>
+        </div>
+        <div class="tw"><table id="t-pro"><thead><tr>
+          <th class="ord" data-s="nome">Proprietário</th>
+          <th class="ord num" data-s="qtd">Contratos</th>
+          <th class="ord num" data-s="ativo">Ativos</th>
+          <th class="ord num" data-s="cumprido">Cumpridos</th>
+          <th class="ord num" data-s="cancelado">Cancelados</th>
+          <th class="ord num" data-s="clientes">Clientes</th>
+          <th class="ord num" data-s="valor">Valor Contratado</th>
+          <th class="ord num" data-s="qtd">% dos Contratos</th>
+        </tr></thead><tbody id="t-pro-b"></tbody></table></div>
+        <p class="nota"><b>Valor Contratado</b> soma o Valor Total dos contratos do responsável no recorte.
+          Contratos sem valor financeiro contam na coluna Contratos, mas somam zero no valor.
+          <b>Ativos + Cumpridos + Cancelados</b> pode não fechar com Contratos: o status <b>Faturado</b>
+          existe na base e não tem coluna própria — aparece em Distribuição por Status.</p>
+      </div>
+    </section>
+
+    <!-- ============== LEITURA DA CARTEIRA ============== -->
+    <section class="grade larga">
+      <div class="cartao">
+        <div class="ch">
+          <h2>Leitura da Carteira</h2>
+          <p>O diagnóstico do recorte selecionado, escrito automaticamente a cada filtro aplicado.</p>
+        </div>
+        <div id="lc-corpo"></div>
+      </div>
+    </section>
+
+    <!-- ============== DRILL-DOWN ============== -->
+    <section class="grade larga">
+      <div class="cartao">
+        <div class="ch">
+          <h2>Contratos · Drill-down</h2>
+          <p id="ins-dd">Todos os contratos do recorte. Clique no cabeçalho para ordenar.</p>
+        </div>
+        <div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:13px">
+          <input type="search" id="dd-busca" placeholder="Buscar cliente, produto, proprietário…"
+                 style="flex:1;min-width:200px;font-family:var(--tp);font-size:13px;background:var(--card2);
+                        color:var(--tx);border:1px solid var(--bd);border-radius:var(--r3);padding:9px 12px">
+          <button class="btn" id="btn-excel">⤓ Exportar Excel</button>
+        </div>
+        <div class="tw" style="max-height:560px;overflow-y:auto"><table id="t-dd"><thead><tr>
+          <th class="ord" data-s="cliente">Cliente</th>
+          <th class="ord" data-s="produtos">Produtos</th>
+          <th class="ord" data-s="unidade">Unidade</th>
+          <th class="ord" data-s="prop">Proprietário</th>
+          <th class="ord" data-s="status">Status</th>
+          <th class="ord num" data-s="valor">Valor</th>
+          <th class="ord num" data-s="inicio">Início</th>
+          <th class="ord num" data-s="fim">Término</th>
+        </tr></thead><tbody id="t-dd-b"></tbody></table></div>
+        <p class="nota" id="dd-rodape"></p>
+      </div>
+    </section>
+
+    <p class="rodape">
+      <b style="color:var(--tx2)">Fonte:</b> export <i>Todos os Contratos</i> do Dynamics 365 · 1 linha = 1 contrato.<br>
+      <b style="color:var(--tx2)">Valor Contratado:</b> soma do campo Valor Total. Contratos com valor zero ou negativo
+      entram na contagem de volume, mas ficam fora dos indicadores financeiros e do ticket médio —
+      são gratuidades e termos institucionais (Novo B+P, Termo de Adesão, Acordo de Cooperação, palestras).<br>
+      <b style="color:var(--tx2)">Vencimento:</b> calculado sobre a Data de Término dos contratos com status Ativo.<br>
+      Área de Mercado · Sistema FIBRA — SESI · SENAI · IEL
+    </p>
+
+  </div>
+</div>
+
+<div class="modal" id="modal">
+  <div class="mbox">
+    <div class="mtopo">
+      <div><h3 id="m-tit">Detalhe</h3><p id="m-sub"></p></div>
+      <button class="mfechar" id="m-fechar" aria-label="Fechar">×</button>
+    </div>
+    <div class="mcorpo"><div class="tw"><table id="t-m"><thead><tr>
+      <th>Cliente</th><th>Produtos</th><th>Unidade</th><th>Proprietário</th>
+      <th class="num">Valor</th><th class="num">Término</th>
+    </tr></thead><tbody id="t-m-b"></tbody></table></div></div>
+  </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+/* ============================================================
+   PAINEL DE CONTRATOS — Sistema FIBRA / Área de Mercado
+   Construído em 13/10/2026.
+
+   LINHA DA BASE (RAW.contratos), uma por contrato:
+     [0] criacaoDias  [1] inicioDias  [2] fimDias  (-1 = sem data)
+     [3] statusIdx    [4] valor       [5] propIdx
+     [6] cliIdx       [7] cnpjIdx     [8] unidIdx
+     [9] porteIdx     [10] cnaeIdx    [11] [produtoIdxs]
+
+   REGRA FINANCEIRA (acertada com o usuário):
+     Contratos com Valor Total <= 0 CONTAM no volume e aparecem no drill-down,
+     mas ficam FORA de tudo que é dinheiro — valor contratado, ticket médio,
+     ranking por valor. São gratuidades e termos institucionais. O painel mostra
+     a contagem deles num card próprio, para o volume nunca sumir da vista.
+   ============================================================ */
+(function () {
+  'use strict';
+
+  /* paleta validada — ver comentário no topo do CSS */
+  var CAT = ['#d27830', '#fc3977', '#a76ef8', '#00a2d2', '#47aa62'];
+  var RAMPA = ['#FBCFE8', '#F9A8D4', '#F2518F', '#C026A3', '#86198F'];
+
+  var FAIXAS = [
+    { rot: 'Vencido',        sub: 'término já passou',   min: -1e9, max: -1 },
+    { rot: 'Até 30 dias',    sub: 'renovar agora',       min: 0,    max: 30 },
+    { rot: '31 a 60 dias',   sub: 'abordar este mês',    min: 31,   max: 60 },
+    { rot: '61 a 90 dias',   sub: 'entrar na agenda',    min: 61,   max: 90 },
+    { rot: '91 a 180 dias',  sub: 'horizonte do semestre', min: 91, max: 180 },
+    { rot: 'Mais de 180 dias', sub: 'carteira longa',    min: 181,  max: 1e9 }
+  ];
+  var CORES_FAIXA = [RAMPA[0], RAMPA[0], RAMPA[1], RAMPA[2], RAMPA[3], RAMPA[4]];
+
+  var FX_REC = [
+    { rot: '1 contrato',    sub: 'comprou uma vez',    min: 1,  max: 1 },
+    { rot: '2 a 4',         sub: 'voltou a comprar',   min: 2,  max: 4 },
+    { rot: '5 a 9',         sub: 'relação consolidada', min: 5, max: 9 },
+    { rot: '10 ou mais',    sub: 'cliente âncora',     min: 10, max: 1e9 }
+  ];
+
+  /* ---------------- formatadores ---------------- */
+  var fmtBRL = function (v) {
+    return 'R$ ' + Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+  var fmtBRLc = function (v) {
+    v = Number(v || 0);
+    var a = Math.abs(v);
+    if (a >= 1e6) return 'R$ ' + (v / 1e6).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + ' mi';
+    if (a >= 1e3) return 'R$ ' + (v / 1e3).toLocaleString('pt-BR', { maximumFractionDigits: 0 }) + ' mil';
+    return 'R$ ' + v.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
+  };
+  var fmtNum = function (v) { return Number(v || 0).toLocaleString('pt-BR'); };
+  var fmtPct = function (v) { return Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%'; };
+  var esc = function (s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  };
+  var corta = function (s, n) { s = String(s == null ? '' : s); return s.length > n ? s.slice(0, n - 1) + '…' : s; };
+  var pct = function (a, b) { return b ? (a / b * 100) : 0; };
+
+  /* ---------------- estado ---------------- */
+  var RAW, L, S, P, CLI, CNPJ, UNI, CNAE, PROD, ENTU, PORTE, EPOCH, HOJE;
+  var F = { ini: null, fim: null, rotulo: 'Tudo', status: [], entidade: [], unidade: [], prop: [], porte: [] };
+  var ORD = {
+    cli: { c: 'valor', d: 'desc' }, prod: { c: 'valor', d: 'desc' },
+    pro: { c: 'valor', d: 'desc' }, dd: { c: 'valor', d: 'desc' }
+  };
+  var recorte = [];
+
+  function diaParaData(d) { var x = new Date(EPOCH.getTime()); x.setUTCDate(x.getUTCDate() + d); return x; }
+  function fmtData(d) {
+    if (d == null || d < 0) return '—';
+    var x = diaParaData(d);
+    return String(x.getUTCDate()).padStart(2, '0') + '/' + String(x.getUTCMonth() + 1).padStart(2, '0') + '/' + x.getUTCFullYear();
+  }
+  function isoParaDia(iso) {
+    var p = String(iso).split('-');
+    if (p.length !== 3) return null;
+    return Math.round((Date.UTC(+p[0], +p[1] - 1, +p[2]) - EPOCH.getTime()) / 86400000);
+  }
+
+  /* ---------------- filtros ---------------- */
+  function aplicaFiltros() {
+    var ini = F.ini, fim = F.fim;
+    var fs = F.status.length ? F.status : null, fe = F.entidade.length ? F.entidade : null;
+    var fu = F.unidade.length ? F.unidade : null, fp = F.prop.length ? F.prop : null;
+    var fo = F.porte.length ? F.porte : null;
+    var out = [];
+    for (var i = 0; i < L.length; i++) {
+      var c = L[i];
+      if (ini != null && c[0] < ini) continue;
+      if (fim != null && c[0] > fim) continue;
+      if (fs && fs.indexOf(c[3]) < 0) continue;
+      if (fe && fe.indexOf(ENTU[c[8]]) < 0) continue;
+      if (fu && fu.indexOf(c[8]) < 0) continue;
+      if (fp && fp.indexOf(c[5]) < 0) continue;
+      if (fo && fo.indexOf(c[9]) < 0) continue;
+      out.push(c);
+    }
+    return out;
+  }
+
+  /* ---------------- blocos de barras ---------------- */
+  function linha(rot, sub, pctLarg, cor, valTopo, valBaixo, extra) {
+    return '<div class="lin' + (extra ? ' clic' : '') + '"' + (extra || '') + '>' +
+      '<div class="rot"><b title="' + esc(rot) + '">' + esc(rot) + '</b><i>' + esc(sub) + '</i></div>' +
+      '<div class="trilho"><div class="fill" style="width:' + Math.max(0, Math.min(100, pctLarg)).toFixed(1) +
+        '%;background:' + cor + '"></div></div>' +
+      '<div class="val"><b>' + valTopo + '</b><i>' + valBaixo + '</i></div></div>';
+  }
+
+  /* ============================================================
+     KPIs
+     ============================================================ */
+  function renderKPIs(lista) {
+    var comValor = lista.filter(function (c) { return c[4] > 0; });
+    var semValor = lista.length - comValor.length;
+    var valor = comValor.reduce(function (a, c) { return a + c[4]; }, 0);
+    var iAtivo = S.indexOf('Ativo');
+    var ativos = lista.filter(function (c) { return c[3] === iAtivo; });
+    var valorAtivo = ativos.reduce(function (a, c) { return a + (c[4] > 0 ? c[4] : 0); }, 0);
+    var a90 = ativos.filter(function (c) { return c[2] >= 0 && (c[2] - HOJE) >= 0 && (c[2] - HOJE) <= 90; });
+    var v90 = a90.reduce(function (a, c) { return a + (c[4] > 0 ? c[4] : 0); }, 0);
+    var cnpjs = {}, n = 0;
+    lista.forEach(function (c) { if (c[7] >= 0 && !cnpjs[c[7]]) { cnpjs[c[7]] = 1; n++; } });
+    var ticket = comValor.length ? valor / comValor.length : 0;
+
+    var cards = [
+      { rot: 'Contratos no recorte', num: fmtNum(lista.length), pe: '<b>' + fmtNum(comValor.length) + '</b> com valor financeiro' },
+      { rot: 'Valor contratado', num: fmtBRLc(valor),
+        pe: '<b>' + fmtBRL(valor) + '</b> — soma dos ' + fmtNum(comValor.length) + ' contratos com valor' },
+      { rot: 'Carteira ativa', num: fmtNum(ativos.length), pe: '<b>' + fmtBRL(valorAtivo) + '</b> sob contrato' },
+      { rot: 'A vencer em 90 dias', num: fmtNum(a90.length), pe: '<b>' + fmtBRL(v90) + '</b> a renovar' },
+      { rot: 'Clientes atendidos', num: fmtNum(n), pe: 'CNPJs distintos no recorte' },
+      { rot: 'Ticket médio', num: fmtBRL(ticket), pe: 'só contratos com valor' },
+      { rot: 'Sem valor financeiro', num: fmtNum(semValor), simples: true,
+        pe: fmtPct(pct(semValor, lista.length)) + ' do volume — gratuidades e termos' }
+    ];
+    document.getElementById('kpis').innerHTML = cards.map(function (k) {
+      return '<div class="kpi"><div class="rot">' + k.rot + '</div>' +
+        '<div class="num' + (k.simples ? ' simples' : '') + '">' + k.num + '</div>' +
+        '<div class="pe">' + k.pe + '</div></div>';
+    }).join('');
+  }
+
+  /* ============================================================
+     RADAR DE VENCIMENTOS
+     ============================================================ */
+  function agregaVenc(lista) {
+    var iAtivo = S.indexOf('Ativo');
+    var fx = FAIXAS.map(function (f) { return { rot: f.rot, sub: f.sub, q: 0, v: 0, itens: [] }; });
+    var sem = [];
+    lista.forEach(function (c) {
+      if (c[3] !== iAtivo) return;
+      if (c[2] < 0) { sem.push(c); return; }
+      var d = c[2] - HOJE;
+      for (var i = 0; i < FAIXAS.length; i++) {
+        if (d >= FAIXAS[i].min && d <= FAIXAS[i].max) {
+          fx[i].q++; fx[i].v += (c[4] > 0 ? c[4] : 0); fx[i].itens.push(c); break;
+        }
+      }
+    });
+    return { fx: fx, sem: sem };
+  }
+
+  function renderVenc(lista) {
+    var el = document.getElementById('venc-corpo');
+    var r = agregaVenc(lista);
+    var fx = r.fx.filter(function (f, i) { return f.q > 0 || i > 0; });
+    var totQ = r.fx.reduce(function (a, f) { return a + f.q; }, 0);
+    if (!totQ) {
+      el.innerHTML = '<div class="vazio">Nenhum contrato Ativo com vigência no filtro selecionado.</div>';
+      return;
+    }
+    /* a barra mede QUANTIDADE: por valor, a faixa de 180+ dias (dezenas de
+       milhoes) achatava as faixas urgentes ate elas sumirem da tela. */
+    var maxQ = Math.max.apply(null, r.fx.map(function (f) { return f.q; }).concat([1]));
+    var html = '<div class="lista">' + r.fx.map(function (f, i) {
+      if (i === 0 && f.q === 0) return '';
+      return linha(f.rot, f.sub, f.q / maxQ * 100, CORES_FAIXA[i], fmtBRL(f.v),
+        fmtNum(f.q) + (f.q === 1 ? ' contrato' : ' contratos'), ' data-venc="' + i + '"');
+    }).join('') + '</div>';
+
+    var q90 = r.fx[0].q + r.fx[1].q + r.fx[2].q + r.fx[3].q;
+    var v90 = r.fx[0].v + r.fx[1].v + r.fx[2].v + r.fx[3].v;
+    html += '<div class="hero"><div class="rot">Janela de renovação — próximos 90 dias</div>' +
+      '<div class="num">' + fmtBRL(v90) + '</div>' +
+      '<div class="sub"><strong>' + fmtNum(q90) + '</strong> contratos de ' + fmtNum(totQ) +
+      ' com vigência cadastrada — ' + fmtPct(pct(q90, totQ)) + ' da carteira ativa datada.</div></div>';
+    html += '<p class="nota">A barra mede <b>quantidade de contratos</b>; o número grande é o <b>valor</b>. ' +
+      'Clique em qualquer faixa para ver os contratos dela. A faixa <b>Vencido</b> só aparece quando existe ' +
+      'contrato Ativo com término no passado — hoje não existe nenhum.</p>';
+    el.innerHTML = html;
+
+    el.querySelectorAll('[data-venc]').forEach(function (n) {
+      n.onclick = function () {
+        var i = +n.getAttribute('data-venc');
+        abreModal('Vencimento · ' + r.fx[i].rot, fmtNum(r.fx[i].q) + ' contratos · ' + fmtBRL(r.fx[i].v), r.fx[i].itens);
+      };
+    });
+
+    var ins = document.getElementById('ins-venc');
+    ins.innerHTML = 'Contratos <b>Ativos</b>, pelo tempo que falta até a Data de Término. ' +
+      '<strong>' + fmtNum(q90) + '</strong> contratos vencem em até 90 dias, somando <strong>' + fmtBRL(v90) + '</strong>.';
+  }
+
+  function renderSemVig(lista) {
+    var el = document.getElementById('semvig-corpo');
+    var r = agregaVenc(lista);
+    var sem = r.sem;
+    if (!sem.length) {
+      el.innerHTML = '<div class="vazio">Todos os contratos Ativos do recorte têm vigência cadastrada.</div>';
+      document.getElementById('ins-semvig').textContent =
+        'Contratos Ativos sem Data de Término no CRM — nenhum encontrado neste recorte.';
+      return;
+    }
+    var v = sem.reduce(function (a, c) { return a + (c[4] > 0 ? c[4] : 0); }, 0);
+    var total = lista.filter(function (c) { return c[3] === S.indexOf('Ativo'); }).length;
+
+    /* quem concentra o problema */
+    var porProp = {};
+    sem.forEach(function (c) {
+      var k = P[c[5]];
+      if (!porProp[k]) porProp[k] = { q: 0, v: 0 };
+      porProp[k].q++; porProp[k].v += (c[4] > 0 ? c[4] : 0);
+    });
+    var lin = Object.keys(porProp).map(function (k) { return { n: k, q: porProp[k].q, v: porProp[k].v }; })
+      .sort(function (a, b) { return b.q - a.q; }).slice(0, 6);
+    var maxQ = Math.max.apply(null, lin.map(function (x) { return x.q; }).concat([1]));
+
+    var html = '<div class="hero"><div class="rot">Valor fora do radar de renovação</div>' +
+      '<div class="num">' + fmtBRL(v) + '</div>' +
+      '<div class="sub"><strong>' + fmtNum(sem.length) + '</strong> contratos Ativos de ' + fmtNum(total) +
+      ' — ' + fmtPct(pct(sem.length, total)) + ' da carteira ativa sem data de término no CRM.</div></div>';
+    html += '<div class="lista" style="margin-top:16px">' + lin.map(function (x) {
+      return linha(x.n, 'contratos sem vigência', x.q / maxQ * 100, CAT[0],
+        fmtNum(x.q), fmtBRL(x.v));
+    }).join('') + '</div>';
+    html += '<p class="nota">Enquanto a Data de Término não for preenchida, estes contratos não entram em ' +
+      'nenhuma faixa do Radar de Vencimentos. <b>É correção de cadastro, não de venda.</b></p>' +
+      '<div style="margin-top:12px"><button class="btn ghost" id="btn-semvig">Ver os ' + fmtNum(sem.length) + ' contratos</button></div>';
+    el.innerHTML = html;
+    document.getElementById('btn-semvig').onclick = function () {
+      abreModal('Ativos sem vigência cadastrada', fmtNum(sem.length) + ' contratos · ' + fmtBRL(v), sem);
+    };
+    document.getElementById('ins-semvig').innerHTML =
+      'Contratos Ativos sem Data de Término no CRM. São <strong>' + fmtNum(sem.length) +
+      '</strong>, somando <strong>' + fmtBRL(v) + '</strong>.';
+  }
+
+  /* ============================================================
+     EVOLUÇÃO MENSAL — colunas em SVG
+     ============================================================ */
+  function meses(lista) {
+    var m = {};
+    lista.forEach(function (c) {
+      if (c[0] < 0) return;
+      var d = diaParaData(c[0]);
+      var k = d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0');
+      if (!m[k]) m[k] = { q: 0, v: 0 };
+      m[k].q++; if (c[4] > 0) m[k].v += c[4];
+    });
+    return Object.keys(m).sort().map(function (k) {
+      var p = k.split('-');
+      return { k: k, rot: ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][+p[1]-1] + '/' + p[0].slice(2),
+               q: m[k].q, v: m[k].v };
+    });
+  }
+
+  function colunas(alvo, dados, campo, cor, fmt) {
+    var el = document.getElementById(alvo);
+    if (!dados.length) { el.innerHTML = '<div class="vazio">Sem contratos no filtro selecionado.</div>'; return; }
+    /* com muitos meses o rótulo colide: mostramos um a cada N */
+    var W = Math.max(440, dados.length * 46), H = 260;
+    var pad = { l: 8, r: 8, t: 26, b: 42 };
+    var iw = W - pad.l - pad.r, ih = H - pad.t - pad.b;
+    var max = Math.max.apply(null, dados.map(function (d) { return d[campo]; }).concat([1]));
+    var bw = Math.min(40, iw / dados.length * 0.64);
+    var passo = Math.ceil(dados.length / (W > 700 ? 14 : 7));
+    var s = '<svg class="ch" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Evolução mensal">';
+    dados.forEach(function (d, i) {
+      var x = pad.l + (i + 0.5) * (iw / dados.length);
+      var h = d[campo] / max * ih;
+      var y = pad.t + ih - h;
+      s += '<rect x="' + (x - bw / 2).toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + bw.toFixed(1) +
+           '" height="' + Math.max(2, h).toFixed(1) + '" rx="4" fill="' + cor + '" fill-opacity=".92">' +
+           '<title>' + esc(d.rot) + ' · ' + esc(fmt(d[campo])) + '</title></rect>';
+      if (i === dados.length - 1 || i % passo === 0) {
+        s += '<text x="' + x.toFixed(1) + '" y="' + (y - 7).toFixed(1) + '" text-anchor="middle" ' +
+             'font-size="10.5" font-weight="700" fill="#C9BEDF">' + esc(fmt(d[campo])) + '</text>';
+        s += '<text x="' + x.toFixed(1) + '" y="' + (pad.t + ih + 18) + '" text-anchor="middle" ' +
+             'font-size="10" fill="#7C6DA0">' + esc(d.rot) + '</text>';
+      }
+    });
+    s += '<line x1="' + pad.l + '" y1="' + (pad.t + ih) + '" x2="' + (W - pad.r) + '" y2="' + (pad.t + ih) +
+         '" stroke="rgba(167,110,248,.22)" stroke-width="1"/>';
+    s += '</svg>';
+    el.innerHTML = s;
+  }
+
+  function renderEvolucao(lista) {
+    var m = meses(lista);
+    colunas('evo-qtd', m, 'q', CAT[2], fmtNum);
+    colunas('evo-val', m, 'v', CAT[0], fmtBRLc);
+    if (m.length) {
+      var pQ = m.slice().sort(function (a, b) { return b.q - a.q; })[0];
+      var pV = m.slice().sort(function (a, b) { return b.v - a.v; })[0];
+      var medQ = m.reduce(function (a, x) { return a + x.q; }, 0) / m.length;
+      document.getElementById('ins-evoq').innerHTML = 'Quantidade de contratos criados a cada mês. Média de <b>' +
+        fmtNum(Math.round(medQ)) + '</b> por mês; o pico foi <b>' + pQ.rot + '</b> com ' + fmtNum(pQ.q) + '.';
+      document.getElementById('ins-evov').innerHTML = 'Soma do Valor Total dos contratos criados a cada mês. ' +
+        'Maior mês: <b>' + pV.rot + '</b> com ' + fmtBRL(pV.v) + '. Contratos sem valor não entram.';
+    }
+  }
+
+  /* ============================================================
+     ENTIDADE E STATUS
+     ============================================================ */
+  function renderEntidade(lista) {
+    var m = {};
+    lista.forEach(function (c) {
+      var e = ENTU[c[8]];
+      if (!m[e]) m[e] = { q: 0, v: 0, un: {} };
+      m[e].q++; if (c[4] > 0) m[e].v += c[4];
+      m[e].un[c[8]] = 1;
+    });
+    var lin = Object.keys(m).map(function (k) {
+      return { n: k, q: m[k].q, v: m[k].v, un: Object.keys(m[k].un).length };
+    }).sort(function (a, b) { return b.v - a.v; });
+    var el = document.getElementById('ent-corpo');
+    if (!lin.length) { el.innerHTML = '<div class="vazio">Sem contratos no filtro selecionado.</div>'; return; }
+    var maxV = Math.max.apply(null, lin.map(function (x) { return x.v; }).concat([1]));
+    var totV = lin.reduce(function (a, x) { return a + x.v; }, 0);
+    el.innerHTML = '<div class="lista">' + lin.map(function (x, i) {
+      return linha(x.n, x.un + (x.un === 1 ? ' unidade' : ' unidades'), x.v / maxV * 100,
+        CAT[i % CAT.length], fmtBRL(x.v), fmtNum(x.q) + ' contratos · ' + fmtPct(pct(x.v, totV)));
+    }).join('') + '</div>';
+    document.getElementById('ins-ent').innerHTML = 'Onde o contrato foi assinado, com as unidades agrupadas por entidade. ' +
+      '<strong>' + lin[0].n + '</strong> concentra ' + fmtPct(pct(lin[0].v, totV)) + ' do valor contratado.';
+  }
+
+  function renderStatus(lista) {
+    var q = S.map(function () { return 0; }), v = S.map(function () { return 0; });
+    lista.forEach(function (c) { q[c[3]]++; if (c[4] > 0) v[c[3]] += c[4]; });
+    var lin = S.map(function (s, i) { return { n: s, q: q[i], v: v[i], i: i }; })
+      .filter(function (x) { return x.q > 0; }).sort(function (a, b) { return b.q - a.q; });
+    var el = document.getElementById('st-corpo');
+    if (!lin.length) { el.innerHTML = '<div class="vazio">Sem contratos no filtro selecionado.</div>'; return; }
+    var maxQ = Math.max.apply(null, lin.map(function (x) { return x.q; }).concat([1]));
+    var totQ = lin.reduce(function (a, x) { return a + x.q; }, 0);
+    el.innerHTML = '<div class="lista">' + lin.map(function (x) {
+      return linha(x.n, fmtPct(pct(x.q, totQ)) + ' do volume', x.q / maxQ * 100, CAT[x.i % CAT.length],
+        fmtNum(x.q), fmtBRL(x.v));
+    }).join('') + '</div>' +
+    '<p class="nota">A barra mede <b>quantidade</b>; o número à direita de baixo é o <b>valor</b>. ' +
+    'Os dois nem sempre andam juntos — contrato pequeno em volume pode pesar muito em dinheiro.</p>';
+  }
+
+  /* ============================================================
+     TOP CLIENTES / PRODUTOS
+     ============================================================ */
+  function baseClientes(lista) {
+    var m = {};
+    lista.forEach(function (c) {
+      var k = CLI[c[6]];
+      if (!m[k]) m[k] = { nome: k, valor: 0, qtd: 0 };
+      m[k].qtd++; if (c[4] > 0) m[k].valor += c[4];
+    });
+    return Object.keys(m).map(function (k) { return m[k]; });
+  }
+  function baseProdutos(lista) {
+    var m = {};
+    lista.forEach(function (c) {
+      c[11].forEach(function (p) {
+        var k = PROD[p];
+        if (!m[k]) m[k] = { nome: k, valor: 0, qtd: 0 };
+        m[k].qtd++; if (c[4] > 0) m[k].valor += c[4];
+      });
+    });
+    return Object.keys(m).map(function (k) { return m[k]; });
+  }
+
+  function desenhaTop(tbody, dados, ordem) {
+    var el = document.getElementById(tbody);
+    if (!dados.length) { el.innerHTML = '<tr><td colspan="3" class="vazio">Sem dados no filtro selecionado.</td></tr>'; return; }
+    var crit = ordem.c === 'qtd' ? 'qtd' : 'valor';
+    var vinte = dados.slice().sort(function (a, b) { return b[crit] - a[crit]; }).slice(0, 20);
+    var sinal = ordem.d === 'asc' ? 1 : -1;
+    var ord = vinte.slice().sort(function (a, b) {
+      return ordem.c === 'nome' ? sinal * String(a.nome).localeCompare(String(b.nome), 'pt-BR')
+                                : sinal * ((a[ordem.c] || 0) - (b[ordem.c] || 0));
+    });
+    var maxV = Math.max.apply(null, vinte.map(function (d) { return d.valor; }).concat([1]));
+    var maxQ = Math.max.apply(null, vinte.map(function (d) { return d.qtd; }).concat([1]));
+    var html = ord.map(function (d) {
+      return '<tr><td class="nome" title="' + esc(d.nome) + '">' + esc(corta(d.nome, 40)) + '</td>' +
+        '<td><div class="b2"><div class="t"><div class="f" style="width:' + (d.valor / maxV * 100).toFixed(1) +
+          '%;background:' + CAT[0] + '"></div></div><span class="v" style="min-width:104px">' + fmtBRL(d.valor) + '</span></div></td>' +
+        '<td><div class="b2"><div class="t"><div class="f" style="width:' + (d.qtd / maxQ * 100).toFixed(1) +
+          '%;background:' + CAT[3] + '"></div></div><span class="v">' + fmtNum(d.qtd) + '</span></div></td></tr>';
+    }).join('');
+    var tV = vinte.reduce(function (a, d) { return a + d.valor; }, 0);
+    var tQ = vinte.reduce(function (a, d) { return a + d.qtd; }, 0);
+    html += '<tr class="total"><td>TOTAL DO TOP 20</td><td class="num">' + fmtBRL(tV) +
+            '</td><td class="num">' + fmtNum(tQ) + '</td></tr>';
+    el.innerHTML = html;
+  }
+
+  /* ============================================================
+     CNAE
+     ============================================================ */
+  function renderCnae(lista) {
+    var el = document.getElementById('cnae-corpo');
+    var m = {}, semCnae = 0;
+    lista.forEach(function (c) {
+      if (c[10] < 0) { semCnae++; return; }
+      var k = CNAE[c[10]];
+      if (!m[k]) m[k] = { n: k, q: 0, v: 0, cli: {} };
+      m[k].q++; if (c[4] > 0) m[k].v += c[4];
+      if (c[7] >= 0) m[k].cli[c[7]] = 1;
+    });
+    var lin = Object.keys(m).map(function (k) {
+      return { n: k, q: m[k].q, v: m[k].v, cli: Object.keys(m[k].cli).length };
+    }).sort(function (a, b) { return b.v - a.v; }).slice(0, 15);
+    if (!lin.length) { el.innerHTML = '<div class="vazio">Sem CNAE preenchido no filtro selecionado.</div>'; return; }
+    var maxV = Math.max.apply(null, lin.map(function (x) { return x.v; }).concat([1]));
+    var totV = lista.reduce(function (a, c) { return a + (c[4] > 0 ? c[4] : 0); }, 0);
+    el.innerHTML = '<div class="lista larga">' + lin.map(function (x) {
+      return linha(x.n, fmtNum(x.cli) + (x.cli === 1 ? ' cliente' : ' clientes'),
+        x.v / maxV * 100, CAT[2], fmtBRL(x.v), fmtNum(x.q) + ' contratos · ' + fmtPct(pct(x.v, totV)));
+    }).join('') + '</div>' +
+    '<p class="nota">Setor pela atividade principal do cliente (CNAE do cadastro). ' +
+    '<b>' + fmtNum(semCnae) + '</b> contratos do recorte estão sem CNAE no CRM e não entram neste bloco. ' +
+    'A descrição é normalizada: o CRM grava o mesmo setor ora em caixa alta, ora em caixa mista.</p>';
+    document.getElementById('ins-cnae').innerHTML = 'Em quais setores a carteira está concentrada. ' +
+      '<strong>' + corta(lin[0].n, 44) + '</strong> lidera com ' + fmtBRL(lin[0].v) + '.';
+  }
+
+  /* ============================================================
+     RECORRÊNCIA
+     ============================================================ */
+  function agregaRec(lista) {
+    var m = {};
+    lista.forEach(function (c) {
+      if (c[7] < 0) return;
+      if (!m[c[7]]) m[c[7]] = { q: 0, v: 0, ativos: 0, nome: CLI[c[6]], itens: [] };
+      m[c[7]].q++; if (c[4] > 0) m[c[7]].v += c[4];
+      if (c[3] === S.indexOf('Ativo')) m[c[7]].ativos++;
+      m[c[7]].itens.push(c);
+    });
+    return Object.keys(m).map(function (k) { return m[k]; });
+  }
+
+  function renderRecorrencia(lista) {
+    var el = document.getElementById('rec-corpo');
+    var cli = agregaRec(lista);
+    if (!cli.length) { el.innerHTML = '<div class="vazio">Sem clientes com CNPJ no filtro selecionado.</div>'; return; }
+    var fx = FX_REC.map(function (f) { return { rot: f.rot, sub: f.sub, n: 0, v: 0, itens: [] }; });
+    cli.forEach(function (c) {
+      for (var i = 0; i < FX_REC.length; i++) {
+        if (c.q >= FX_REC[i].min && c.q <= FX_REC[i].max) {
+          fx[i].n++; fx[i].v += c.v; c.itens.forEach(function (x) { fx[i].itens.push(x); }); break;
+        }
+      }
+    });
+    var maxN = Math.max.apply(null, fx.map(function (f) { return f.n; }).concat([1]));
+    var totN = cli.length, totV = fx.reduce(function (a, f) { return a + f.v; }, 0);
+    var html = '<div class="lista">' + fx.map(function (f, i) {
+      return linha(f.rot, f.sub, f.n / maxN * 100, RAMPA[i + 1],
+        fmtNum(f.n) + (f.n === 1 ? ' cliente' : ' clientes'),
+        fmtBRL(f.v) + ' · ' + fmtPct(pct(f.n, totN)), ' data-rec="' + i + '"');
+    }).join('') + '</div>';
+    var rec = fx[1].n + fx[2].n + fx[3].n;
+    html += '<div class="hero"><div class="rot">Taxa de recompra</div>' +
+      '<div class="num">' + fmtPct(pct(rec, totN)) + '</div>' +
+      '<div class="sub"><strong>' + fmtNum(rec) + '</strong> de ' + fmtNum(totN) +
+      ' clientes assinaram mais de um contrato, somando ' + fmtBRL(totV - fx[0].v) + '.</div></div>';
+    html += '<p class="nota">A conta é por <b>CNPJ</b>, não por nome — o mesmo cliente cadastrado duas vezes ' +
+      'com grafias diferentes não vira dois. Clique numa faixa para ver os contratos dela.</p>';
+    el.innerHTML = html;
+    el.querySelectorAll('[data-rec]').forEach(function (n) {
+      n.onclick = function () {
+        var i = +n.getAttribute('data-rec');
+        abreModal('Recorrência · ' + fx[i].rot, fmtNum(fx[i].n) + ' clientes · ' + fmtBRL(fx[i].v), fx[i].itens);
+      };
+    });
+    document.getElementById('ins-rec').innerHTML = 'Quantos contratos cada CNPJ assinou no recorte. ' +
+      '<strong>' + fmtPct(pct(rec, totN)) + '</strong> dos clientes voltaram a comprar.';
+
+    /* clientes âncora */
+    var anc = cli.slice().sort(function (a, b) { return b.q - a.q || b.v - a.v; }).slice(0, 15);
+    document.getElementById('t-anc-b').innerHTML = anc.map(function (c) {
+      return '<tr><td class="nome" title="' + esc(c.nome) + '">' + esc(corta(c.nome, 38)) + '</td>' +
+        '<td class="num">' + fmtNum(c.q) + '</td><td class="num">' + fmtBRL(c.v) + '</td>' +
+        '<td class="num">' + (c.ativos ? '<span class="pill" style="background:rgba(71,170,98,.18);color:#47aa62">' +
+          fmtNum(c.ativos) + '</span>' : '<span style="color:var(--tx4)">—</span>') + '</td></tr>';
+    }).join('') || '<tr><td colspan="4" class="vazio">Sem dados.</td></tr>';
+  }
+
+  /* ============================================================
+     PROPRIETÁRIOS
+     ============================================================ */
+  function baseProp(lista) {
+    var iA = S.indexOf('Ativo'), iC = S.indexOf('Cumprido'), iX = S.indexOf('Cancelado');
+    var m = {};
+    lista.forEach(function (c) {
+      var k = P[c[5]];
+      if (!m[k]) m[k] = { nome: k, qtd: 0, ativo: 0, cumprido: 0, cancelado: 0, valor: 0, _cli: {} };
+      var o = m[k];
+      o.qtd++;
+      if (c[3] === iA) o.ativo++; else if (c[3] === iC) o.cumprido++; else if (c[3] === iX) o.cancelado++;
+      if (c[4] > 0) o.valor += c[4];
+      if (c[7] >= 0) o._cli[c[7]] = 1;
+    });
+    return Object.keys(m).map(function (k) {
+      m[k].clientes = Object.keys(m[k]._cli).length; return m[k];
+    });
+  }
+
+  function desenhaProp(dados, ordem) {
+    var el = document.getElementById('t-pro-b');
+    if (!dados.length) { el.innerHTML = '<tr><td colspan="8" class="vazio">Sem dados no filtro selecionado.</td></tr>'; return; }
+    var sinal = ordem.d === 'asc' ? 1 : -1;
+    var ord = dados.slice().sort(function (a, b) {
+      return ordem.c === 'nome' ? sinal * String(a.nome).localeCompare(String(b.nome), 'pt-BR')
+                                : sinal * ((a[ordem.c] || 0) - (b[ordem.c] || 0));
+    });
+    var totQ = dados.reduce(function (a, o) { return a + o.qtd; }, 0) || 1;
+    var html = ord.map(function (o) {
+      var p = o.qtd / totQ * 100;
+      return '<tr><td class="nome" title="' + esc(o.nome) + '">' + esc(corta(o.nome, 34)) + '</td>' +
+        '<td class="num">' + fmtNum(o.qtd) + '</td>' +
+        '<td class="num">' + fmtNum(o.ativo) + '</td>' +
+        '<td class="num">' + fmtNum(o.cumprido) + '</td>' +
+        '<td class="num">' + fmtNum(o.cancelado) + '</td>' +
+        '<td class="num">' + fmtNum(o.clientes) + '</td>' +
+        '<td class="num">' + fmtBRL(o.valor) + '</td>' +
+        '<td><div class="b2"><div class="t"><div class="f" style="width:' + p.toFixed(1) +
+          '%;background:' + CAT[2] + '"></div></div><span class="v">' + fmtPct(p) + '</span></div></td></tr>';
+    }).join('');
+    var t = ord.reduce(function (a, o) {
+      return { qtd: a.qtd + o.qtd, ativo: a.ativo + o.ativo, cumprido: a.cumprido + o.cumprido,
+               cancelado: a.cancelado + o.cancelado, valor: a.valor + o.valor };
+    }, { qtd: 0, ativo: 0, cumprido: 0, cancelado: 0, valor: 0 });
+    var cliTot = {};
+    dados.forEach(function (o) { Object.keys(o._cli).forEach(function (k) { cliTot[k] = 1; }); });
+    html += '<tr class="total"><td>TOTAL</td><td class="num">' + fmtNum(t.qtd) + '</td>' +
+      '<td class="num">' + fmtNum(t.ativo) + '</td><td class="num">' + fmtNum(t.cumprido) + '</td>' +
+      '<td class="num">' + fmtNum(t.cancelado) + '</td><td class="num">' + fmtNum(Object.keys(cliTot).length) + '</td>' +
+      '<td class="num">' + fmtBRL(t.valor) + '</td><td class="num">100,0%</td></tr>';
+    el.innerHTML = html;
+  }
+
+  /* ============================================================
+     LEITURA DA CARTEIRA
+     ============================================================ */
+  function renderLeitura(lista) {
+    var el = document.getElementById('lc-corpo');
+    var LC = [];
+    if (!lista.length) { el.innerHTML = '<div class="vazio">Sem contratos no filtro selecionado.</div>'; return; }
+
+    var comValor = lista.filter(function (c) { return c[4] > 0; });
+    var valor = comValor.reduce(function (a, c) { return a + c[4]; }, 0);
+    var iA = S.indexOf('Ativo'), iX = S.indexOf('Cancelado');
+    var ativos = lista.filter(function (c) { return c[3] === iA; });
+    var canc = lista.filter(function (c) { return c[3] === iX; });
+
+    LC.push({ t: 'in', tit: 'Retrato do recorte',
+      txt: '<strong>' + fmtNum(lista.length) + '</strong> contratos, somando <strong>' + fmtBRL(valor) +
+        '</strong>. Destes, <strong>' + fmtNum(ativos.length) + '</strong> estão ativos e ' +
+        fmtNum(lista.length - comValor.length) + ' não têm valor financeiro.' });
+
+    var r = agregaVenc(lista);
+    var q90 = r.fx[0].q + r.fx[1].q + r.fx[2].q + r.fx[3].q;
+    var v90 = r.fx[0].v + r.fx[1].v + r.fx[2].v + r.fx[3].v;
+    if (q90) {
+      LC.push({ t: 'at', tit: 'Janela de renovação',
+        txt: '<strong>' + fmtNum(q90) + '</strong> contratos vencem em até 90 dias, somando <strong>' +
+          fmtBRL(v90) + '</strong>. É a receita que precisa ser renegociada antes de virar perda.' });
+    }
+    if (r.sem.length) {
+      var vs = r.sem.reduce(function (a, c) { return a + (c[4] > 0 ? c[4] : 0); }, 0);
+      LC.push({ t: 'ri', tit: 'Carteira cega',
+        txt: '<strong>' + fmtNum(r.sem.length) + '</strong> contratos ativos, somando <strong>' + fmtBRL(vs) +
+          '</strong>, estão sem Data de Término no CRM. Nenhuma rotina de renovação enxerga esse dinheiro.' });
+    }
+
+    var cli = baseClientes(lista).sort(function (a, b) { return b.valor - a.valor; });
+    if (cli.length >= 5) {
+      var top5 = cli.slice(0, 5).reduce(function (a, c) { return a + c.valor; }, 0);
+      var pc = pct(top5, valor);
+      LC.push({ t: pc >= 50 ? 'ri' : pc >= 35 ? 'at' : 'ok', tit: 'Concentração de clientes',
+        txt: 'Os <strong>5 maiores clientes</strong> respondem por <strong>' + fmtPct(pc) + '</strong> do valor contratado. ' +
+          'O maior é <strong>' + esc(corta(cli[0].nome, 42)) + '</strong>, com ' + fmtBRL(cli[0].valor) + '.' +
+          (pc >= 50 ? ' Perder um deles move o resultado do ano.' : '') });
+    }
+
+    var pr = baseProdutos(lista).sort(function (a, b) { return b.valor - a.valor; });
+    if (pr.length) {
+      LC.push({ t: 'ok', tit: 'Produto motor',
+        txt: '<strong>' + esc(corta(pr[0].nome, 44)) + '</strong> responde por <strong>' +
+          fmtPct(pct(pr[0].valor, valor)) + '</strong> do valor contratado, em ' + fmtNum(pr[0].qtd) + ' contratos.' });
+    }
+
+    var cl = agregaRec(lista);
+    if (cl.length) {
+      var rec = cl.filter(function (c) { return c.q > 1; }).length;
+      LC.push({ t: pct(rec, cl.length) >= 45 ? 'ok' : 'at', tit: 'Recompra',
+        txt: '<strong>' + fmtPct(pct(rec, cl.length)) + '</strong> dos ' + fmtNum(cl.length) +
+          ' clientes do recorte assinaram mais de um contrato. Média de <strong>' +
+          (lista.length / cl.length).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) +
+          '</strong> contratos por cliente.' });
+    }
+
+    var pp = baseProp(lista).sort(function (a, b) { return b.valor - a.valor; });
+    if (pp.length) {
+      var tres = pp.slice(0, 3).reduce(function (a, o) { return a + o.valor; }, 0);
+      LC.push({ t: pct(pp[0].valor, valor) >= 50 ? 'at' : 'ok', tit: 'Quem assina os contratos',
+        txt: '<strong>' + esc(corta(pp[0].nome, 32)) + '</strong> lidera com ' + fmtBRL(pp[0].valor) + ' (' +
+          fmtPct(pct(pp[0].valor, valor)) + '). Os três primeiros somam ' + fmtPct(pct(tres, valor)) + ' do valor contratado.' });
+    }
+
+    if (canc.length) {
+      LC.push({ t: 'at', tit: 'Cancelamentos',
+        txt: '<strong>' + fmtNum(canc.length) + '</strong> contratos cancelados no recorte (' +
+          fmtPct(pct(canc.length, lista.length)) + ' do volume), somando ' +
+          fmtBRL(canc.reduce(function (a, c) { return a + (c[4] > 0 ? c[4] : 0); }, 0)) + '.' });
+    }
+
+    var sg = { ok: '✓', at: '!', ri: '▲', in: 'i' };
+    el.innerHTML = '<div class="lc">' + LC.map(function (o) {
+      return '<div class="lci ' + o.t + '"><span class="tg">' + sg[o.t] + '</span>' +
+        '<span class="lct"><b class="t">' + o.tit + '</b>' + o.txt + '</span></div>';
+    }).join('') + '</div>';
+  }
+
+  /* ============================================================
+     DRILL-DOWN
+     ============================================================ */
+  function linhasDD(lista) {
+    return lista.map(function (c) {
+      return {
+        cliente: CLI[c[6]], produtos: c[11].map(function (p) { return PROD[p]; }).join(', '),
+        unidade: UNI[c[8]], prop: P[c[5]], status: S[c[3]], valor: c[4],
+        inicio: c[1], fim: c[2], cnpj: c[7] >= 0 ? CNPJ[c[7]] : '',
+        porte: PORTE[c[9]], cnae: c[10] >= 0 ? CNAE[c[10]] : '', criacao: c[0]
+      };
+    });
+  }
+
+  function corPill(st) {
+    var m = { 'Ativo': CAT[4], 'Cumprido': CAT[3], 'Faturado': CAT[0], 'Cancelado': '#9B8CBB' };
+    var c = m[st] || '#9B8CBB';
+    return '<span class="pill" style="background:' + c + '22;color:' + c + '">' + esc(st) + '</span>';
+  }
+
+  var _dd = [];
+  function renderDD(lista) {
+    _dd = linhasDD(lista);
+    desenhaDD();
+  }
+  function desenhaDD() {
+    var busca = (document.getElementById('dd-busca').value || '').toLowerCase().trim();
+    var dados = _dd;
+    if (busca) {
+      dados = dados.filter(function (r) {
+        return (r.cliente + ' ' + r.produtos + ' ' + r.prop + ' ' + r.unidade).toLowerCase().indexOf(busca) >= 0;
+      });
+    }
+    var o = ORD.dd, sinal = o.d === 'asc' ? 1 : -1;
+    var txt = ['cliente', 'produtos', 'unidade', 'prop', 'status'].indexOf(o.c) >= 0;
+    dados = dados.slice().sort(function (a, b) {
+      return txt ? sinal * String(a[o.c]).localeCompare(String(b[o.c]), 'pt-BR')
+                 : sinal * ((a[o.c] || 0) - (b[o.c] || 0));
+    });
+    var most = dados.slice(0, 400);
+    document.getElementById('t-dd-b').innerHTML = most.map(function (r) {
+      return '<tr><td class="nome" title="' + esc(r.cliente) + '">' + esc(corta(r.cliente, 34)) + '</td>' +
+        '<td title="' + esc(r.produtos) + '">' + esc(corta(r.produtos, 38)) + '</td>' +
+        '<td>' + esc(corta(r.unidade, 22)) + '</td>' +
+        '<td>' + esc(corta(r.prop, 24)) + '</td>' +
+        '<td>' + corPill(r.status) + '</td>' +
+        '<td class="num">' + fmtBRL(r.valor) + '</td>' +
+        '<td class="num">' + fmtData(r.inicio) + '</td>' +
+        '<td class="num">' + fmtData(r.fim) + '</td></tr>';
+    }).join('') || '<tr><td colspan="8" class="vazio">Nada encontrado.</td></tr>';
+    document.getElementById('dd-rodape').innerHTML = 'Mostrando <b>' + fmtNum(most.length) + '</b> de <b>' +
+      fmtNum(dados.length) + '</b> contratos' + (dados.length > 400 ? ' — refine a busca ou os filtros para ver os demais.' : '.') +
+      ' A exportação leva <b>todos</b> os ' + fmtNum(dados.length) + ', com as colunas extras de CNPJ, porte e CNAE.';
+  }
+
+  function exportar() {
+    var busca = (document.getElementById('dd-busca').value || '').toLowerCase().trim();
+    var dados = busca ? _dd.filter(function (r) {
+      return (r.cliente + ' ' + r.produtos + ' ' + r.prop + ' ' + r.unidade).toLowerCase().indexOf(busca) >= 0;
+    }) : _dd;
+    var cab = ['Cliente', 'CNPJ', 'Porte', 'CNAE', 'Produtos', 'Entidade/Unidade', 'Proprietário',
+               'Status', 'Valor Total', 'Data de Criação', 'Início', 'Término'];
+    var linhas = dados.map(function (r) {
+      return [r.cliente, r.cnpj, r.porte, r.cnae, r.produtos, r.unidade, r.prop, r.status,
+              r.valor, fmtData(r.criacao), fmtData(r.inicio), fmtData(r.fim)];
+    });
+    var nome = 'contratos_' + new Date().toISOString().slice(0, 10);
+    if (window.XLSX) {
+      var ws = XLSX.utils.aoa_to_sheet([cab].concat(linhas));
+      var wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Contratos');
+      XLSX.writeFile(wb, nome + '.xlsx');
+      return;
+    }
+    /* sem a biblioteca (CDN bloqueado), cai para CSV que o Excel abre direto */
+    var csv = [cab].concat(linhas).map(function (l) {
+      return l.map(function (v) { return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; }).join(';');
+    }).join('\r\n');
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' }));
+    a.download = nome + '.csv';
+    a.click();
+  }
+
+  /* ============================================================
+     MODAL
+     ============================================================ */
+  function abreModal(titulo, sub, itens) {
+    document.getElementById('m-tit').textContent = titulo;
+    document.getElementById('m-sub').textContent = sub;
+    var r = linhasDD(itens).sort(function (a, b) { return b.valor - a.valor; }).slice(0, 300);
+    document.getElementById('t-m-b').innerHTML = r.map(function (x) {
+      return '<tr><td class="nome" title="' + esc(x.cliente) + '">' + esc(corta(x.cliente, 34)) + '</td>' +
+        '<td title="' + esc(x.produtos) + '">' + esc(corta(x.produtos, 34)) + '</td>' +
+        '<td>' + esc(corta(x.unidade, 20)) + '</td><td>' + esc(corta(x.prop, 22)) + '</td>' +
+        '<td class="num">' + fmtBRL(x.valor) + '</td><td class="num">' + fmtData(x.fim) + '</td></tr>';
+    }).join('') || '<tr><td colspan="6" class="vazio">Sem contratos.</td></tr>';
+    document.getElementById('modal').classList.add('on');
+  }
+  function fechaModal() { document.getElementById('modal').classList.remove('on'); }
+
+  /* ============================================================
+     ORQUESTRAÇÃO
+     ============================================================ */
+  function renderTudo() {
+    recorte = aplicaFiltros();
+    renderKPIs(recorte);
+    renderVenc(recorte);
+    renderSemVig(recorte);
+    renderEvolucao(recorte);
+    renderEntidade(recorte);
+    renderStatus(recorte);
+    desenhaTop('t-cli-b', baseClientes(recorte), ORD.cli);
+    desenhaTop('t-prod-b', baseProdutos(recorte), ORD.prod);
+    renderCnae(recorte);
+    renderRecorrencia(recorte);
+    desenhaProp(baseProp(recorte), ORD.pro);
+    renderLeitura(recorte);
+    renderDD(recorte);
+    var tx = F.rotulo + ' · ' + fmtNum(recorte.length) + ' contratos';
+    document.getElementById('selo-txt').innerHTML =
+      'Base de <b>' + RAW.meta.hoje_iso.split('-').reverse().join('/') + '</b> · ' + esc(tx) +
+      ' · total de ' + fmtNum(RAW.meta.total) + ' na base';
+  }
+
+  function multiSel(id, opcoes, campo) {
+    var el = document.getElementById(id);
+    el.innerHTML = opcoes.map(function (o) {
+      return '<option value="' + o.v + '">' + esc(o.t) + '</option>';
+    }).join('');
+    el.onchange = function () {
+      F[campo] = Array.prototype.slice.call(el.selectedOptions).map(function (o) {
+        return isNaN(+o.value) ? o.value : +o.value;
+      });
+      renderTudo();
+    };
+  }
+
+  function montaFiltros() {
+    /* abas de ano, pela Data de Criação */
+    var anos = RAW.meta.anos.slice();
+    var abas = [{ t: 'Tudo', v: 'tudo' }].concat(anos.map(function (a) { return { t: String(a), v: a }; }));
+    var cont = document.getElementById('abas-ano');
+    cont.innerHTML = abas.map(function (a, i) {
+      return '<button class="aba' + (i === 0 ? ' on' : '') + '" data-v="' + a.v + '">' + a.t + '</button>';
+    }).join('');
+    cont.querySelectorAll('.aba').forEach(function (b) {
+      b.onclick = function () {
+        cont.querySelectorAll('.aba').forEach(function (x) { x.classList.remove('on'); });
+        b.classList.add('on');
+        var v = b.getAttribute('data-v');
+        if (v === 'tudo') { F.ini = null; F.fim = null; F.rotulo = 'Todo o período'; }
+        else {
+          F.ini = isoParaDia(v + '-01-01'); F.fim = isoParaDia(v + '-12-31'); F.rotulo = v;
+        }
+        document.getElementById('dt-ini').value = '';
+        document.getElementById('dt-fim').value = '';
+        renderTudo();
+      };
+    });
+
+    multiSel('f-status', S.map(function (s, i) { return { v: i, t: s }; }), 'status');
+    multiSel('f-entidade', RAW.lookups.entidades.filter(function (e) {
+      return ENTU.indexOf(e) >= 0;
+    }).map(function (e) { return { v: e, t: e }; }), 'entidade');
+    multiSel('f-unidade', UNI.map(function (u, i) { return { v: i, t: u }; })
+      .sort(function (a, b) { return a.t.localeCompare(b.t, 'pt-BR'); }), 'unidade');
+    multiSel('f-prop', P.map(function (p, i) { return { v: i, t: p }; })
+      .sort(function (a, b) { return a.t.localeCompare(b.t, 'pt-BR'); }), 'prop');
+    multiSel('f-porte', PORTE.map(function (p, i) { return { v: i, t: p }; }), 'porte');
+
+    document.getElementById('btn-aplicar').onclick = function () {
+      var a = document.getElementById('dt-ini').value, b = document.getElementById('dt-fim').value;
+      if (!a || !b) { return; }
+      F.ini = isoParaDia(a); F.fim = isoParaDia(b);
+      F.rotulo = a.split('-').reverse().join('/') + ' a ' + b.split('-').reverse().join('/');
+      document.querySelectorAll('#abas-ano .aba').forEach(function (x) { x.classList.remove('on'); });
+      renderTudo();
+    };
+    document.getElementById('btn-limpar').onclick = function () {
+      F = { ini: null, fim: null, rotulo: 'Todo o período', status: [], entidade: [], unidade: [], prop: [], porte: [] };
+      ['f-status', 'f-entidade', 'f-unidade', 'f-prop', 'f-porte'].forEach(function (id) {
+        document.getElementById(id).selectedIndex = -1;
+      });
+      document.getElementById('dt-ini').value = '';
+      document.getElementById('dt-fim').value = '';
+      document.getElementById('dd-busca').value = '';
+      var ab = document.querySelectorAll('#abas-ano .aba');
+      ab.forEach(function (x) { x.classList.remove('on'); });
+      if (ab[0]) ab[0].classList.add('on');
+      renderTudo();
+    };
+
+    [['t-cli', 'cli', function () { desenhaTop('t-cli-b', baseClientes(recorte), ORD.cli); }],
+     ['t-prod', 'prod', function () { desenhaTop('t-prod-b', baseProdutos(recorte), ORD.prod); }],
+     ['t-pro', 'pro', function () { desenhaProp(baseProp(recorte), ORD.pro); }],
+     ['t-dd', 'dd', desenhaDD]].forEach(function (x) {
+      var tab = document.getElementById(x[0]);
+      if (!tab) return;
+      tab.querySelectorAll('th.ord').forEach(function (th) {
+        th.onclick = function () {
+          var c = th.getAttribute('data-s'), o = ORD[x[1]];
+          if (o.c === c) o.d = (o.d === 'asc' ? 'desc' : 'asc');
+          else { o.c = c; o.d = (c === 'nome' || c === 'cliente' ? 'asc' : 'desc'); }
+          x[2]();
+        };
+      });
+    });
+
+    document.getElementById('dd-busca').oninput = desenhaDD;
+    document.getElementById('btn-excel').onclick = exportar;
+    document.getElementById('m-fechar').onclick = fechaModal;
+    document.getElementById('modal').onclick = function (e) { if (e.target.id === 'modal') fechaModal(); };
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') fechaModal(); });
+  }
+
+  function iniciarCom(dados) {
+    RAW = dados;
+    L = RAW.contratos;
+    var lk = RAW.lookups;
+    S = lk.status; P = lk.proprietarios; CLI = lk.clientes; CNPJ = lk.cnpjs;
+    UNI = lk.unidades; CNAE = lk.cnaes; PROD = lk.produtos; ENTU = lk.entidadePorUnidade;
+    PORTE = lk.porte;
+    var e = RAW.meta.epoch.split('-');
+    EPOCH = new Date(Date.UTC(+e[0], +e[1] - 1, +e[2]));
+    /* hoje em dias desde a epoch, ancorado na MEIA-NOITE da data local.
+       Usar Date.now() cru arredondaria para o dia seguinte a partir das 12h,
+       e um contrato que termina hoje apareceria como vencido. */
+    var _n = new Date();
+    HOJE = Math.round((Date.UTC(_n.getFullYear(), _n.getMonth(), _n.getDate()) - EPOCH.getTime()) / 86400000);
+    F.rotulo = 'Todo o período';
+    montaFiltros();
+    renderTudo();
+    document.getElementById('carregando').style.display = 'none';
+    document.getElementById('painel').style.display = 'block';
+  }
+
+  function aviso(html) {
+    var a = document.getElementById('aviso');
+    a.innerHTML = html;
+    a.style.display = 'block';
+  }
+
+  /* ---------------- carga automática ----------------
+     A base mora no mesmo diretório do index.html. O caminho é calculado a
+     partir de location.pathname porque a Vercel serve /pasta sem a barra
+     final — sem isso o fetch relativo iria para a pasta de cima. */
+  function caminhoBase() {
+    var p = location.pathname;
+    if (p.charAt(p.length - 1) !== '/') p = p.replace(/[^/]*$/, '');
+    return p + 'base.json';
+  }
+
+  function carregar() {
+    if (window.__DADOS) { iniciarCom(window.__DADOS); return; }
+    if (location.protocol === 'file:') {
+      document.getElementById('carregando').style.display = 'none';
+      aviso('<b>Base não carregada.</b><br>Este arquivo foi aberto direto do disco, e o navegador bloqueia ' +
+        'a leitura do <code>base.json</code> nesse modo. Publique no GitHub/Vercel, ou use a cópia de demonstração.');
+      return;
+    }
+    fetch(caminhoBase() + '?v=' + Date.now(), { cache: 'no-store' })
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function (d) { iniciarCom(d); })
+      .catch(function (err) {
+        document.getElementById('carregando').style.display = 'none';
+        aviso('<b>Base automática indisponível.</b><br>' + esc(err && err.message ? err.message : err) +
+          '<br>Confira se o arquivo <code>base.json</code> está na mesma pasta do painel no GitHub.');
+      });
+  }
+
+  /* o evento load não dispara de forma confiável quando a página volta do
+     cache; um setTimeout curto resolve e roda em todos os navegadores */
+  setTimeout(carregar, 60);
+})();
+</script>
+</body>
+</html>
