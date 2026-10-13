@@ -1414,8 +1414,14 @@ svg.ch{display:block;width:100%;height:auto;min-width:420px}
      final — sem isso o fetch relativo iria para a pasta de cima. */
   function caminhoBase() {
     var p = location.pathname;
-    if (p.charAt(p.length - 1) !== '/') p = p.replace(/[^/]*$/, '');
-    return p + 'base.json';
+    if (p.charAt(p.length - 1) === '/') return p + 'base.json';
+    /* A Vercel serve /contratos SEM a barra final. Nesse caso "contratos" e o
+       nome da PASTA, nao de um arquivo — a base esta dentro dela. So quando o
+       ultimo pedaco tem ponto (index.html) e que ele e um arquivo e precisa
+       sair do caminho. Cortar sempre o ultimo pedaco mandava o fetch para a
+       raiz do site e dava 404. */
+    var ultimo = p.slice(p.lastIndexOf('/') + 1);
+    return (ultimo.indexOf('.') >= 0 ? p.replace(/[^/]*$/, '') : p + '/') + 'base.json';
   }
 
   function carregar() {
