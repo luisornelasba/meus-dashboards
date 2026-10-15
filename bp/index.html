@@ -1529,16 +1529,19 @@ const META = {
   total: 156,           // CNPJs até set/2026
   mensal: 19,           // fallback legado para rotinas não-YTD
   mensalPlanejada: {    // metas oficiais por mês para cálculo YTD
+    // Alinhado em 15/10/2026 com a tabela "Meta Mensal por Consultor · Jan-Out".
+    // Os dois blocos precisam andar juntos: este alimenta o KPI Meta YTD, o Gap
+    // e o gráfico de evolução; o outro, a tabela por consultor. A soma segue 156.
     1: 10,
     2: 11,
     3: 13,
     4: 21,
     5: 16,
-    6: 6,
-    7: 21,
-    8: 28,
-    9: 17,
-    10: 13,
+    6: 5,
+    7: 20,
+    8: 27,
+    9: 19,
+    10: 14,
   },
   // Janela do card "Meta YTD (Plano Mensal)" e do "Gap vs Meta YTD":
   // Janeiro a Outubro/2026 — soma exata de 156 propostas.
@@ -2380,11 +2383,11 @@ function renderConsultorMeta(){
     {key:'2026-03', mes:'Março/26', historico:true, total:13},
     {key:'2026-04', mes:'Abril/26', historico:true, total:21},
     {key:'2026-05', mes:'Maio/26', historico:true, total:16},
-    {key:'2026-06', mes:'Junho/26', historico:true, total:6},
-    {key:'2026-07', mes:'Julho/26', historico:false, total:21, claudia:4, dyego:12, ana:9, fernando:9, paula:8},
-    {key:'2026-08', mes:'Agosto/26', historico:false, total:28, claudia:4, dyego:4, ana:4, fernando:4, paula:4},
-    {key:'2026-09', mes:'Setembro/26', historico:false, total:17, claudia:4, dyego:4, ana:3, fernando:4, paula:3},
-    {key:'2026-10', mes:'Outubro/26', historico:false, total:13, claudia:2, dyego:2, ana:3, fernando:2, paula:3},
+    {key:'2026-06', mes:'Junho/26', historico:true, total:5},
+    {key:'2026-07', mes:'Julho/26', historico:false, total:20, claudia:4, dyego:12, ana:9, fernando:9, paula:8},
+    {key:'2026-08', mes:'Agosto/26', historico:false, total:27, claudia:4, dyego:4, ana:4, fernando:4, paula:4},
+    {key:'2026-09', mes:'Setembro/26', historico:false, total:19, claudia:4, dyego:4, ana:3, fernando:4, paula:3},
+    {key:'2026-10', mes:'Outubro/26', historico:false, total:14, claudia:2, dyego:2, ana:3, fernando:2, paula:3},
   ];
 
   const normalizeConsultor = (v) => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toUpperCase();
