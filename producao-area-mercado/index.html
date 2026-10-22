@@ -2413,6 +2413,14 @@ html, body {
     </div>
     <div class="detail-controls">
       <input type="text" class="detail-search" id="conv-search" placeholder="Buscar por proprietário, ID, CNPJ, cliente, unidade…">
+      <button type="button" class="btn-export-excel" id="btn-export-conv" title="Exportar para Excel a lista atual filtrada">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        <span>Exportar Excel</span>
+      </button>
       <div class="detail-info">Exibindo <strong id="conv-info-shown">0</strong> de <strong id="conv-info-total">0</strong> propostas</div>
     </div>
     <div class="table-wrap" style="max-height:560px;overflow-y:auto">
@@ -3596,8 +3604,9 @@ function desenhaConversao() {
     '<strong>' + fmtNum(venc) + '</strong> de ' + fmtNum(dados.length) +
     ' propostas passaram de ' + CONV_LIMITE_DIAS + ' dias sem movimentação no CRM. ' +
     (dados.length > CONV_MAX_LINHAS
-      ? 'Mostrando as ' + CONV_MAX_LINHAS + ' primeiras da ordenação — use a busca ou os filtros para chegar nas demais. '
-      : '') +
+      ? 'A tela mostra as ' + CONV_MAX_LINHAS + ' primeiras da ordenação; o botão <strong>Exportar Excel</strong> leva as ' +
+        fmtNum(dados.length) + ' do recorte. '
+      : 'O botão <strong>Exportar Excel</strong> leva todas as do recorte. ') +
     'A data é a <strong>Data de Modificação</strong> do CRM, que é a referência de toda proposta ainda não aceita.';
 
   const ins = document.getElementById('insight-conv');
@@ -3610,9 +3619,141 @@ function renderConversao(propsSemStatus) {
   desenhaConversao();
 }
 
+
+/* ============================================================
+   EXPORTAR EXCEL — Pipeline em Conversao (22/10/2026)
+   Leva TODAS as propostas do recorte, nao so as 300 que a tela mostra, e
+   respeita a busca e a ordenacao em uso. Mesmo acabamento do outro botao:
+   cabecalho azul, ID e CNPJ como texto (para nao perder zero a esquerda),
+   largura automatica, autofiltro e primeira linha congelada.
+   ============================================================ */
+function linhasConversaoParaExport() {
+  /* repete o filtro e a ordenacao de desenhaConversao, para o arquivo sair
+     exatamente como a tabela esta na tela — porem sem o corte das 300 */
+  const termo = (_convBusca || '').trim().toLowerCase();
+  let dados = _convLinhas;
+  if (termo) {
+    dados = dados.filter(r =>
+      (r.proprietario || '').toLowerCase().includes(termo) ||
+      (r.propId || '').toLowerCase().includes(termo) ||
+      (r.cnpj || '').toLowerCase().includes(termo) ||
+      (r.cliente || '').toLowerCase().includes(termo) ||
+      (r.unidade || '').toLowerCase().includes(termo) ||
+      (r.status || '').toLowerCase().includes(termo));
+  }
+  const o = _convOrdem, sinal = o.asc ? 1 : -1;
+  const numerica = (o.campo === 'dias' || o.campo === 'modDias');
+  return [...dados].sort((a, b) => numerica
+    ? sinal * ((a[o.campo] || 0) - (b[o.campo] || 0))
+    : sinal * String(a[o.campo]).localeCompare(String(b[o.campo]), 'pt-BR'));
+}
+
+function exportarConversaoExcel() {
+  if (typeof XLSX === 'undefined') {
+    alert('A biblioteca de exportação ainda está carregando. Tente novamente em alguns segundos.');
+    return;
+  }
+  var dados = linhasConversaoParaExport();
+  if (!dados.length) {
+    alert('Não há propostas para exportar com os filtros atuais.');
+    return;
+  }
+
+  var btn = document.getElementById('btn-export-conv');
+  if (btn) { btn.disabled = true; btn.querySelector('span').textContent = 'Gerando…'; }
+
+  try {
+    var headers = ['Proprietário', 'ID da Proposta', 'CNPJ (Cliente)', 'Cliente',
+                   'Entidade/Unidade', 'Razão do Status', 'Data de Modificação',
+                   'Dias sem Movimentação', 'Prazo de Conversão'];
+    var aoa = [headers];
+    dados.forEach(function (r) {
+      aoa.push([
+        r.proprietario || '',
+        String(r.propId || ''),
+        String(r.cnpj || ''),
+        r.cliente || '',
+        r.unidade || '',
+        r.status || '',
+        fmtDataBR(diasParaData(r.modDias)),
+        r.dias,
+        r.dias > CONV_LIMITE_DIAS ? 'Prazo vencido para conversão' : 'No prazo de conversão'
+      ]);
+    });
+
+    var ws = XLSX.utils.aoa_to_sheet(aoa);
+    var totalRows = aoa.length;
+
+    /* ID (B) e CNPJ (C) como TEXTO: senao o Excel come o zero a esquerda */
+    for (var i = 1; i < totalRows; i++) {
+      var addrB = XLSX.utils.encode_cell({ r: i, c: 1 });
+      var addrC = XLSX.utils.encode_cell({ r: i, c: 2 });
+      if (ws[addrB]) { ws[addrB].t = 's'; ws[addrB].z = '@'; }
+      if (ws[addrC]) { ws[addrC].t = 's'; ws[addrC].z = '@'; }
+    }
+
+    var headerStyle = {
+      font:      { bold: true, color: { rgb: 'FFFFFF' }, sz: 11, name: 'Calibri' },
+      fill:      { patternType: 'solid', fgColor: { rgb: '164194' } },
+      alignment: { horizontal: 'left', vertical: 'center' },
+      border: {
+        top:    { style: 'thin', color: { rgb: '0A1729' } },
+        bottom: { style: 'thin', color: { rgb: '0A1729' } },
+        left:   { style: 'thin', color: { rgb: '0A1729' } },
+        right:  { style: 'thin', color: { rgb: '0A1729' } }
+      }
+    };
+    headers.forEach(function (_, c) {
+      var addr = XLSX.utils.encode_cell({ r: 0, c: c });
+      if (ws[addr]) ws[addr].s = headerStyle;
+    });
+
+    ws['!cols'] = headers.map(function (hh, c) {
+      var maxLen = String(hh).length;
+      for (var r = 1; r < aoa.length; r++) {
+        var v = aoa[r][c];
+        var len = (v === 0 || v) ? String(v).length : 0;
+        if (len > maxLen) maxLen = len;
+      }
+      return { wch: Math.min(60, Math.max(12, maxLen + 2)) };
+    });
+
+    var lastCol = XLSX.utils.encode_col(headers.length - 1);
+    ws['!autofilter'] = { ref: 'A1:' + lastCol + totalRows };
+    ws['!freeze'] = { xSplit: 0, ySplit: 1 };
+    ws['!views'] = [{ state: 'frozen', ySplit: 1 }];
+
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Pipeline em Conversão');
+
+    var d = new Date();
+    /* pad() precisa devolver TEXTO: com numero, "2026 + 10 + 22" vira a soma
+       2058 e o nome do arquivo sai sem sentido. */
+    var pad = function (n) { return String(n).padStart(2, '0'); };
+    var stamp = String(d.getFullYear()) + pad(d.getMonth() + 1) + pad(d.getDate()) +
+                '_' + pad(d.getHours()) + pad(d.getMinutes());
+    var fname = 'Pipeline_em_Conversao_' + stamp + '.xlsx';
+
+    XLSX.writeFile(wb, fname, { compression: true });
+    console.log('✓ Excel exportado:', fname, '— linhas:', dados.length);
+  } catch (err) {
+    console.error('Erro ao exportar o Pipeline em Conversão:', err);
+    alert('Houve um erro ao gerar o arquivo Excel. Tente novamente ou contate o suporte.');
+  } finally {
+    if (btn) {
+      setTimeout(function () {
+        btn.disabled = false;
+        btn.querySelector('span').textContent = 'Exportar Excel';
+      }, 600);
+    }
+  }
+}
+
 function ligarConversao() {
   const busca = document.getElementById('conv-search');
   if (busca) busca.addEventListener('input', e => { _convBusca = e.target.value; desenhaConversao(); });
+  const btnX = document.getElementById('btn-export-conv');
+  if (btnX && !btnX.__bound) { btnX.addEventListener('click', exportarConversaoExcel); btnX.__bound = true; }
   const tab = document.getElementById('conv-table');
   if (!tab) return;
   tab.querySelectorAll('th.sortable').forEach(th => {
@@ -3686,15 +3827,9 @@ function montaLeitura(propsSemStatus, itensSemStatus, kpisAnt) {
       '</strong>. Foram contratados <strong>' + fmtBRL(f.aceita.v) + '</strong> em ' + fmtNum(f.aceita.q) +
       ' propostas aceitas, com taxa de ganho de <strong>' + fmtPct(taxa) + '</strong> sobre o que já foi decidido.' });
 
-  /* 2 — comparativo com o periodo anterior de mesma duracao */
-  if (kpisAnt && kpisAnt.receita_total > 0) {
-    const var_ = _pctSeguro(f.aceita.v - kpisAnt.receita_total, kpisAnt.receita_total);
-    const subiu = var_ >= 0;
-    L.push({ t: subiu ? 'ok' : 'at', titulo: 'Contra o período anterior',
-      txt: 'A receita contratada ' + (subiu ? '<strong>subiu</strong>' : '<strong>caiu</strong>') + ' ' +
-        fmtPct(Math.abs(var_)) + ' — de ' + fmtBRL(kpisAnt.receita_total) + ' para ' + fmtBRL(f.aceita.v) +
-        '. Comparação com um intervalo anterior de mesma duração.' });
-  }
+  /* O quadro "Contra o período anterior" saiu em 22/10/2026, a pedido.
+     O parametro kpisAnt continua na assinatura porque renderLeitura o envia;
+     hoje nenhum quadro o utiliza. */
 
   /* 3 — concentracao de receita nos maiores clientes */
   const porCli = basePorCliente(propsSemStatus).sort((a, b) => b.receita - a.receita);
@@ -3737,27 +3872,30 @@ function montaLeitura(propsSemStatus, itensSemStatus, kpisAnt) {
         fmtPct(_pctSeguro(lider.valor, f.aceita.v)) + ' do total). Os <strong>três primeiros</strong> somam ' +
         fmtPct(_pctSeguro(tres, f.aceita.v)) + ' da receita aceita.' });
 
-    /* melhor e pior conversao entre quem tem volume */
-    const comVolume = porProp.filter(o => o.propostas >= 30);
-    if (comVolume.length >= 2) {
-      const melhor = [...comVolume].sort((a, b) => b.conversao - a.conversao)[0];
-      const pior = [...comVolume].sort((a, b) => a.conversao - b.conversao)[0];
-      L.push({ t: 'at', titulo: 'Conversão — melhor e pior',
-        txt: '<strong>' + truncar(melhor.chave, 28) + '</strong> converte ' + fmtPct(melhor.conversao) +
-          ' de ' + fmtNum(melhor.propostas) + ' propostas; <strong>' + truncar(pior.chave, 28) + '</strong> converte ' +
-          fmtPct(pior.conversao) + ' de ' + fmtNum(pior.propostas) +
-          '. A diferença é de <strong>' + fmtNum(Math.round(melhor.conversao - pior.conversao)) + ' pontos percentuais</strong>.' });
+    /* O quadro "Conversão — melhor e pior" saiu em 22/10/2026, a pedido. */
+
+    /* QUEM MAIS FECHA EM VOLUME (22/10/2026)
+       O quadro acima mede dinheiro; este mede QUANTIDADE de propostas Aceitas,
+       que e outra conversa: quem traz muitos contratos pequenos nunca aparecia
+       na leitura. agrupaDesempenho ja conta as aceitas por responsavel e
+       respeita todos os filtros do painel. */
+    const porQtd = [...porProp].sort((a, b) => b.aceitas - a.aceitas || b.valor - a.valor);
+    const campeao = porQtd[0];
+    if (campeao && campeao.aceitas > 0) {
+      const fatia = _pctSeguro(campeao.aceitas, f.aceita.q);
+      const mesmaPessoa = campeao.chave === lider.chave;
+      L.push({ t: 'ok', titulo: 'Quem mais fecha em volume',
+        txt: '<strong>' + truncar(campeao.chave, 34) + '</strong> é quem mais fecha: <strong>' +
+          fmtNum(campeao.aceitas) + '</strong> ' + (campeao.aceitas === 1 ? 'proposta aceita' : 'propostas aceitas') +
+          ' no recorte, ' + fmtPct(fatia) + ' do total, somando ' + fmtBRL(campeao.valor) + '.' +
+          (mesmaPessoa
+            ? ' É a mesma pessoa que lidera em receita.'
+            : ' Em receita, quem lidera é <strong>' + truncar(lider.chave, 30) + '</strong>.') });
     }
   }
 
-  /* 6 — o que esta parado */
-  const paradas = agregaParadas(propsSemStatus);
-  const vencQ = paradas[3].q + paradas[4].q, vencV = paradas[3].v + paradas[4].v;
-  if (vencQ) {
-    L.push({ t: 'ri', titulo: 'Pipeline parado',
-      txt: '<strong>' + fmtBRL(vencV) + '</strong> em <strong>' + fmtNum(vencQ) +
-        ' propostas</strong> sem movimentação há mais de 90 dias. Ou são negócios a retomar, ou são baixas pendentes no CRM.' });
-  }
+  /* O quadro "Pipeline parado" saiu em 22/10/2026, a pedido. Era o ultimo
+     lugar que chamava agregaParadas; a funcao segue no arquivo, sem uso. */
 
   /* 7 — onde o produto e vendido */
   const porUnid = agruparResumo(propsSemStatus, p => (p[6] >= 0 ? UNIDADES[p[6]] : 'NÃO INFORMADO'))
