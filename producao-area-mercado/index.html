@@ -2055,6 +2055,200 @@ html, body {
   background: linear-gradient(135deg, #52AE32 0%, #3F8C26 100%); color: #fff;
   font-size: 13px; font-weight: 700; box-shadow: 0 10px 30px rgba(82, 174, 50, 0.40);
 }
+
+
+/* ════════════════════════════════════════════════════════════════════
+   MOBILE E TABLET (22/10/2026)
+   Desktop (> 1024px) nao e tocado: a unica regra fora de media query e a
+   que mantem o botao do painel de filtros escondido.
+   ════════════════════════════════════════════════════════════════════ */
+
+/* O botao existe no DOM em qualquer largura, mas so aparece no mobile. */
+.mob-filtros-btn { display: none; }
+
+/* ───────────────────────── TELEFONE + TABLET (<= 1024px) ───────────────────────── */
+@media (max-width: 1024px) {
+
+  /* --- botao "Filtros e Periodos" --- */
+  .mob-filtros-btn {
+    display: flex; align-items: center; gap: 9px; width: 100%;
+    margin: 14px 0 0; padding: 0 14px; min-height: 46px;
+    border: 1px solid #cfdef3; border-radius: 11px;
+    background: linear-gradient(135deg, #eef4fd 0%, #e4eefb 100%);
+    color: var(--fibra-azul-escuro);
+    font-family: inherit; font-size: 13.5px; font-weight: 700; letter-spacing: .01em;
+    cursor: pointer; -webkit-tap-highlight-color: rgba(22,65,148,.12);
+    touch-action: manipulation;
+  }
+  .mob-filtros-btn:active { background: #e0ebf9; }
+  .mob-filtros-btn .rot { flex: 1; text-align: left; }
+  .mob-filtros-btn svg { flex: none; }
+  .mob-filtros-seta { font-size: 13px; transition: transform .2s ease; flex: none; }
+  .header.mob-filtros-fechado .mob-filtros-seta { transform: rotate(-90deg); }
+  .mob-filtros-badge {
+    flex: none; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px;
+    background: var(--fibra-laranja); color: #fff;
+    font-size: 11px; font-weight: 800; line-height: 20px; text-align: center;
+  }
+  .mob-filtros-badge[hidden] { display: none; }
+
+  /* fechado: somem os controles, ficam os chips do que esta filtrado */
+  .header.mob-filtros-fechado .filters-row { display: none; }
+
+  /* --- cabecalho --- */
+  .header-top {
+    display: grid; grid-template-columns: auto 1fr; align-items: center;
+    gap: 10px 12px; margin-bottom: 0;
+  }
+  .header-brand { grid-column: 1 / -1; gap: 12px; }
+  .period-tag {
+    grid-column: 1 / 2; justify-self: start;
+    white-space: normal; text-align: left; line-height: 1.35; font-size: 10.5px;
+    padding: 7px 13px;
+  }
+  .btn-import-excel {
+    grid-column: 2 / 3; justify-self: end;
+    margin-left: 0; min-height: 44px; height: auto; padding: 10px 16px; font-size: 12.5px;
+    touch-action: manipulation;
+  }
+  /* o rotulo do botao volta: um icone sozinho nao diz o que faz */
+  .btn-import-excel span { display: inline !important; }
+
+  .filters-row { padding-top: 14px; }
+  .filters-row:first-of-type { border-top: 1px solid var(--border-soft); }
+
+  /* --- alvos de toque --- */
+  .filter-btn { min-height: 40px; padding: 9px 16px; font-size: 12.5px; touch-action: manipulation; }
+  .ms-trigger { min-height: 42px; font-size: 12.5px; touch-action: manipulation; }
+  .btn-apply  { min-height: 40px; padding: 9px 16px; font-size: 12.5px; touch-action: manipulation; }
+  .btn-clear-all { min-height: 40px; touch-action: manipulation; }
+  .btn-export-excel { min-height: 42px; touch-action: manipulation; }
+  .btn-export-excel span { display: inline !important; }
+  .btn-clear-prop { min-height: 36px; touch-action: manipulation; }
+
+  /* 16px e o limite abaixo do qual o Safari do iPhone da zoom ao focar o campo */
+  .custom-range input[type="date"] { font-size: 16px; padding: 8px 10px; min-height: 40px; }
+  .detail-search { font-size: 16px !important; min-height: 42px; }
+
+  /* --- dropdown dos multi-select: nunca mais largo que a tela --- */
+  .ms-dropdown.is-open-fixed,
+  .ms-dropdown[style*="fixed"] {
+    max-width: calc(100vw - 16px) !important;
+    max-height: calc(100vh - 120px) !important;
+    overflow-y: auto;
+  }
+
+  /* --- tabelas: rolagem horizontal com inercia --- */
+  .table-wrap, .ind-wrap { -webkit-overflow-scrolling: touch; }
+
+  /* --- o carimbo da base sai de cima do conteudo e vira rodape --- */
+  #pam-carimbo {
+    position: static !important; max-width: none !important;
+    margin: 4px 16px 20px !important; box-shadow: none !important;
+  }
+
+  /* --- mapa com altura confortavel no toque --- */
+  .map-wrap, .map-wrap .leaflet-container { min-height: 320px; }
+  .map-toolbar { flex-wrap: wrap; gap: 8px; }
+}
+
+/* ───────────────────────── TELEFONE (<= 700px) ───────────────────────── */
+@media (max-width: 700px) {
+
+  .container { padding: 14px 12px 36px; }
+
+  /* --- cabecalho mais enxuto --- */
+  .header { padding: 14px; }
+  .header h1 { font-size: clamp(15px, 4.4vw, 19px); line-height: 1.25; }
+  .brand-logo { height: 40px; }
+  .header-brand { gap: 10px; }
+  .header-top { grid-template-columns: 1fr auto; }
+  .period-tag { font-size: 10px; padding: 6px 12px; }
+  .btn-import-excel { padding: 10px 14px; font-size: 12px; }
+
+  /* --- KPIs em DUAS colunas (pedido expresso) --- */
+  .kpi-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .kpi-card { padding: 13px 12px; }
+  .kpi-header { margin-bottom: 8px; gap: 6px; }
+  .kpi-label { font-size: 9.5px; line-height: 1.25; }
+  .kpi-icon { width: 28px; height: 28px; font-size: 11px; flex: none; }
+  .kpi-value { font-size: clamp(16px, 5.6vw, 23px); }
+  /* a receita e o unico valor que nao pode quebrar: R$ 29.110.875,04 */
+  #kpi-receita { font-size: clamp(12.5px, 4.1vw, 18px); }
+  .kpi-meta { margin-top: 7px; font-size: 10px; gap: 5px; flex-wrap: wrap; }
+  .kpi-meta-text { font-size: 9.5px; line-height: 1.25; }
+
+  /* --- filtros empilhados, largura cheia --- */
+  .filters-row { flex-direction: column; align-items: stretch; gap: 12px; }
+  .filter-group { flex-direction: column; align-items: stretch; gap: 7px; }
+  /* Periodo tem um botao so (YTD): deixar esticar vira faixa de pagina.
+     Ano tem cinco: grade de tres colunas fecha certinho em 3 + 2. */
+  .filter-tabs { flex-wrap: wrap; }
+  #quick-tabs { align-self: flex-start; }
+  #quick-tabs .filter-btn { flex: 0 0 auto; min-width: 88px; }
+  #year-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+  #year-tabs .filter-btn { width: 100%; }
+
+  .ms-wrap { width: 100%; }
+  .custom-range {
+    display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+    gap: 8px; padding: 8px;
+  }
+  .custom-range input[type="date"] { width: 100%; min-width: 0; }
+  .custom-range > span { text-align: center; font-size: 11px; }
+  .custom-range .btn-apply { grid-column: 1 / -1; width: 100%; }
+  .ms-wrap { width: 100%; }
+  .ms-trigger { width: 100%; justify-content: space-between; }
+  .btn-clear-all { margin-left: 0; width: 100%; }
+  .active-filters-bar { padding-top: 10px; }
+
+  /* --- graficos: um por linha, respirando menos --- */
+  .chart-card, .status-row { padding: 15px 13px; }
+  .chart-title { font-size: 14px; }
+  .chart-insight { font-size: 11.5px; }
+  .chart-canvas-wrap { height: 250px; }
+  .chart-canvas-wrap.tall { height: 300px; }
+  .chart-canvas-wrap.xtall { height: 330px; }
+  .chart-canvas-wrap.top20 { height: 520px; }
+
+  /* --- drill-down --- */
+  .drill-active { flex-wrap: wrap; }
+  .btn-clear-prop { margin-left: 0; }
+}
+
+/* ───────────────────────── PODIO NO TELEFONE (<= 720px) ─────────────────────────
+   O bloco dos rankings ja empilhava os tres cartoes a partir de 720px; isso
+   custava quase uma tela inteira de rolagem. Aqui o 1o lugar ocupa a linha
+   cheia e 2o e 3o dividem a de baixo. Mesmo limite de 720px, para nao abrir
+   uma faixa de larguras com dois comportamentos diferentes.             */
+@media (max-width: 720px) {
+  .rk-podio { grid-template-columns: 1fr 1fr; gap: 9px; align-items: stretch; }
+  .rk-p.ouro { grid-column: 1 / -1; order: -1; padding: 15px 12px 16px; }
+  .rk-p { padding: 12px 10px 13px; }
+  .rk-p .rk-av, .rk-p .rk-ini { width: 40px; height: 40px; margin-bottom: 7px; }
+  .rk-p.ouro .rk-av, .rk-p.ouro .rk-ini { width: 52px; height: 52px; }
+  .rk-p .vl { font-size: 18px; }
+  .rk-p.ouro .vl { font-size: 26px; }
+  .rk-p .med { font-size: 9px; margin-bottom: 6px; }
+  .rk-p .nm { font-size: 11px; }
+  .rk-p .sh { font-size: 9.5px; }
+}
+
+/* ───────────────────────── TELEFONE ESTREITO (<= 380px) ───────────────────────── */
+@media (max-width: 380px) {
+  .container { padding: 12px 10px 32px; }
+  .kpi-grid { gap: 8px; }
+  .kpi-card { padding: 11px 10px; }
+  .kpi-label { font-size: 9px; }
+  .kpi-icon { width: 24px; height: 24px; font-size: 10px; }
+  #kpi-receita { font-size: clamp(11.5px, 3.9vw, 15px); }
+  .header-top { grid-template-columns: 1fr; }
+  .period-tag, .btn-import-excel { grid-column: 1 / -1; justify-self: stretch; }
+  .btn-import-excel { justify-content: center; }
+  .rk-podio { gap: 8px; }
+  .rk-lb-head, .rk-lb { grid-template-columns: 28px 1fr 118px; gap: 7px; }
+  .rk-lb .vl { font-size: 11.5px; }
+}
 </style>
 </head>
 <body>
@@ -2331,16 +2525,8 @@ html, body {
 
   </section>
 
-  <!-- LEITURA DA CARTEIRA (06/10/2026) — texto gerado dos proprios dados -->
-  <section class="charts-grid larga" id="sec-leitura">
-    <div class="table-card">
-      <div class="chart-header">
-        <div class="chart-title">Leitura da Carteira</div>
-        <div class="chart-insight">O diagnóstico do recorte selecionado, escrito automaticamente a cada filtro aplicado.</div>
-      </div>
-      <div id="leitura-corpo"></div>
-    </div>
-  </section>
+  <!-- A secao "Leitura da Carteira" saiu em 26/10/2026, a pedido.
+       As funcoes montaLeitura/renderLeitura seguem no arquivo, sem uso. -->
 
   <section class="charts-grid row-2" id="sec-resumos">
     <div class="table-card">
@@ -2476,10 +2662,10 @@ html, body {
   <div class="table-card">
     <div class="chart-header">
       <div class="chart-title">Detalhamento de Propostas — Drill-down por Item</div>
-      <div class="chart-insight">Uma linha por <strong>proposta</strong> — IDs repetidos foram consolidados em 22/10/2026. Use a busca para localizar rapidamente; cabeçalhos clicáveis ordenam.</div>
+      <div class="chart-insight">Uma linha por <strong>item</strong> — a mesma proposta aparece uma vez para cada produto. O <strong>Valor Total</strong> é o da linha, então a coluna pode ser somada. Use a busca para localizar rapidamente; cabeçalhos clicáveis ordenam.</div>
     </div>
     <div class="detail-controls">
-      <input type="text" class="detail-search" id="detail-search" placeholder="Buscar por proprietário, ID, CNPJ, cliente, unidade…">
+      <input type="text" class="detail-search" id="detail-search" placeholder="Buscar por proprietário, ID, CNPJ, cliente, unidade, produto…">
       <button type="button" class="btn-export-excel" id="btn-export-excel" title="Exportar para Excel a lista atual filtrada">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -2500,6 +2686,8 @@ html, body {
             <th class="sortable" data-sort="cliente">Cliente</th>
             <th class="sortable" data-sort="unidade">Entidade/Unidade</th>
             <th class="sortable" data-sort="status">Razão do Status</th>
+            <th class="sortable" data-sort="produto">Produto Existente</th>
+            <th class="sortable num" data-sort="valor">Valor Total</th>
           </tr>
         </thead>
         <tbody id="detail-tbody"></tbody>
@@ -3006,6 +3194,11 @@ var PAM = (function() {
       ]);
     });
 
+    /* DETALHE = [propostaIdx_pos, produtoIdx_or_-1, valorDoItem]
+       O terceiro campo entrou em 26/10/2026. E o "Valor Total" DAQUELA LINHA
+       da planilha, nao o da proposta. Precisa viajar aqui porque ITENS
+       descarta itens sem valor e nao distingue a mesma dupla
+       (proposta, produto) repetida — o que acontece em 808 pares da base. */
     var detalheCompact = [];
     linhasItens.forEach(function(r) {
       var pid = String(r['ID da Proposta']);
@@ -3013,6 +3206,7 @@ var PAM = (function() {
       detalheCompact.push([
         pidToPos[pid],
         prod && prodIdx[prod] !== undefined ? prodIdx[prod] : -1,
+        Math.round((Number(r['Valor Total']) || 0) * 100) / 100,
       ]);
     });
 
@@ -3301,7 +3495,7 @@ const PROP_IDS = RAW.lookups.propIds;
 const PROPOSTAS = RAW.propostas;
 // ITENS = [propostaIdx_pos, produtoIdx, categoriaIdx, valor]  (somente Aceitas+Concluídas)
 const ITENS = RAW.itens;
-// DETALHE = [propostaIdx_pos, produtoIdx_or_-1]  (todos status)
+// DETALHE = [propostaIdx_pos, produtoIdx_or_-1, valorDoItem]  (todos status)
 const DETALHE = RAW.detalhe;
 
 // Conversão de datas
@@ -5532,19 +5726,19 @@ function agregaTabelaMensal(propostas) {
 
 // === NOVO: prepara linhas para tabela detalhada ===
 function montaDetalhe(detalheArr) {
-  /* UMA LINHA POR PROPOSTA (22/10/2026).
-     detalheArr traz um registro por ITEM, entao a mesma proposta aparecia
-     varias vezes, uma por produto. Agora o primeiro item de cada proposta
-     entra e os demais sao descartados — a coluna Produto Existente saiu da
-     tabela junto, nao ha informacao perdida na tela. */
+  /* UMA LINHA POR ITEM (26/10/2026).
+     A consolidacao por proposta, feita em 22/10, foi desfeita a pedido: a
+     tabela volta a mostrar uma linha por item, com o ID da proposta
+     repetindo, e ganha as colunas Produto Existente e Valor Total.
+     O valor e o do ITEM (d[2]) — somando a coluna chega-se exatamente a
+     soma das propostas do recorte. Repetir o valor da proposta em cada
+     linha inflaria a coluna em varias vezes. */
   const linhas = [];
-  const vistos = new Set();
   for (let i = 0; i < detalheArr.length; i++) {
     const d = detalheArr[i];
     const propPos = d[0];
     const prodIdx = d[1];
-    if (vistos.has(propPos)) continue;
-    vistos.add(propPos);
+    const valorItem = d.length > 2 ? d[2] : null;
     const p = PROPOSTAS[propPos];
     linhas.push({
       proprietario: p[7] >= 0 ? PROPRIETARIOS[p[7]] : '—',
@@ -5553,6 +5747,7 @@ function montaDetalhe(detalheArr) {
       cliente: p[5] >= 0 ? CLIENTES[p[5]] : '—',
       unidade: p[6] >= 0 ? UNIDADES[p[6]] : '—',
       produto: prodIdx >= 0 ? PRODUTOS[prodIdx] : '—',
+      valor: valorItem,
       status: STATUS_LIST[p[1]],
       statusIdx: p[1],
       modDias: p[0],
@@ -6360,7 +6555,8 @@ function aplicaBuscaDetalhe() {
       (r.cnpj || '').toLowerCase().includes(termo) ||
       (r.cliente || '').toLowerCase().includes(termo) ||
       (r.unidade || '').toLowerCase().includes(termo) ||
-      (r.status || '').toLowerCase().includes(termo)
+      (r.status || '').toLowerCase().includes(termo) ||
+      (r.produto || '').toLowerCase().includes(termo)
     );
   }
 }
@@ -6368,11 +6564,19 @@ function ordenaDetalhe() {
   aplicaBuscaDetalhe();
   if (detailSortState.key) {
     const k = detailSortState.key, asc = detailSortState.asc;
-    detailSorted.sort((a, b) => {
-      const va = (a[k] || '').toString();
-      const vb = (b[k] || '').toString();
-      return asc ? va.localeCompare(vb, 'pt-BR') : vb.localeCompare(va, 'pt-BR');
-    });
+    if (k === 'valor') {
+      /* ordenacao numerica: como texto, R$ 9,00 viria depois de R$ 80.000,00 */
+      detailSorted.sort((a, b) => {
+        const va = Number(a.valor) || 0, vb = Number(b.valor) || 0;
+        return asc ? va - vb : vb - va;
+      });
+    } else {
+      detailSorted.sort((a, b) => {
+        const va = (a[k] || '').toString();
+        const vb = (b[k] || '').toString();
+        return asc ? va.localeCompare(vb, 'pt-BR') : vb.localeCompare(va, 'pt-BR');
+      });
+    }
   }
   detailPage = 1;
   desenhaDetalhe();
@@ -6387,7 +6591,7 @@ function desenhaDetalhe() {
   document.getElementById('detail-info-total').textContent = fmtNum(total);
 
   if (total === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:32px; color:var(--text-tertiary)">Nenhuma linha encontrada.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:32px; color:var(--text-tertiary)">Nenhuma linha encontrada.</td></tr>';
     document.getElementById('detail-info-shown').textContent = '0';
     document.getElementById('detail-pagination').innerHTML = '';
     return;
@@ -6411,6 +6615,8 @@ function desenhaDetalhe() {
       '<td title="' + r.cliente + '">' + truncar(r.cliente, 30) + '</td>' +
       '<td title="' + r.unidade + '">' + truncar(r.unidade, 24) + '</td>' +
       '<td><span class="' + stPill + '">' + r.status + '</span></td>' +
+      '<td title="' + (r.produto || '') + '">' + truncar(r.produto, 34) + '</td>' +
+      '<td class="num mono">' + (r.valor == null ? '—' : fmtBRL(r.valor)) + '</td>' +
       '</tr>';
   }).join('');
 
@@ -6459,7 +6665,8 @@ document.querySelectorAll('#detail-table th.sortable').forEach(th => {
   th.addEventListener('click', () => {
     const k = th.dataset.sort;
     if (detailSortState.key === k) detailSortState.asc = !detailSortState.asc;
-    else { detailSortState.key = k; detailSortState.asc = true; }
+    /* numero comeca do maior; texto comeca de A */
+    else { detailSortState.key = k; detailSortState.asc = (k !== 'valor'); }
     ordenaDetalhe();
   });
 });
@@ -7066,11 +7273,7 @@ function renderTudo(iniDias, fimDias, label) {
      motivo de receberem propsSemStatus. */
   renderFunil(propsSemStatus);
   /* renderParadas saiu em 22/10/2026 junto com o cartao. */
-  /* Leitura da Carteira e Desempenho por Proprietario (06/10/2026).
-     A Leitura recebe kpisAnt para conseguir escrever a frase do comparativo;
-     quando nao existe periodo anterior no intervalo, a frase simplesmente
-     nao e gerada. */
-  renderLeitura(propsSemStatus, itensSemStatus, kpisAnt);
+  /* A chamada de renderLeitura saiu em 26/10/2026 junto com a secao. */
   renderDesempenho(propsSemStatus);
   renderPropQtd(agregaPropQtdAceitas(propsSemStatus));
   renderPropValor(agregaPropValor(propsSemStatus));
@@ -7232,7 +7435,7 @@ function exportFilteredTableToExcel() {
 
   try {
     // Cabeçalho (linha 1) — usado para autofiltro e largura
-    var headers = ['Proprietário', 'ID da Proposta', 'CNPJ (Cliente)', 'Cliente', 'Entidade/Unidade', 'Razão do Status'];
+    var headers = ['Proprietário', 'ID da Proposta', 'CNPJ (Cliente)', 'Cliente', 'Entidade/Unidade', 'Razão do Status', 'Produto Existente', 'Valor Total'];
 
     // Montar AOA (Array of Arrays) preservando tipos: CNPJ e ID como TEXTO
     var aoa = [headers];
@@ -7243,11 +7446,20 @@ function exportFilteredTableToExcel() {
         String(r.cnpj || ''),
         r.cliente || '',
         r.unidade || '',
-        r.status || ''
+        r.status || '',
+        r.produto || '',
+        /* numero de verdade, nao texto: assim soma e filtra no Excel */
+        (r.valor == null ? null : Number(r.valor))
       ]);
     });
 
     var ws = XLSX.utils.aoa_to_sheet(aoa);
+
+    /* Valor Total (coluna H) com formato de moeda */
+    for (var iv = 1; iv < aoa.length; iv++) {
+      var addrH = XLSX.utils.encode_cell({ r: iv, c: 7 });
+      if (ws[addrH] && ws[addrH].v != null) { ws[addrH].t = 'n'; ws[addrH].z = 'R$ #,##0.00'; }
+    }
 
     // Forçar tipo TEXTO para coluna B (ID da Proposta) e C (CNPJ) para preservar zeros à esquerda
     var totalRows = aoa.length;
@@ -7585,6 +7797,102 @@ if (document.readyState === 'loading') {
 }
 
 }  /* fim __iniciarPainel */
+
+/* ════════════════════════════════════════════════════════════════════
+   MOBILE (22/10/2026)
+   a) Botao "Filtros e Periodos": cria o botao e alterna uma classe no
+      .header. Quem esconde os filtros e o CSS, dentro da media query —
+      por isso no desktop este codigo nao produz efeito visual algum.
+   b) Redesenho dos graficos quando a LARGURA da janela muda. A altura
+      muda sozinha no celular (a barra de endereco some ao rolar), entao
+      altura nao conta: se contasse, o painel redesenharia a cada rolagem.
+   ════════════════════════════════════════════════════════════════════ */
+(function () {
+  var LIMITE_MOBILE = 1024;   /* ate aqui o botao aparece (CSS manda) */
+  var FECHA_ABAIXO  = 768;    /* telefone comeca fechado; tablet, aberto */
+
+  function montaBotaoFiltros() {
+    var header = document.querySelector('.header');
+    var topo = header && header.querySelector('.header-top');
+    if (!header || !topo || document.getElementById('mob-filtros-btn')) return;
+
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.id = 'mob-filtros-btn';
+    b.className = 'mob-filtros-btn';
+    b.setAttribute('aria-expanded', 'true');
+    b.innerHTML =
+      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+      'stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+      '<polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>' +
+      '<span class="rot">Filtros e Períodos</span>' +
+      '<span class="mob-filtros-badge" id="mob-filtros-badge" hidden>0</span>' +
+      '<span class="mob-filtros-seta" aria-hidden="true">▾</span>';
+    topo.insertAdjacentElement('afterend', b);
+
+    var mexeuNoBotao = false;   /* depois do primeiro toque, manda o usuario */
+
+    b.addEventListener('click', function () {
+      mexeuNoBotao = true;
+      var fechado = header.classList.toggle('mob-filtros-fechado');
+      b.setAttribute('aria-expanded', String(!fechado));
+      if (!fechado) {
+        /* ao abrir, traz o painel para a vista */
+        try { b.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (e) {}
+      }
+    });
+
+    /* Estado inicial e reajuste por largura: telefone abre fechado (para a
+       primeira tela ser o numero, nao o filtro), tablet abre aberto. Vale
+       tambem para quem redimensiona a janela no computador — ate o momento
+       em que a pessoa toca no botao; dai em diante quem decide e ela. */
+    function aplicaPadrao() {
+      if (mexeuNoBotao) return;
+      var fecha = window.innerWidth < FECHA_ABAIXO;
+      header.classList.toggle('mob-filtros-fechado', fecha);
+      b.setAttribute('aria-expanded', String(!fecha));
+    }
+    aplicaPadrao();
+    window.addEventListener('resize', aplicaPadrao);
+
+    /* O numero no botao vem dos proprios chips de filtro ativo — assim o
+       contador nunca sai do ar em relacao ao estado real do painel, e nada
+       precisa ser alterado em atualizaChips(). */
+    var cont = document.getElementById('active-filters-content');
+    var badge = document.getElementById('mob-filtros-badge');
+    function atualizaBadge() {
+      if (!cont || !badge) return;
+      var n = cont.querySelectorAll('.chip').length;
+      if (n > 0) { badge.textContent = n; badge.hidden = false; }
+      else { badge.hidden = true; }
+    }
+    if (cont && window.MutationObserver) {
+      new MutationObserver(atualizaBadge).observe(cont, { childList: true, subtree: true });
+    }
+    atualizaBadge();
+  }
+
+  /* --- redesenho ao mudar a largura --- */
+  var larguraAnterior = window.innerWidth;
+  var temporizador = null;
+  window.addEventListener('resize', function () {
+    if (window.innerWidth === larguraAnterior) return;   /* so mudou a altura */
+    larguraAnterior = window.innerWidth;
+    clearTimeout(temporizador);
+    temporizador = setTimeout(function () {
+      if (typeof recalcular === 'function') {
+        try { recalcular(); } catch (e) { console.warn('redesenho pos-resize:', e); }
+      }
+    }, 220);
+  });
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', montaBotaoFiltros);
+  } else {
+    montaBotaoFiltros();
+  }
+})();
+
 </script>
 
 
