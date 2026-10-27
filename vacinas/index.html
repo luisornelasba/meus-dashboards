@@ -1441,8 +1441,15 @@ function computeKPIs(filtered){
   const isAditivo = temMeta ? estoque < 0 : false;
   const pct = temMeta ? (aplicadas / meta) * 100 : null;
 
-  const receita = fechVendas.reduce((s,r) => s + (r.valor||0), 0);
-  const propVenda = new Set(fechVendas.map(r => r.id_proposta)).size;
+  /* RECEITA = SOMENTE PROPOSTAS ACEITAS (27/10/2026).
+     Antes somava Aceitas + Concluidas (fechVendas). O ticket usa a mesma
+     base no denominador: numerador e denominador precisam olhar para o
+     mesmo conjunto, senao o ticket sai torto.
+     As DOSES seguem com a regra antiga (fechVendas), porque a mudanca
+     pedida foi a da receita. */
+  const vendasAceitas = vendas.filter(r => r.status === 'Aceita');
+  const receita = vendasAceitas.reduce((s,r) => s + (r.valor||0), 0);
+  const propVenda = new Set(vendasAceitas.map(r => r.id_proposta)).size;
   const ticket = propVenda > 0 ? receita/propVenda : 0;
 
   const consigMap = buildConsigMap(filtered);
