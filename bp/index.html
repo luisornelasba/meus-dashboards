@@ -611,7 +611,7 @@
     position:absolute;top:16px;left:16px;width:292px;
     background:rgba(255,255,255,.94);backdrop-filter:blur(18px);
     border:1px solid rgba(226,232,240,.92);border-radius:18px;
-    padding:16px 16px 14px;box-shadow:0 24px 70px rgba(15,23,42,.18);z-index:520;
+    padding:16px 16px 14px;box-shadow:0 24px 70px rgba(15,23,42,.18);z-index:650;
   }
   .map-panel-title-v2{font-family:'Manrope',sans-serif;font-size:15px;font-weight:800;color:#0F172A;letter-spacing:-.02em;margin-bottom:2px}
   .map-panel-sub-v2{font-size:11px;color:var(--text-2);margin-bottom:10px;line-height:1.4}
@@ -639,7 +639,7 @@
 
   /* Strip de KPIs inferiores */
   .map-kpi-strip{
-    position:absolute;left:326px;right:16px;bottom:16px;z-index:520;
+    position:absolute;left:326px;right:74px;bottom:16px;z-index:650;
     display:grid;grid-template-columns:repeat(4,minmax(130px,1fr));gap:10px;pointer-events:none;
   }
   .map-kpi-mini{
@@ -655,7 +655,7 @@
     position:absolute;top:16px;right:16px;bottom:auto;left:auto;
     background:rgba(255,255,255,.94);backdrop-filter:blur(16px);
     border:1px solid rgba(226,232,240,.92);border-radius:14px;
-    padding:12px 14px;z-index:520;box-shadow:0 16px 44px rgba(15,23,42,.13);
+    padding:12px 14px;z-index:650;box-shadow:0 16px 44px rgba(15,23,42,.13);
     font-size:11px;color:var(--text-2);min-width:220px;
   }
   .map-legend-title{font-weight:800;color:#0F172A;text-transform:uppercase;letter-spacing:.08em;font-size:10px;margin-bottom:8px}
@@ -682,6 +682,13 @@
     font-size:10px;font-weight:800;text-transform:uppercase;
     letter-spacing:.02em;white-space:nowrap;
   }
+
+  /* Assinatura do OpenStreetMap — inferior esquerdo (04/11/2026) */
+  .leaflet-bottom.leaflet-left .leaflet-control-attribution{
+    background:rgba(255,255,255,.82);border-radius:7px;padding:2px 7px;
+    font-size:9.5px;color:var(--text-3);box-shadow:0 2px 8px rgba(15,23,42,.08);
+  }
+  .leaflet-bottom.leaflet-left .leaflet-control-attribution a{color:var(--text-2)}
 
   /* Tooltip Leaflet */
   .leaflet-tooltip.map-region-tooltip{
@@ -717,9 +724,17 @@
 
   /* Responsivo */
   @media (max-width:900px){
-    .map-kpi-strip{left:16px;grid-template-columns:repeat(2,1fr)}
-    .map-executive-panel{width:250px}
-    .map-container,.map-container.premium-v2{height:680px}
+    .map-container,.map-container.premium-v2{
+      height:auto;display:flex;flex-direction:column;gap:10px;
+      padding-bottom:12px;background:var(--bg-card);
+    }
+    #empresasMap{height:400px;flex:none;border-radius:18px 18px 0 0}
+    .map-executive-panel,.map-legend,.map-kpi-strip{
+      position:static;inset:auto;width:auto;margin:0 12px;
+      backdrop-filter:none;box-shadow:0 2px 10px rgba(15,23,42,.06);
+    }
+    .map-kpi-strip{grid-template-columns:repeat(2,1fr)}
+    .map-kpi-strip .map-kpi-mini{box-shadow:none;border:1px solid var(--border)}
     .map-legend{min-width:auto}
   }
 
@@ -2914,32 +2929,179 @@ function renderExecutiveInsights(data){
 /* ========= MAPA DE EMPRESAS · PREMIUM ========= */
 let _mapInstance = null;
 let _mapLayer = null;
+let _mapLabelLayer = null;   // camada so dos nomes de regiao (04/11/2026)
+let _mapRotulos = [];        // {region, lat, lng, raio} das regioes com nome
+let _mapBolhas = [];         // {lat, lng, raio} de TODAS as bolhas, para desviar
+let _mapResizeT = null;      // debounce do redimensionamento da janela
+
+/* ══════════════════════════════════════════════════════════════════════
+   NOMES DE REGIAO SEM SOBREPOSICAO (04/11/2026)
+
+   Antes o nome era deslocado em GRAU: 0.012 + (idx % 3) * 0.004 de latitude e
+   0.018 + (idx % 2) * 0.006 de longitude. Dois problemas. Primeiro, sao seis
+   combinacoes para sete regioes, logo a 1a e a 7a recebiam o mesmo
+   deslocamento e as pilulas caiam exatamente uma sobre a outra. Segundo, grau
+   e medida do mundo e nao da tela: o mesmo 0.012 vale 4px com zoom baixo e
+   60px com zoom alto, de modo que o afastamento nunca batia com o tamanho real
+   da bolha.
+
+   Agora o calculo e em pixel e feito DEPOIS do fitBounds, quando a vista final
+   ja esta definida. Para cada regiao sao testadas oito direcoes em tres
+   distancias; a primeira posicao que nao invadir outra pilula, uma bolha ou um
+   dos cartoes do painel e a escolhida. Regiao sem posicao livre fica sem
+   pilula — o nome continua no tooltip, que e melhor do que dois nomes
+   ilegiveis empilhados.
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* Mede a pilula com o CSS de verdade (.map-region-label), fora da tela.
+   Vive dentro do proprio cartao do mapa e com aria-hidden: assim nao entra no
+   texto da pagina nem e lido por leitor de tela. */
+function _mapMedeRotulo(txt){
+  let el = document.getElementById('_mapMedidorRotulo');
+  if(!el){
+    el = document.createElement('div');
+    el.id = '_mapMedidorRotulo';
+    el.className = 'map-region-label';
+    el.setAttribute('aria-hidden', 'true');
+    el.style.cssText = 'position:absolute;left:-9999px;top:0;visibility:hidden;pointer-events:none';
+    const casa = (_mapInstance && _mapInstance.getContainer().parentElement) || document.body;
+    casa.appendChild(el);
+  }
+  el.textContent = txt;
+  return [el.offsetWidth, el.offsetHeight];
+}
+
+function _mapCruza(a, b){
+  return !(a.x2 <= b.x1 || a.x1 >= b.x2 || a.y2 <= b.y1 || a.y1 >= b.y2);
+}
+function _mapCruzaAlgum(r, lista){
+  for(let i = 0; i < lista.length; i++) if(_mapCruza(r, lista[i])) return true;
+  return false;
+}
+
+/* Os cartoes flutuantes do painel, em coordenada do container do mapa. */
+function _mapAreasOcupadas(){
+  const cont = _mapInstance.getContainer();
+  const base = cont.getBoundingClientRect();
+  const caixa = cont.parentElement || document;
+  const out = [];
+  ['.map-executive-panel', '.map-kpi-strip', '.map-legend',
+   '.leaflet-bottom.leaflet-right', '.leaflet-bottom.leaflet-left'].forEach(sel => {
+    const el = caixa.querySelector(sel);
+    if(!el) return;
+    const r = el.getBoundingClientRect();
+    if(!r.width || !r.height) return;
+    out.push({ x1: r.left - base.left - 6, y1: r.top - base.top - 6,
+               x2: r.right - base.left + 6, y2: r.bottom - base.top + 6 });
+  });
+  return out;
+}
+
+function _mapDesenhaRotulos(){
+  if(!_mapInstance || !_mapLabelLayer) return;
+  _mapLabelLayer.clearLayers();
+  if(!_mapRotulos.length) return;
+
+  const tam = _mapInstance.getSize();
+  const ocupado = _mapAreasOcupadas();
+
+  /* Toda bolha e obstaculo — inclusive a pilula do numero, de 44x26,
+     centrada na bolha. */
+  _mapBolhas.forEach(b => {
+    const p = _mapInstance.latLngToContainerPoint([b.lat, b.lng]);
+    const meia = Math.max(b.raio, 22);
+    ocupado.push({ x1: p.x - meia, y1: p.y - 14, x2: p.x + meia, y2: p.y + 14 });
+  });
+
+  const DIRECOES = [[1,0],[-1,0],[0,-1],[0,1],[1,-1],[-1,-1],[1,1],[-1,1]];
+  const colocados = [];
+
+  _mapRotulos.forEach(it => {
+    const p = _mapInstance.latLngToContainerPoint([it.lat, it.lng]);
+    const txt = String(it.region || '').toUpperCase();
+    const med = _mapMedeRotulo(txt);
+    const w = med[0], hh = med[1];
+    let alvo = null;
+
+    for(let d = 0; d < 3 && !alvo; d++){
+      const folga = it.raio + [8, 18, 32][d];
+      for(let k = 0; k < DIRECOES.length; k++){
+        const dx = DIRECOES[k][0], dy = DIRECOES[k][1];
+        const cx = dx === 0 ? p.x : p.x + dx * (folga + w / 2);
+        const cy = dy === 0 ? p.y : p.y + dy * (folga + hh / 2);
+        const r = { x1: cx - w/2, y1: cy - hh/2, x2: cx + w/2, y2: cy + hh/2 };
+        if(r.x1 < 4 || r.y1 < 4 || r.x2 > tam.x - 4 || r.y2 > tam.y - 4) continue;
+        if(_mapCruzaAlgum(r, ocupado) || _mapCruzaAlgum(r, colocados)) continue;
+        alvo = { cx: cx, cy: cy, r: r };
+        break;
+      }
+    }
+    if(!alvo) return;   // sem espaco livre: o nome fica no tooltip
+    colocados.push(alvo.r);
+
+    L.marker([it.lat, it.lng], {
+      interactive: false,
+      icon: L.divIcon({
+        className: 'map-region-label',
+        html: escapeHtmlRkc(txt),
+        iconSize: [w, hh],
+        iconAnchor: [w/2 - (alvo.cx - p.x), hh/2 - (alvo.cy - p.y)],
+      })
+    }).addTo(_mapLabelLayer);
+  });
+}
 
 function initMapOnce(){
   if(_mapInstance) return;
   _mapInstance = L.map('empresasMap', {
     center: [-15.793, -47.882],
     zoom: 10,
-    zoomControl: true,
+    /* ZOOM NO CANTO INFERIOR DIREITO e assinatura no inferior esquerdo
+       (04/11/2026). Os controles do Leaflet ficam em z-index 800 e os cartoes
+       do painel em 520: no canto superior esquerdo os botoes +/- desenhavam
+       por cima do "Resumo geografico", e a assinatura, no inferior direito,
+       por cima do ultimo cartao de KPI. */
+    zoomControl: false,
+    attributionControl: false,
     scrollWheelZoom: true,
     preferCanvas: true,
-    attributionControl: true,
   });
-  // Voyager (CartoDB) — tons cinza/bege suaves, igual à imagem de referência
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png', {
-    attribution: '© OpenStreetMap · CARTO',
-    subdomains: 'abcd',
+  L.control.zoom({ position: 'bottomright' }).addTo(_mapInstance);
+  L.control.attribution({ position: 'bottomleft', prefix: false }).addTo(_mapInstance);
+
+  /* MAPA DE FUNDO (corrigido em 04/11/2026).
+     Antes: basemaps.cartocdn.com, em duas camadas (voyager_nolabels embaixo e
+     voyager_only_labels em cima das bolhas). A CARTO passou a exigir chave de
+     API e devolve, com HTTP 200, uma imagem de 2.049 bytes com a tarja
+     "API KEY REQUIRED" atravessada, igual para qualquer coordenada — era isso
+     que aparecia no lugar do mapa. Agora e o OpenStreetMap padrao: aberto, sem
+     chave, e o mesmo que o painel producao-area-mercado usa desde 29/09/2026.
+     Os nomes das cidades vem gravados no proprio ladrilho, por isso a camada
+     separada de rotulos deixou de existir. */
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     maxZoom: 19,
+    /* ladrilho que falhar fica transparente em vez de virar imagem quebrada */
+    errorTileUrl: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
   }).addTo(_mapInstance);
-  // Labels separados em camada de cima (cidades visíveis sobre as bolhas)
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png', {
-    attribution: '',
-    subdomains: 'abcd',
-    maxZoom: 19,
-    pane: 'shadowPane',
-    opacity: 0.85,
-  }).addTo(_mapInstance);
+
   _mapLayer = L.layerGroup().addTo(_mapInstance);
+  _mapLabelLayer = L.layerGroup().addTo(_mapInstance);
+
+  /* Os nomes das regioes sao posicionados em pixel, entao precisam ser
+     recalculados a cada zoom e a cada arraste. */
+  _mapInstance.on('zoomend moveend resize', _mapDesenhaRotulos);
+
+  /* Girar o celular ou atravessar os 900px muda a altura do mapa; sem
+     invalidateSize o Leaflet continua desenhando no tamanho antigo. */
+  window.addEventListener('resize', function(){
+    clearTimeout(_mapResizeT);
+    _mapResizeT = setTimeout(function(){
+      if(!_mapInstance) return;
+      _mapInstance.invalidateSize({ animate: false });
+      _mapDesenhaRotulos();
+    }, 180);
+  });
 }
 
 function fmtBRL(v){
@@ -2956,6 +3118,9 @@ function fmtBRLShort(v){
 function renderMap(data){
   initMapOnce();
   _mapLayer.clearLayers();
+  if(_mapLabelLayer) _mapLabelLayer.clearLayers();
+  _mapRotulos = [];
+  _mapBolhas = [];
 
   const metricEl = document.getElementById('mapMetricSelect');
   const metric = metricEl ? metricEl.value : 'propostas';
@@ -3071,18 +3236,11 @@ function renderMap(data){
         })
       }).addTo(_mapLayer);
 
-      // Label retangular com nome da região (deslocado para o lado)
-      const offsetLat = 0.012 + (idx % 3) * 0.004;
-      const offsetLng = 0.018 + (idx % 2) * 0.006;
-      L.marker([g.lat + offsetLat, g.lng + offsetLng], {
-        interactive: false,
-        icon: L.divIcon({
-          className: 'map-region-label',
-          html: g.region.toUpperCase(),
-          iconSize: null,
-          iconAnchor: [0, 8],
-        })
-      }).addTo(_mapLayer);
+      /* O nome da regiao e so anotado aqui. A posicao exige a vista final do
+         mapa, que so existe depois do fitBounds, e precisa ser recalculada a
+         cada zoom — quem faz isso e _mapDesenhaRotulos(). */
+      _mapRotulos.push({ region: g.region, lat: g.lat, lng: g.lng, raio: radius });
+      _mapBolhas.push({ lat: g.lat, lng: g.lng, raio: radius });
     } else {
       // Bolhas pequenas cyan/azul-claro para regiões secundárias
       const smallRadius = Math.max(8, radius * 0.7);
@@ -3097,6 +3255,7 @@ function renderMap(data){
         .bindTooltip(`<b>${g.region}</b><br>${fmtNum(g.count)} proposta(s)`, {
           direction:'top', offset:[0,-smallRadius-4], opacity:.95, className:'map-region-tooltip'
         });
+      _mapBolhas.push({ lat: g.lat, lng: g.lng, raio: smallRadius });
     }
   });
 
@@ -3148,12 +3307,24 @@ function renderMap(data){
   // Fit bounds com padding extra à esquerda (painel) e abaixo (KPI strip)
   if(grouped.length > 0){
     const bounds = L.latLngBounds(grouped.map(g => [g.lat, g.lng]));
+    /* A folga de 330px a esquerda existe por causa do cartao "Resumo
+       geografico" flutuando ali. Abaixo de 900px ele deixa de flutuar e vai
+       para baixo do mapa — manter 330px num mapa de 300px de largura jogava as
+       bolhas contra a borda. Por isso a folga e lida do estado real do cartao,
+       nao de um numero fixo. */
+    const _painel = document.querySelector('.map-executive-panel');
+    const _flutua = _painel && getComputedStyle(_painel).position === 'absolute';
+    /* animate:false — a vista final tem de valer JA, porque os nomes das
+       regioes sao posicionados em pixel na linha seguinte. Com animacao eles
+       seriam calculados sobre a vista antiga e saltariam de lugar. */
     _mapInstance.fitBounds(bounds, {
-      paddingTopLeft:[330, 80],
-      paddingBottomRight:[80, 110],
+      paddingTopLeft:     _flutua ? [330, 80]  : [40, 40],
+      paddingBottomRight: _flutua ? [80, 110]  : [40, 40],
       maxZoom: 11,
+      animate: false,
     });
   }
+  _mapDesenhaRotulos();
 }
 
 /* ========= Resumo Mensal Tabela ========= */
