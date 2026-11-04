@@ -95,7 +95,11 @@ OUTROS_DASHBOARDS = {
     'bp': {
         'descricao': 'Brasil Mais Produtivo',
         'tipo': 'produto',
-        'valores': {'NOVO B P MANUFATURA ENXUTA', 'NOVO B P EFICIENCIA ENERGETICA'},
+        # CONSULTORIA EM PROCESSOS PRODUTIVOS entrou em 04/11/2026: e o produto
+        # do projeto PotencializEE Nacional. Ate esta data a base nao tinha
+        # nenhuma linha dele, entao a inclusao nao mexeu em numero nenhum.
+        'valores': {'NOVO B P MANUFATURA ENXUTA', 'NOVO B P EFICIENCIA ENERGETICA',
+                    'CONSULTORIA EM PROCESSOS PRODUTIVOS'},
     },
     'vacinas': {
         'descricao': 'Campanha de Vacinação',

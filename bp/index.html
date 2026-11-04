@@ -3317,10 +3317,15 @@ const DF_GEO = {
   'CONDOMINIO MANSOES SOBRADINHO': [-15.6530, -47.7930],
 };
 
-/* Produtos B+P alvo (sem Transformação Digital — não contabiliza) */
+/* Produtos B+P alvo (sem Transformação Digital — não contabiliza).
+   CONSULTORIA EM PROCESSOS PRODUTIVOS entrou em 04/11/2026: e o produto do
+   projeto PotencializEE Nacional. Esta lista vale para o botao "Importar
+   Excel"; a carga automatica usa o recorte equivalente no scripts/etl.py —
+   os dois precisam andar juntos. */
 const PRODUTOS_BP = [
   'NOVO B P MANUFATURA ENXUTA',
   'NOVO B P EFICIENCIA ENERGETICA',
+  'CONSULTORIA EM PROCESSOS PRODUTIVOS',
 ];
 
 /* === Proprietários EXCLUÍDOS (curadoria oficial) ===
@@ -3508,9 +3513,12 @@ function buildDatasetFromImports(bpFile, mercadoFile){
   // Filtrar Mercado pelos produtos B+P (se houver)
   let mercadoBP = [];
   if(mercadoFile){
+    /* Comparacao NORMALIZADA (sem acento, maiusculas) — a mesma regra do
+       sem_acento() no scripts/etl.py. Antes era igualdade exata, e um produto
+       escrito em caixa mista no CRM era descartado aqui sem aviso. */
+    const ALVO_BP = PRODUTOS_BP.map(normalize);
     mercadoBP = mercadoFile.rows.filter(r=>{
-      const prod = String(r['Produto Existente']||'').trim();
-      return PRODUTOS_BP.indexOf(prod) !== -1;
+      return ALVO_BP.indexOf(normalize(r['Produto Existente'])) !== -1;
     });
   }
 
