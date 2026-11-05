@@ -577,14 +577,13 @@
   <!-- Header -->
   <header class="header">
     <div class="header-left">
-      <!-- LOGO: para usar o PNG oficial, troque o <svg> abaixo por
-           <img src="data:image/png;base64,COLE_AQUI"> -->
+      <!-- LOGO OFICIAL DO SESI (05/11/2026) — substituiu o desenho em SVG
+           que fazia as vezes dela. Embutida em base64: o painel precisa abrir
+           offline e sem depender de caminho no servidor, o mesmo criterio das
+           fotos dos proprietarios. Gravada a 126px de altura, 3x os 42px de
+           exibicao, para nao serrilhar em tela retina. -->
       <div class="logo-wrap">
-        <svg height="42" viewBox="0 0 132 42" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="SESI">
-          <rect x="0" y="4" width="6" height="34" rx="3" fill="#3EDC74"/>
-          <text x="16" y="27" font-family="Inter, sans-serif" font-size="25" font-weight="800" fill="#062B2D" letter-spacing="1.5">SESI</text>
-          <text x="17" y="37" font-family="Inter, sans-serif" font-size="7.5" font-weight="600" fill="#5C6B68" letter-spacing="1.2">SISTEMA FIBRA</text>
-        </svg>
+        <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAiIAAAB+CAMAAAAuuYq9AAAAkFBMVEXU3uRRUFB5ksI8Yaa8yeBbrBuOxmKy2JRgfraesNLI47KAfn6gn595u0XAv786OTmAv08AE3pAPz8AH4F/gID///8VQZQLOY/n6Ovx8/RYV1dnZ2fX19fIx8d3dnaXlpa3t7eop6dVdbHO1+iIh4eTp81osy1qhro0WqJGaaoiTJqouNcAKoe0wtwqUp2Em8b0w7klAAAAMHRSTlP///////////////////////////8A//////////////////////////////////+B+Kl4AAAnsElEQVR42u1dC3ubvJKWL22dJs3ZPbvBUrgYDK4N2Ob//7vVzAgQVwlMku53qud87SmxhYJe5qaZd9ib/WAsP51OxfmoRpqmx2qcT3kOP87zbczF2+QhYpY/yW+f1ue+6avbrOEzec7imFtOzOKt/Mq5niOtZ5bT0cjzm82EYmxM/p05jVnfpQk83/e9mV+23nbbHRRcPulTUazPO9o8+ceG/sZ/48MuiuKE+zcVJHL2mwRYgQhsTI8bmqblteO5wI/JLbW6iwIIAC/FlZYTKgie1wUOm2ULwcaHmPYre7DBsMdy8DmbJzw/DF//AIgILl/Zm3zFER7y0W4ul40cFxibDf3fjdy883m3k3+saQflFsrBjNsoN5Hd5C7K2WFIAHamr8blkh53+LE13OXpNrZ8jhPDsuXM1arVzNWq1Xxy0LK3W1g371s2+/ljdPycgBH5/ofRoRxROAsj3JdTRD7/aojg+00vIT7c+z3rG/dLNTb4lu4IK9tYGBSMVAIgmDbq2/3Td+4DX9icczGMvG0OOrFadv9srWUfAehrwF5Xooif37//1/eRITFiv7kvSeBWIziEsyASJsHMry4HESlBboCPi7O/7qcNJ0PRUuRjOl5u5Omc3p39nPE/1/uJD83LJEDS+/RJHQnC9AgoaWOb/fj17du337+/dcdv/MH3H9YQ8Q7u++q9Gm4yDyKRhNnXQgQECNgGF7mHVzksn/KVxt7Bx30+MT44P5iRm2w/Zfb6Nv/9307BB/BxgmVnailTlk3glvJknfO2EOlDh4YTa4gIHgYSIUFSKpqX0J8pRZIk8r4QIlIHrI8goR1n1mvuwMg259OAruG34ri5Z/Mm3wNqe6WI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" alt="SESI · Serviço Social da Indústria" decoding="async">
       </div>
       <div class="title-block">
         <div class="eyebrow"><span class="live-dot"></span>Sistema FIBRA · Inteligência de Mercado</div>
@@ -627,7 +626,7 @@
       <div class="filter-group grow"><label class="filter-label">CNPJ</label><input type="text" id="filterCnpj" class="filter-input" placeholder="Consultar CNPJ"></div>
       <div class="filter-group grow"><label class="filter-label">Cliente</label><input type="text" id="filterClient" class="filter-input" placeholder="Consultar cliente"></div>
       <div class="filter-group"><label class="filter-label">Porte</label><div class="ms" data-key="porte"></div></div>
-      <div class="filter-group"><label class="filter-label">CNAE</label><input type="text" id="filterCnae" class="filter-input" placeholder="Ex.: 4110700"></div>
+      <div class="filter-group grow"><label class="filter-label">CNAE</label><div class="ms" data-key="cnae"></div></div>
       <button id="btnClear" class="btn-clear" title="Limpar todos os filtros">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         Limpar
@@ -641,7 +640,7 @@
       <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></div>
       <div class="kpi-label">Doses Contratadas</div>
       <div class="kpi-value" id="kpiContratado">0</div>
-      <div class="kpi-meta">Bruto negociado · <strong id="kpiPropVend">0</strong>&nbsp;propostas</div>
+      <div class="kpi-meta">Somente propostas <strong>Aceitas</strong> · <strong id="kpiPropVend">0</strong>&nbsp;propostas</div>
     </div>
 
     <div class="kpi alert" id="kpi-dev">
@@ -784,7 +783,7 @@
     <div class="card-header">
       <div>
         <div class="card-title">Mapa de Empresas com Propostas</div>
-        <div class="card-subtitle">Visão executiva por bairro/região · bolhas dimensionadas pelo indicador escolhido</div>
+        <div class="card-subtitle">Somente propostas <strong>Aceitas</strong> · visão por bairro/região, bolhas dimensionadas pelo indicador escolhido</div>
       </div>
       <div class="mpv-toolbar">
         <label for="mpvMetrica">Visualizar por</label>
@@ -1150,10 +1149,27 @@ function stripAccents(s){ return String(s == null ? '' : s).normalize('NFD').rep
 // ----- Predicados de negócio -----
 const isDevolucao = (r) => !!r.devolvida;              // linha "Vacinas DEVOLVIDAS"
 const isVenda     = (r) => !r.devolvida;               // linha de produto de vacina
-const isFechada   = (r) => r.status === 'Aceita' || r.status === 'Concluída';
-/* Somente Aceitas — usado pela Projecao de Doses por Cliente desde 05/11/2026.
-   Nao confundir com isFechada, que continua valendo para as doses dos KPIs. */
+/* ═══════════════════════════════════════════════════════════════════════
+   PROPOSTA FECHADA = PROPOSTA ACEITA (05/11/2026)
+
+   Ate esta data isFechada() era "Aceita OU Concluida". A regra de negocio e
+   que proposta contratada e a Aceita, e so ela — entao as duas funcoes abaixo
+   passam a ser a mesma coisa, de proposito: um unico predicado para um unico
+   conceito. Deixar os dois nomes evita uma renomeacao em dez chamadas e
+   mantem legivel quem le "fechada" no codigo antigo.
+
+   Alcanca, de uma vez: Evolucao Mensal, os KPIs de contratado/devolvido/
+   aplicado, Doses Aplicadas por Proprietario, Doses Aplicadas por Cliente,
+   Clientes em Consignacao, faixas de devolucao, Mapa de Empresas, evolucao
+   plurianual e o comparativo mes a mes.
+
+   NAO alcanca — e nem deve: o contador "concluidas" do cartao Total de
+   Propostas e o grafico "Mix por Status". Esses falam de status, nao de
+   fechamento; a proposta Concluida continua visivel no painel, so deixa de
+   ser contada como contratada.
+   ═══════════════════════════════════════════════════════════════════════ */
 const isAceita    = (r) => r.status === 'Aceita';
+const isFechada   = isAceita;
 
 // ===========================================================================
 // PIPELINE ETL EM JS — espelha o script Python usado na carga inicial
@@ -1458,11 +1474,11 @@ function commitImport(){
 function resetFiltersAndRebuild(){
   state.dateFrom = null; state.dateTo = null;
   state.status.clear(); state.owner.clear(); state.product.clear(); state.porte.clear();
-  state.cnae = ''; state.cnpjQuery = ''; state.clientQuery = ''; state.search = ''; state.page = 1;
+  state.cnae.clear();
+  state.cnpjQuery = ''; state.clientQuery = ''; state.search = ''; state.page = 1;
   state.projSearch = ''; state.projPage = 1;
   document.getElementById('dateFrom').value = '';
   document.getElementById('dateTo').value = '';
-  document.getElementById('filterCnae').value = '';
   document.getElementById('filterCnpj').value = '';
   document.getElementById('filterClient').value = '';
   document.getElementById('searchTable').value = '';
@@ -1513,18 +1529,54 @@ function hideToast(id){
 const state = {
   dateFrom: null, dateTo: null,
   status: new Set(), owner: new Set(), product: new Set(), porte: new Set(),
-  cnae: '', cnpjQuery: '', clientQuery: '', search: '', page: 1,
+  /* cnae: conjunto de DIVISOES (dois digitos), nao mais texto livre — 05/11/2026 */
+  cnae: new Set(),
+  cnpjQuery: '', clientQuery: '', search: '', page: 1,
   sort: { key: 'data', dir: 'desc' },
   // projeção
   projScope: 'dev', projSearch: '', projPage: 1, projMargem: 0,
   projSort: { key: 'devolvido', dir: 'desc' },
 };
 
+/* ═══════════════════════════════════════════════════════════════════════
+   DIVISAO DO CNAE — os dois primeiros digitos do codigo de sete (05/11/2026)
+
+   O zero a esquerda importa: 0810-0/99 e divisao 08, nao 81. Por isso o
+   codigo e completado a sete digitos ANTES do corte — a mesma regra que o
+   cleanIntField() ja usa ao normalizar a coluna.
+   ═══════════════════════════════════════════════════════════════════════ */
+function divisaoCnae(cnae){
+  const d = String(cnae == null ? '' : cnae).replace(/\D/g, '');
+  if (!d) return '';
+  return d.padStart(7, '0').slice(0, 2);
+}
+
+/* Quantas propostas distintas existem em cada divisao. Serve so para rotular
+   as opcoes: escolher entre 54 numeros soltos, sem saber o peso de cada um,
+   seria adivinhacao. Recalculado quando a base e trocada, junto com o resto
+   dos filtros. */
+let _CNAE_PROPOSTAS = {};
+function divisoesCnaeDaBase(){
+  _CNAE_PROPOSTAS = {};
+  RAW_DATA.forEach(r => {
+    const d = divisaoCnae(r.cnae);
+    if (!d) return;
+    if (!_CNAE_PROPOSTAS[d]) _CNAE_PROPOSTAS[d] = new Set();
+    _CNAE_PROPOSTAS[d].add(r.id_proposta);
+  });
+  return Object.keys(_CNAE_PROPOSTAS).sort();
+}
+
 const MS_CONFIG = {
   status:  { getValues: () => [...new Set(RAW_DATA.map(r => r.status))].filter(Boolean).sort() },
   owner:   { getValues: () => [...new Set(RAW_DATA.map(r => r.proprietario))].filter(Boolean).sort() },
   product: { getValues: () => [...new Set(RAW_DATA.map(r => r.produto))].filter(Boolean).sort() },
   porte:   { getValues: () => [...new Set(RAW_DATA.map(r => r.porte))].filter(Boolean).sort() },
+  cnae:    { getValues: divisoesCnaeDaBase,
+             format: v => {
+               const n = _CNAE_PROPOSTAS[v] ? _CNAE_PROPOSTAS[v].size : 0;
+               return v + '  ·  ' + n + (n === 1 ? ' proposta' : ' propostas');
+             } },
 };
 
 function buildMultiSelect(rootEl){
@@ -1646,10 +1698,9 @@ function getFiltered(){
       if (qClient && !String(r.cliente || '').toLowerCase().includes(qClient)) return false;
     }
     if (state.porte.size && !state.porte.has(r.porte)) return false;
-    if (state.cnae){
-      const q = state.cnae.replace(/\D/g,'');
-      if (q && (!r.cnae || !r.cnae.includes(q))) return false;
-    }
+    /* CNAE por DIVISAO (05/11/2026). Antes era texto livre casando em
+       qualquer posicao do codigo — "10" tambem pegava 4110700. */
+    if (state.cnae.size && !state.cnae.has(divisaoCnae(r.cnae))) return false;
     return true;
   });
 }
@@ -3430,17 +3481,16 @@ function bindEvents(){
     state.dateTo = e.target.value || null; state.page = 1; state.projPage = 1;
     document.querySelectorAll('.btn-preset').forEach(x => x.classList.remove('active')); renderAll();
   });
-  document.getElementById('filterCnae').addEventListener('input', e => { state.cnae = e.target.value; state.page = 1; state.projPage = 1; renderAll(); });
   document.getElementById('filterCnpj').addEventListener('input', e => { state.cnpjQuery = e.target.value; state.page = 1; state.projPage = 1; renderAll(); });
   document.getElementById('filterClient').addEventListener('input', e => { state.clientQuery = e.target.value; state.page = 1; state.projPage = 1; renderAll(); });
   document.getElementById('searchTable').addEventListener('input', e => { state.search = e.target.value; state.page = 1; renderTable(getFiltered()); });
 
   document.getElementById('btnClear').addEventListener('click', () => {
-    state.dateFrom = null; state.dateTo = null; state.cnae = ''; state.cnpjQuery = ''; state.clientQuery = '';
+    state.dateFrom = null; state.dateTo = null; state.cnae.clear();
+    state.cnpjQuery = ''; state.clientQuery = '';
     state.search = ''; state.page = 1; state.projSearch = ''; state.projPage = 1;
     document.getElementById('dateFrom').value = '';
     document.getElementById('dateTo').value = '';
-    document.getElementById('filterCnae').value = '';
     document.getElementById('filterCnpj').value = '';
     document.getElementById('filterClient').value = '';
     document.getElementById('searchTable').value = '';
@@ -3579,7 +3629,8 @@ function bindEvents(){
     // So as selecoes de filtro sao zeradas, porque os valores disponiveis
     // mudaram junto com a base.
     state.status.clear(); state.owner.clear(); state.product.clear(); state.porte.clear();
-    state.cnae = ''; state.cnpjQuery = ''; state.clientQuery = ''; state.search = '';
+    state.cnae.clear();
+    state.cnpjQuery = ''; state.clientQuery = ''; state.search = '';
     state.page = 1; state.projSearch = ''; state.projPage = 1;
     document.querySelectorAll('.ms').forEach(buildMultiSelect);
 
