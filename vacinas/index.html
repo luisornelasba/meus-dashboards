@@ -818,18 +818,45 @@
    Ano sem meta definida: o painel mostra o volume normalmente e marca o
    atingimento como "meta nao definida" — nunca calcula percentual sobre
    um numero inventado.
+
+   Duas formas aceitas:
+     2027: 7000                              meta fechada, sem aditivo
+     2026: { base: 7000, aditivos: [1750] }  meta com doses adquiridas depois
+
+   Na segunda forma o TOTAL E SOMADO por metaDoAno() — nunca digitado. Assim
+   o numero grande da tela e sempre consequencia da composicao, e os dois nao
+   tem como se contradizer. Entrou aditivo novo? Acrescente o valor a lista
+   (ex.: aditivos: [1750, 500]) e os sete pontos da tela andam juntos.
    ═══════════════════════════════════════════════════════════════════════ */
 const METAS_POR_ANO = {
-  2026: 7000,
+  /* 7.000 era a meta do ano. Em 04/11/2026 entraram mais 1.750 doses
+     adquiridas — total de 8.750. */
+  2026: { base: 7000, aditivos: [1750] },
   // 2027: 0,   <-- troque o 0 pela meta de 2027 e remova as duas barras
 };
 
 const LIMIAR_CONSIGNACAO = 200;
 
-/* Meta do ano, ou null quando o ano nao tem meta cadastrada. */
-function metaDoAno(ano){
+/* Composicao da meta do ano: {base, aditivos[]} — ou null quando o ano nao
+   tem meta cadastrada. Normaliza as duas formas aceitas em METAS_POR_ANO,
+   para que o resto do painel nao precise saber qual delas foi usada. */
+function composicaoDoAno(ano){
   const m = METAS_POR_ANO[ano];
-  return (typeof m === 'number' && m > 0) ? m : null;
+  if (typeof m === 'number') return m > 0 ? { base: m, aditivos: [] } : null;
+  if (!m || typeof m !== 'object') return null;
+  const base = Number(m.base) || 0;
+  const aditivos = (Array.isArray(m.aditivos) ? m.aditivos : [])
+    .map(Number).filter(v => v > 0);
+  const total = base + aditivos.reduce((s, v) => s + v, 0);
+  return total > 0 ? { base, aditivos } : null;
+}
+
+/* Meta do ano, ou null quando o ano nao tem meta cadastrada.
+   SOMA a composicao — o total nunca e um numero digitado a parte. */
+function metaDoAno(ano){
+  const c = composicaoDoAno(ano);
+  if (!c) return null;
+  return c.base + c.aditivos.reduce((s, v) => s + v, 0);
 }
 
 /* Ano em foco: so existe quando o periodo filtrado cabe inteiro num ano civil.
@@ -2372,6 +2399,17 @@ function exportProjection(){
    MULTI-ANO — titulos, botoes de ano e selecao do ano de abertura
    ═══════════════════════════════════════════════════════════════════════ */
 
+/* Composicao da meta em texto, para o cabecalho: " (7.000 + 1.750 aditivo)".
+   Devolve string vazia quando a meta do ano nao tem aditivo nenhum — nesse
+   caso repetir o proprio total entre parenteses nao diria nada. */
+function composicaoEmTexto(ano){
+  const c = composicaoDoAno(ano);
+  if (!c || !c.aditivos.length) return '';
+  const partes = [c.base].concat(c.aditivos).map(v => fmtInt.format(v)).join(' + ');
+  const palavra = c.aditivos.length === 1 ? 'aditivo' : 'aditivos';
+  return ` <span style="color:var(--text-soft)">(${partes} ${palavra})</span>`;
+}
+
 /* Titulo, meta do cabecalho e nome do arquivo de exportacao seguem o ano em foco. */
 function atualizarTitulos(k){
   const t = document.getElementById('tituloCampanha');
@@ -2380,7 +2418,7 @@ function atualizarTitulos(k){
   const m = document.getElementById('metaCabecalho');
   if (m){
     m.innerHTML = k.temMeta
-      ? `Meta de campanha: <strong style="color:var(--bg-dark)">${fmtInt.format(k.meta)} doses</strong>`
+      ? `Meta de campanha: <strong style="color:var(--bg-dark)">${fmtInt.format(k.meta)} doses</strong>${composicaoEmTexto(k.ano)}`
       : (k.ano
           ? `Meta de ${k.ano}: <strong style="color:var(--bg-dark)">não cadastrada</strong>`
           : `Meta: <strong style="color:var(--bg-dark)">selecione um ano</strong>`);
