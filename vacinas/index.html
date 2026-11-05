@@ -569,6 +569,147 @@
     .mpv-faixa{grid-template-columns:repeat(2,1fr);}
     .mpv-legenda{min-width:auto;}
   }
+
+  /* ══════════════════════════════════════════════════════════════════
+     VERSAO MOBILE (05/11/2026)
+     Tudo daqui para baixo vive dentro de @media. Nenhuma regra alcanca o
+     desktop — conferido por comparacao de pixel em 1440px e 1280px.
+     ══════════════════════════════════════════════════════════════════ */
+
+  /* o botao de filtros nao existe no desktop */
+  .filtros-toggle{display:none;}
+
+  @media (max-width:860px){
+    /* ---------- cabecalho ---------- */
+    .header{flex-direction:column;align-items:stretch;gap:14px;}
+    .header-left{gap:14px;align-items:center;}
+    .logo-wrap{height:54px;padding:8px 13px;flex:none;}
+    .logo-wrap img{height:32px;}
+    .title-block{min-width:0;}
+    .title-block h1{font-size:23px;line-height:1.15;letter-spacing:-.02em;}
+    .title-block .eyebrow{font-size:10px;letter-spacing:.1em;margin-bottom:4px;}
+    .title-block .subtitle{font-size:12px;line-height:1.35;}
+    .header-right{align-items:stretch;gap:10px;}
+    .header-right .btn-import{width:100%;justify-content:center;}
+    .last-update{display:flex;flex-wrap:wrap;gap:4px 8px;line-height:1.5;font-size:11.5px;}
+    #metaCabecalho{font-size:12px;}
+
+    /* ---------- filtros recolhiveis ---------- */
+    .filtros-toggle{
+      display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;
+      background:var(--bg-dark);color:#fff;border:0;border-radius:var(--radius-sm);
+      padding:14px 16px;font-family:inherit;font-size:13.5px;font-weight:700;
+      cursor:pointer;letter-spacing:.01em;
+    }
+    .filtros-toggle .ft-esq{display:flex;align-items:center;gap:10px;}
+    .filtros-toggle svg{width:17px;height:17px;flex:none;}
+    .filtros-toggle .ft-seta{transition:transform .22s ease;opacity:.8;}
+    .filters:not(.recolhido) .ft-seta{transform:rotate(180deg);}
+    .ft-contador{
+      background:var(--green);color:var(--bg-dark);border-radius:99px;
+      min-width:20px;height:20px;padding:0 6px;display:inline-flex;align-items:center;
+      justify-content:center;font-size:11px;font-weight:800;
+    }
+    .filters{padding:12px;}
+    .filters.recolhido .filters-row{display:none;}
+    /* A barra de filtros e sticky desde sempre. Aberta no celular ela passaria
+       da altura da tela e prenderia o conteudo atras dela, entao ganha teto e
+       rolagem propria. */
+    .filters-row{margin-top:12px;max-height:min(58vh,520px);overflow-y:auto;
+      -webkit-overflow-scrolling:touch;padding-right:2px;}
+    .filter-group{min-width:100%;}
+    .preset-row{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:7px;padding-bottom:4px;
+      -webkit-overflow-scrolling:touch;scrollbar-width:none;}
+    .preset-row::-webkit-scrollbar{display:none;}
+    .preset-row .btn-preset{flex:none;}
+    #presetsAnos{display:contents;}
+    .btn-clear{width:100%;justify-content:center;margin-top:4px;}
+
+    /* ---------- KPIs ---------- */
+    .kpi{padding:15px 14px;}
+    .kpi-icon{width:30px;height:30px;margin-bottom:10px;}
+    .kpi-icon svg{width:15px;height:15px;}
+    .kpi-label{font-size:10px;letter-spacing:.07em;margin-bottom:6px;}
+    .kpi-value{font-size:24px;}
+    .kpi-meta{font-size:10.5px;line-height:1.45;}
+
+    /* ---------- cartoes e graficos ---------- */
+    .card{padding:16px 14px;}
+    .card-title{font-size:15px;}
+    .card-subtitle{font-size:11.5px;line-height:1.4;}
+    .card-header{flex-wrap:wrap;gap:8px;}
+    .chart-wrapper{height:240px;}
+    .chart-wrapper.tall{height:270px;}
+
+    /* ---------- controles da tabela e da projecao ---------- */
+    .table-controls{flex-direction:column;align-items:stretch;}
+    .search-box{max-width:none;}
+    .metrics-strip{grid-template-columns:repeat(2,1fr);}
+    .scope-row{gap:6px;}
+    .btn-scope{font-size:11px;padding:7px 11px;}
+  }
+
+  /* ══════════════════════════════════════════════════════════════════
+     TABELAS VIRAM CARTOES (<=720px)
+
+     As duas tabelas tem 10 e 11 colunas e 1.171px / 1.382px de largura;
+     a janela visivel no celular tem 314px. Em vez de arrastar de lado —
+     que nem sinalizado era — cada linha vira um cartao com os campos em
+     duas colunas, cada um com o nome da coluna em cima.
+
+     O nome vem de data-rot, escrito em tempo de execucao por
+     rotularCelulasMobile() a partir do proprio <thead>. Por isso nenhuma
+     das linhas de template que montam os <td> precisou ser tocada, e uma
+     coluna nova se rotula sozinha.
+     ══════════════════════════════════════════════════════════════════ */
+  @media (max-width:720px){
+    .table-wrapper{overflow-x:visible;border:0;}
+    #projTable, #dataTable,
+    #projTable tbody, #dataTable tbody{display:block;width:100%;}
+    #projTable thead, #dataTable thead{display:none;}
+
+    #projTable tbody tr, #dataTable tbody tr{
+      display:grid;grid-template-columns:1fr 1fr;gap:9px 12px;
+      border:1px solid var(--border);border-radius:var(--radius-sm);
+      background:var(--card);padding:13px 14px;margin-bottom:10px;
+    }
+    #projTable tbody tr:hover, #dataTable tbody tr:hover{background:var(--card);}
+
+    #projTable tbody td, #dataTable tbody td{
+      display:flex;flex-direction:column;gap:3px;align-items:flex-start;
+      border:0;padding:0;font-size:12.5px;line-height:1.3;white-space:normal;
+      text-align:left;
+    }
+    #projTable tbody td::before, #dataTable tbody td::before{
+      content:attr(data-rot);font-size:9px;font-weight:800;letter-spacing:.09em;
+      text-transform:uppercase;color:var(--text-soft);
+    }
+    /* celula vazia nao precisa ocupar lugar no cartao */
+    #projTable tbody td:empty, #dataTable tbody td:empty{display:none;}
+    /* alinhamento numerico nao faz sentido em cartao */
+    #projTable tbody td.num, #dataTable tbody td.num{text-align:left;}
+
+    /* os campos longos ocupam a linha inteira */
+    #projTable tbody td[data-rot="Cliente"],
+    #dataTable tbody td[data-rot="Cliente"],
+    #dataTable tbody td[data-rot="Produtos"]{
+      grid-column:1 / -1;
+    }
+    #projTable tbody td[data-rot="Cliente"],
+    #dataTable tbody td[data-rot="Cliente"]{
+      font-size:13.5px;font-weight:700;padding-bottom:3px;
+      border-bottom:1px solid var(--border);margin-bottom:2px;
+    }
+    /* a celula de aviso "nenhum resultado" continua sendo uma faixa so */
+    #projTable tbody td[colspan], #dataTable tbody td[colspan]{grid-column:1 / -1;}
+    #projTable tbody tr:has(td[colspan]), #dataTable tbody tr:has(td[colspan]){
+      display:block;border:0;background:transparent;padding:0;
+    }
+    #projTable tbody td[colspan]::before, #dataTable tbody td[colspan]::before{content:none;}
+
+    /* paginacao e rodape */
+    .table-footer, .pagination{flex-wrap:wrap;justify-content:center;gap:8px;}
+  }
 </style>
 </head>
 <body>
@@ -608,8 +749,18 @@
   </header>
 
   <!-- Filters -->
-  <section class="filters" aria-label="Filtros do dashboard">
-    <div class="filters-row">
+  <section class="filters recolhido" id="secFiltros" aria-label="Filtros do dashboard">
+    <!-- Botao de abrir/fechar: so existe visualmente abaixo de 860px. No
+         desktop fica display:none e os filtros aparecem como sempre. -->
+    <button type="button" class="filtros-toggle" id="btnFiltros" aria-expanded="false" aria-controls="filtrosRow">
+      <span class="ft-esq">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+        Filtros e Períodos
+        <span class="ft-contador" id="ftContador" hidden>0</span>
+      </span>
+      <svg class="ft-seta" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+    </button>
+    <div class="filters-row" id="filtrosRow">
       <div class="filter-group">
         <label class="filter-label">Período rápido</label>
         <div class="preset-row">
@@ -1486,6 +1637,7 @@ function resetFiltersAndRebuild(){
   document.querySelectorAll('.btn-preset').forEach(x => x.classList.remove('active'));
   document.querySelector('.btn-preset[data-preset="all"]').classList.add('active');
   document.querySelectorAll('.ms').forEach(buildMultiSelect);
+  ligarBotaoFiltros();
 }
 
 function updateMetaInfo(){
@@ -2391,7 +2543,16 @@ function iniciaMapaVac(){
   _mpvCamada = L.layerGroup().addTo(_mpvMapa);
   _mpvCamadaRot = L.layerGroup().addTo(_mpvMapa);
   _mpvMapa.on('zoomend moveend resize', _mpvDesenhaRotulos);
+  /* Atravessar os 720px muda o tamanho da pagina das tabelas; sem redesenhar,
+     a paginacao ficaria descrita para a faixa anterior. */
+  let _faixaCartao = ehCartaoMobile();
   window.addEventListener('resize', function(){
+    const agora = ehCartaoMobile();
+    if (agora !== _faixaCartao){
+      _faixaCartao = agora;
+      state.page = 1; state.projPage = 1;
+      if (typeof renderAll === 'function') renderAll();
+    }
     clearTimeout(_mpvResizeT);
     _mpvResizeT = setTimeout(function(){
       if (!_mpvMapa) return;
@@ -2740,7 +2901,20 @@ function applyProjScope(rows){
   return rows;
 }
 
-const PROJ_PAGE_SIZE = 25;
+/* LINHAS POR PAGINA (05/11/2026)
+   No celular cada linha vira um cartao de ~200px, entao 25 e 50 linhas por
+   pagina viravam 15.000px de rolagem. Abaixo de 720px a pagina passa a ter
+   10 registros — a paginacao ja existente cuida do resto. No desktop os
+   valores de sempre.
+   Lidos a cada render: girar o aparelho muda o tamanho da pagina na hora. */
+function ehCartaoMobile(){
+  return typeof window !== 'undefined'
+    && window.matchMedia && window.matchMedia('(max-width:720px)').matches;
+}
+const PROJ_PAGE_SIZE_DESKTOP = 25;
+const PAGE_SIZE_DESKTOP = 50;
+function projPageSize(){ return ehCartaoMobile() ? 10 : PROJ_PAGE_SIZE_DESKTOP; }
+function tablePageSize(){ return ehCartaoMobile() ? 10 : PAGE_SIZE_DESKTOP; }
 
 function renderProjection(filtered){
   const all = buildProjection(filtered);
@@ -2784,10 +2958,10 @@ function renderProjection(filtered){
   });
 
   const total = rows.length;
-  const totalPages = Math.max(1, Math.ceil(total / PROJ_PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(total / projPageSize()));
   if (state.projPage > totalPages) state.projPage = totalPages;
-  const start = (state.projPage - 1) * PROJ_PAGE_SIZE;
-  const pageRows = rows.slice(start, start + PROJ_PAGE_SIZE);
+  const start = (state.projPage - 1) * projPageSize();
+  const pageRows = rows.slice(start, start + projPageSize());
 
   document.querySelectorAll('#projTable th.sortable').forEach(th => {
     th.classList.remove('sort-asc','sort-desc');
@@ -2828,6 +3002,7 @@ function renderProjection(filtered){
   const comDev = all.filter(r => r.devolvido > 0).length;
   document.getElementById('projBadge').textContent = `${comDev} de ${all.length} clientes com devolução`;
   renderProjPagination(totalPages);
+  rotularCelulasMobile(document.getElementById('projTable'));
   window._projExportRows = rows;
 }
 
@@ -2927,7 +3102,7 @@ function renderDevCharts(all){
 // TABELA DETALHADA
 // ===========================================================================
 
-const PAGE_SIZE = 50;
+
 
 /** Consolida as linhas de item em UMA linha por ID da Proposta. */
 function consolidateByProposal(rows){
@@ -2994,10 +3169,10 @@ function renderTable(filtered){
   });
 
   const total = rows.length;
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(total / tablePageSize()));
   if (state.page > totalPages) state.page = totalPages;
-  const start = (state.page - 1) * PAGE_SIZE;
-  const pageRows = rows.slice(start, start + PAGE_SIZE);
+  const start = (state.page - 1) * tablePageSize();
+  const pageRows = rows.slice(start, start + tablePageSize());
 
   document.querySelectorAll('#dataTable th.sortable').forEach(th => {
     th.classList.remove('sort-asc','sort-desc');
@@ -3037,6 +3212,7 @@ function renderTable(filtered){
   document.getElementById('tableTotal').textContent = total;
   document.getElementById('tableBadge').textContent = `${fmtInt.format(total)} propostas`;
   renderPagination(totalPages);
+  rotularCelulasMobile(document.getElementById('dataTable'));
   window._exportRows = rows;
 }
 
@@ -3461,11 +3637,61 @@ function renderPlurianual(){
   }
 }
 
+
+/* ══════════════════════════════════════════════════════════════════════
+   APOIO DA VERSAO MOBILE (05/11/2026)
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* Escreve em cada <td> o nome da sua coluna, lido do proprio <thead>.
+   Abaixo de 720px o CSS usa esse atributo para transformar a linha num
+   cartao. Fazendo assim, as 21 linhas de template que montam os <td> nao
+   precisaram ser tocadas e uma coluna nova se rotula sozinha. */
+function rotularCelulasMobile(tabela){
+  if (!tabela) return;
+  const cab = [...tabela.querySelectorAll('thead th')]
+    .map(th => th.textContent.replace(/\s+/g, ' ').trim());
+  tabela.querySelectorAll('tbody tr').forEach(tr => {
+    [...tr.children].forEach((td, i) => {
+      if (td.hasAttribute('colspan')) return;
+      td.setAttribute('data-rot', cab[i] || '');
+    });
+  });
+}
+
+/* Quantos filtros estao ativos — o numero no botao "Filtros e Periodos".
+   O periodo nao entra na conta: ele tem os proprios botoes, sempre visiveis. */
+function contarFiltrosAtivos(){
+  let n = 0;
+  ['status','owner','product','porte','cnae'].forEach(k => {
+    if (state[k] && state[k].size) n += state[k].size;
+  });
+  if (String(state.cnpjQuery || '').trim()) n++;
+  if (String(state.clientQuery || '').trim()) n++;
+  const el = document.getElementById('ftContador');
+  if (el){
+    el.textContent = n;
+    el.hidden = n === 0;
+  }
+  return n;
+}
+
+function ligarBotaoFiltros(){
+  const btn = document.getElementById('btnFiltros');
+  const sec = document.getElementById('secFiltros');
+  if (!btn || !sec || btn.dataset.ligado) return;
+  btn.dataset.ligado = '1';
+  btn.addEventListener('click', () => {
+    const aberto = !sec.classList.toggle('recolhido');
+    btn.setAttribute('aria-expanded', aberto ? 'true' : 'false');
+  });
+}
+
 function renderAll(){
   const filtered = getFiltered();
   renderKPIs(filtered);
   renderEvolucao(filtered);
   renderStatus(filtered);
+  contarFiltrosAtivos();
   renderPropOwner(filtered);
   renderDosesOwner(filtered);
   renderMapaVac(filtered);
@@ -3591,6 +3817,7 @@ function bindEvents(){
 (function init(){
   updateMetaInfo();
   document.querySelectorAll('.ms').forEach(buildMultiSelect);
+  ligarBotaoFiltros();
   bindEvents();
   montarPresetsAnos();
   aplicarAno(anoDeAbertura());   /* ano do calendario, ou o mais recente com dados */
@@ -3639,6 +3866,7 @@ function bindEvents(){
     state.cnpjQuery = ''; state.clientQuery = ''; state.search = '';
     state.page = 1; state.projSearch = ''; state.projPage = 1;
     document.querySelectorAll('.ms').forEach(buildMultiSelect);
+  ligarBotaoFiltros();
 
     // A base embutida no arquivo e antiga: os anos de verdade so aparecem
     // agora. Refaz os botoes de ano e reposiciona a abertura sobre a base nova
