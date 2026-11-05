@@ -690,7 +690,7 @@
       <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
       <div class="kpi-label">Clientes em Consignação</div>
       <div class="kpi-value" id="kpiConsig">0</div>
-      <div class="kpi-meta">Propostas com Quant. ≥ 200</div>
+      <div class="kpi-meta">Aceitas com Quant. ≥ 200</div>
     </div>
   </section>
 
@@ -716,7 +716,7 @@
     <div class="card col-8">
       <div class="card-header">
         <div><div class="card-title">Evolução Mensal</div>
-          <div class="card-subtitle">Propostas fechadas (linha) × Doses aplicadas e devolvidas (barras) por mês</div></div>
+          <div class="card-subtitle">Somente propostas <strong>Aceitas</strong> · contagem (linha) × doses aplicadas e devolvidas (barras) por mês</div></div>
         <span class="card-badge green">Combo chart</span>
       </div>
       <div class="chart-wrapper tall"><canvas id="chartEvolucao"></canvas></div>
@@ -734,7 +734,7 @@
       <div class="rkv-host" id="rankPropOwner"></div>
     </div>
     <div class="card col-6">
-      <div class="card-header"><div><div class="card-title">Doses Aplicadas por Proprietário</div><div class="card-subtitle">Líquido de devoluções — propostas Aceitas e Concluídas</div></div></div>
+      <div class="card-header"><div><div class="card-title">Doses Aplicadas por Proprietário</div><div class="card-subtitle">Somente propostas <strong>Aceitas</strong> · líquido de devoluções</div></div></div>
       <div class="chart-wrapper"><canvas id="chartDosesOwner"></canvas></div>
     </div>
   </section>
@@ -744,7 +744,7 @@
     <div class="card col-7">
       <div class="card-header">
         <div><div class="card-title">Doses Aplicadas por Cliente</div>
-          <div class="card-subtitle">Ranking completo · líquido de devoluções (Aceitas + Concluídas) · role para ver mais</div></div>
+          <div class="card-subtitle">Somente propostas <strong>Aceitas</strong> · ranking completo, líquido de devoluções · role para ver mais</div></div>
         <span class="card-badge green" id="clientsBadge">0 clientes</span>
       </div>
       <div class="chart-wrapper scroll">
@@ -753,7 +753,7 @@
     </div>
     <div class="card col-5">
       <div class="card-header">
-        <div><div class="card-title">Clientes em Consignação</div><div class="card-subtitle">Propostas com Quantidade ≥ 200 doses</div></div>
+        <div><div class="card-title">Clientes em Consignação</div><div class="card-subtitle">Somente propostas <strong>Aceitas</strong> · quantidade ≥ 200 doses</div></div>
         <span class="card-badge" id="consigBadge">0</span>
       </div>
       <div class="consig-list" id="consigList"></div>
