@@ -1705,9 +1705,14 @@ function getFiltered(){
   });
 }
 
+/* CONSIGNACAO = SOMENTE ACEITAS (05/11/2026).
+   isVenda separa venda de devolucao e mais nada — sozinho, deixava entrar
+   proposta Recusada e Em Desenvolvimento na conta de doses consignadas.
+   Dose consignada so existe em negocio fechado. */
 function buildConsigMap(rows){
   const m = {};
-  rows.filter(isVenda).forEach(r => { m[r.id_proposta] = (m[r.id_proposta] || 0) + (r.doses||0); });
+  rows.filter(r => isVenda(r) && isAceita(r))
+      .forEach(r => { m[r.id_proposta] = (m[r.id_proposta] || 0) + (r.doses||0); });
   return m;
 }
 
@@ -2638,7 +2643,8 @@ function renderTopClients(filtered){
 
 function renderConsig(filtered){
   const grouped = {};
-  filtered.filter(isVenda).forEach(r => {
+  /* Mesma regra do cartao do topo: consignacao e de proposta Aceita. */
+  filtered.filter(r => isVenda(r) && isAceita(r)).forEach(r => {
     const key = r.id_proposta;
     if (!grouped[key]) grouped[key] = { id_proposta:r.id_proposta, cliente:r.cliente, cnpj:r.cnpj, proprietario:r.proprietario, status:r.status, doses:0 };
     grouped[key].doses += (r.doses||0);
@@ -2649,7 +2655,7 @@ function renderConsig(filtered){
   if (list.length === 0){
     container.innerHTML = `<div class="empty-state">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
-      Nenhuma proposta com Quantidade ≥ 200 doses no recorte atual.</div>`;
+      Nenhuma proposta <strong>Aceita</strong> com Quantidade ≥ 200 doses no recorte atual.</div>`;
     return;
   }
   container.innerHTML = list.map(g => `
