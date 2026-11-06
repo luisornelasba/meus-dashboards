@@ -1160,14 +1160,9 @@
       </div>
       <input type="date" class="date-input" id="dateStart" value="2026-01-01">
       <input type="date" class="date-input" id="dateEnd" value="2026-05-06">
-      <button class="btn btn-import" id="openImportBtn" title="Importar nova base de dados">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-          <polyline points="17 8 12 3 7 8"/>
-          <line x1="12" y1="3" x2="12" y2="15"/>
-        </svg>
-        Importar Excel
-      </button>
+      <!-- Botao "Importar Excel" retirado em 06/11/2026 a pedido. O modal e o
+           motor da importacao continuam no arquivo: a carga automatica usa as
+           mesmas funcoes. -->
     </div>
   </header>
 
@@ -4750,7 +4745,7 @@ function bindEvents(){
   const dropZone = document.getElementById('dropZone');
   const fileInput = document.getElementById('fileInput');
 
-  openBtn.onclick = openImportModal;
+  if (openBtn) openBtn.onclick = openImportModal;   // o botao saiu em 06/11/2026
   closeBtn.onclick = closeImportModal;
   cancelBtn.onclick = closeImportModal;
   processBtn.onclick = processImport;
@@ -5028,11 +5023,9 @@ startChartFullscreenFeature();
   }
 </style>
 
-<button id="chatgptExportBtn" type="button" onclick="exportarDadosParaChatGPT()" title="Copiar dados do dashboard para usar no ChatGPT">
-  🟢 Exportar Relatório
-</button>
-
-<div id="chatgptExportToast" role="status" aria-live="polite">🟢 Dados copiados com sucesso! Cole direto no ChatGPT.</div>
+<!-- Botao flutuante "Exportar Relatorio" e seu aviso retirados em 06/11/2026
+     a pedido. A funcao exportarDadosParaChatGPT() continua definida abaixo,
+     sem botao que a chame. -->
 
 <script id="chatgpt-export-injected-script">
 (function(){
