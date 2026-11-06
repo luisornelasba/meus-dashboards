@@ -367,11 +367,11 @@ tbody tr:hover{background:#F9FBFD}
         <span class="badge" id="carimbo-auto-wrap" style="display:none"><span class="dot" style="background:var(--verde,#16a34a)"></span> <span id="carimboAuto">—</span></span>
       </div>
       <div class="import-btn-group">
-        <label class="btn btn-success" title="Importar arquivo Excel (.xlsx) — propostas ou clientes">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-          Importar Excel
-          <input type="file" id="file-import" accept=".xlsx,.xls">
-        </label>
+        <!-- Botao "Importar Excel" retirado em 06/11/2026 a pedido. O campo de
+             arquivo que vivia dentro dele fica, solto e escondido: o ouvinte
+             mais abaixo no arquivo aponta para ele e, sem o elemento, o script
+             inteiro pararia. -->
+        <input type="file" id="file-import" accept=".xlsx,.xls" style="display:none">
         <button class="btn btn-warning" id="btn-reset-data" title="Limpar dados importados e voltar à base inicial">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
           Restaurar
