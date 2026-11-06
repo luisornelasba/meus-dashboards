@@ -300,8 +300,9 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
       <div class="stamp" id="stamp"></div>
     </div>
     <div class="top-actions">
-      <button class="btn btn-glass" id="btnImport">📂 Importar Excel</button>
-      <button class="btn btn-green" id="btnExport">📊 Exportar Relatório</button>
+      <!-- Botoes "Importar Excel" e "Exportar Relatorio" retirados em
+           06/11/2026 a pedido. As funcoes continuam no arquivo; a carga
+           automatica do dados.json usa as mesmas rotinas da importacao. -->
       <button class="btn btn-orange" id="btnReset">↺ Limpar Filtros</button>
       <input type="file" id="fileIn" accept=".xlsx,.xls,.xlsm,.csv" hidden>
     </div>
@@ -1626,9 +1627,11 @@ function ligarEventos(){
   document.getElementById('modal').onclick = e => { if(e.target.id === 'modal') fecharModal(); };
   document.addEventListener('keydown', e => { if(e.key === 'Escape') fecharModal(); });
 
-  document.getElementById('btnImport').onclick = () => document.getElementById('fileIn').click();
+  const _bImp = document.getElementById('btnImport');   // retirado em 06/11/2026
+  if (_bImp) _bImp.onclick = () => document.getElementById('fileIn').click();
   document.getElementById('fileIn').onchange = importarExcel;
-  document.getElementById('btnExport').onclick = exportarRelatorio;
+  const _bExp = document.getElementById('btnExport');   // retirado em 06/11/2026
+  if (_bExp) _bExp.onclick = exportarRelatorio;
   document.getElementById('btnXlsDrill').onclick = exportarDrillXLSX;
   document.getElementById('btnXlsCtr').onclick = exportarContratosXLSX;
   const bVenc = document.getElementById('btnXlsCtrVenc');
