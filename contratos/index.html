@@ -272,6 +272,50 @@ svg.ch{display:block;width:100%;height:auto;min-width:420px}
   svg.ch{min-width:340px}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ══════════════════════════════════════════════════════════════════
+   VERSAO MOBILE (06/11/2026) — tudo dentro de @media; desktop intocado.
+   ══════════════════════════════════════════════════════════════════ */
+@media (max-width:720px){
+  /* IMPORTANTE: nao mexer em max-height. O t-dd mostra 400 linhas sem
+     paginacao e vive numa caixa que rola por dentro; tirar esse teto faria
+     400 cartoes empilhados numa pagina so. A caixa continua rolando — o
+     conteudo segue todo acessivel, dentro do proprio bloco. */
+  /* Teto de 78vh com rolagem propria: as listas longas (t-pro com 36
+     registros, t-dd com 400) viravam quilometros de pagina quando cada linha
+     passou a ser um cartao. Lista curta nunca chega ao teto; lista longa rola
+     dentro do proprio bloco, e nada deixa de ser alcancavel.
+     O t-dd ja tem max-height:560px inline, que e menor e continua valendo. */
+  .tw{overflow-x:visible;border:1px solid var(--bd);border-radius:12px;
+      max-height:78vh;overflow-y:auto;padding:8px}
+  .tw table,.tw table tbody{display:block;width:100%}
+  .tw table thead{display:none}
+  .tw table tbody tr{
+    display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;
+    border:1px solid var(--bd);border-radius:12px;
+    background:rgba(255,255,255,.035);
+    padding:12px 13px;margin-bottom:9px;
+  }
+  .tw table tbody td{
+    display:flex;flex-direction:column;gap:3px;align-items:flex-start;
+    border:0;padding:0;font-size:12.5px;line-height:1.3;white-space:normal;text-align:left;
+  }
+  .tw table tbody td::before{
+    content:attr(data-rot);font-size:9px;font-weight:800;letter-spacing:.09em;
+    text-transform:uppercase;opacity:.55;
+  }
+  .tw table tbody td.num{text-align:left}
+  .tw table tbody td:empty{display:none}
+  /* o nome vem cortado por reticencias no desktop; no cartao ha espaco */
+  .tw table tbody td.nome{grid-column:1 / -1;font-size:13.5px;font-weight:700;
+    padding-bottom:3px;border-bottom:1px solid var(--bd);margin-bottom:2px}
+  .tw table tbody td[data-rot="Produtos"],
+  .tw table tbody td[data-rot="Cliente"],
+  .tw table tbody td[data-rot="Unidade"]{grid-column:1 / -1}
+  .tw table tbody td[colspan]{grid-column:1 / -1}
+  .tw table tbody td[colspan]::before{content:none}
+  .tw table tbody tr:has(td[colspan]){display:block;border:0;background:transparent;padding:0}
+}
 </style>
 </head>
 <body>
@@ -912,6 +956,7 @@ svg.ch{display:block;width:100%;height:auto;min-width:420px}
   }
 
   function desenhaTop(tbody, dados, ordem) {
+    setTimeout(rotularTabelasMobileCT, 0);
     var el = document.getElementById(tbody);
     if (!dados.length) { el.innerHTML = '<tr><td colspan="3" class="vazio">Sem dados no filtro selecionado.</td></tr>'; return; }
     var crit = ordem.c === 'qtd' ? 'qtd' : 'valor';
@@ -1049,6 +1094,7 @@ svg.ch{display:block;width:100%;height:auto;min-width:420px}
   }
 
   function desenhaProp(dados, ordem) {
+    setTimeout(rotularTabelasMobileCT, 0);
     var el = document.getElementById('t-pro-b');
     if (!dados.length) { el.innerHTML = '<tr><td colspan="8" class="vazio">Sem dados no filtro selecionado.</td></tr>'; return; }
     var sinal = ordem.d === 'asc' ? 1 : -1;
@@ -1205,6 +1251,9 @@ svg.ch{display:block;width:100%;height:auto;min-width:420px}
                  : sinal * ((a[o.c] || 0) - (b[o.c] || 0));
     });
     var most = dados.slice(0, 400);
+    /* rotula logo apos preencher: ordenacao e busca redesenham esta tabela
+       sem passar pelo renderTudo */
+    setTimeout(rotularTabelasMobileCT, 0);
     document.getElementById('t-dd-b').innerHTML = most.map(function (r) {
       return '<tr><td class="nome" title="' + esc(r.cliente) + '">' + esc(corta(r.cliente, 34)) + '</td>' +
         '<td title="' + esc(r.produtos) + '">' + esc(corta(r.produtos, 38)) + '</td>' +
@@ -1269,6 +1318,27 @@ svg.ch{display:block;width:100%;height:auto;min-width:420px}
   /* ============================================================
      ORQUESTRAÇÃO
      ============================================================ */
+  /* ══════════════════════════════════════════════════════════════════
+     APOIO DA VERSAO MOBILE (06/11/2026)
+     Escreve em cada <td> o nome da sua coluna, lido do proprio <thead>.
+     Abaixo de 720px o CSS usa esse atributo para virar cartao. Percorre
+     todas as .tw table, entao nenhuma fica de fora e coluna nova se rotula
+     sozinha. A seta de ordenacao e removida do rotulo. */
+  function rotularTabelasMobileCT() {
+    document.querySelectorAll('.tw table').forEach(function (t) {
+      var cab = [].map.call(t.querySelectorAll('thead th'), function (th) {
+        return th.textContent.replace(/\s+/g, ' ').replace(/[\u25B2\u25BC\u2191\u2193]/g, '').trim();
+      });
+      if (!cab.length) return;
+      t.querySelectorAll('tbody tr').forEach(function (tr) {
+        [].forEach.call(tr.children, function (td, i) {
+          if (td.hasAttribute('colspan')) return;
+          td.setAttribute('data-rot', cab[i] || '');
+        });
+      });
+    });
+  }
+
   function renderTudo() {
     recorte = aplicaFiltros();
     renderKPIs(recorte);
@@ -1284,6 +1354,7 @@ svg.ch{display:block;width:100%;height:auto;min-width:420px}
     desenhaProp(baseProp(recorte), ORD.pro);
     renderLeitura(recorte);
     renderDD(recorte);
+    rotularTabelasMobileCT();   // depois de todas as tabelas montadas
     var tx = F.rotulo + ' · ' + fmtNum(recorte.length) + ' contratos';
     document.getElementById('selo-txt').innerHTML =
       'Base de <b>' + RAW.meta.hoje_iso.split('-').reverse().join('/') + '</b> · ' + esc(tx) +
