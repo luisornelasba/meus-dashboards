@@ -733,14 +733,10 @@
       </div>
     </div>
     <div class="header-right">
-      <button id="btnImport" class="btn-import" title="Importar nova base Excel (.xlsx) — você também pode arrastar o arquivo para a tela">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-          <polyline points="17 8 12 3 7 8"/>
-          <line x1="12" y1="3" x2="12" y2="15"/>
-        </svg>
-        <span>Importar Excel</span>
-      </button>
+      <!-- Botao "Importar Excel" retirado em 06/11/2026 a pedido. O motor da
+           importacao continua no arquivo porque a carga automatica do
+           base.json usa as mesmas funcoes; so a porta de entrada pela tela
+           deixou de existir. -->
       <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none">
       <div class="last-update">Base atualizada · <span id="lastUpdate">—</span> · <span id="recordCount">0</span> reg.<span id="carimboAuto"></span></div>
       <div id="metaCabecalho">Meta de campanha: <strong style="color:var(--bg-dark)">—</strong></div>
@@ -1499,8 +1495,9 @@ function processRawRecords(rows){
 let _pendingImport = null;
 
 async function handleImport(file){
+  /* O botao saiu em 06/11/2026; o elemento pode nao existir. */
   const importBtn = document.getElementById('btnImport');
-  importBtn.disabled = true;
+  if (importBtn) importBtn.disabled = true;
   const loadingId = showToast('loading', 'Processando arquivo', `Lendo "${file.name}"...`);
 
   try {
@@ -1604,7 +1601,8 @@ function openConfirmModal(){
 
 function closeConfirmModal(){
   document.getElementById('confirmModal').classList.remove('active');
-  document.getElementById('btnImport').disabled = false;
+  const _bi = document.getElementById('btnImport');
+  if (_bi) _bi.disabled = false;
   document.getElementById('fileInput').value = '';
   _pendingImport = null;
 }
@@ -3768,7 +3766,6 @@ function bindEvents(){
   document.getElementById('btnExport').addEventListener('click', exportToExcel);
 
   // Importar Excel
-  document.getElementById('btnImport').addEventListener('click', () => document.getElementById('fileInput').click());
   document.getElementById('fileInput').addEventListener('change', e => {
     const f = e.target.files && e.target.files[0];
     if (f) handleImport(f);
