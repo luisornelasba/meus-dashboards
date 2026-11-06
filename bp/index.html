@@ -1031,6 +1031,111 @@
   .rkc-podio { grid-template-columns: 1fr 1fr; }
   .rkc-p.ouro { grid-column: 1 / -1; order: -1; }
 }
+
+  /* ══════════════════════════════════════════════════════════════════
+     VERSAO MOBILE (06/11/2026)
+     Tudo daqui para baixo vive dentro de @media — o desktop nao muda.
+     ══════════════════════════════════════════════════════════════════ */
+  .tbl-matriz{overflow:visible}
+
+  @media (max-width:860px){
+    /* A causa raiz do corte: item de grid nasce com min-width:auto e isso
+       impede a coluna de encolher abaixo da largura minima do conteudo. A
+       tabela de 13 colunas esticava o cartao para 1.116px numa tela de 390px
+       e, como o body tem overflow-x:hidden, o excedente virava conteudo
+       inalcancavel — nem rolando dava para chegar nele. */
+    .charts-grid > *{min-width:0}
+
+    /* ---------- cabecalho e respiro ---------- */
+    .chart-card{padding:16px 13px}
+    .chart-title{font-size:15px}
+    .chart-subtitle{font-size:11.5px;line-height:1.4}
+    .chart-header{flex-wrap:wrap;gap:8px}
+    .chart-body{min-height:0}
+
+    /* ---------- a matriz de metas: rola de lado, com o mes fixo ----------
+       13 colunas nao cabem em tela de celular e virar cartao destruiria a
+       leitura (o cabecalho repete "Realizado" seis vezes; fora da grade isso
+       nao diz nada). Entao rola — mas com a coluna do mes ancorada, senao
+       arrastar faz perder a referencia de qual linha se esta lendo. */
+    .tbl-matriz{
+      overflow-x:auto;-webkit-overflow-scrolling:touch;position:relative;
+      border:1px solid var(--border);border-radius:10px;
+    }
+    .tbl-matriz::before{
+      content:attr(data-aviso);display:block;position:sticky;left:0;
+      font-size:10.5px;font-weight:700;color:var(--text-3);
+      padding:7px 10px 6px;background:var(--bg-soft);
+      border-bottom:1px solid var(--border);white-space:nowrap;
+    }
+    .consultor-meta-table{font-size:11px}
+    .consultor-meta-table th,.consultor-meta-table td{padding:6px 8px;white-space:nowrap}
+    .consultor-meta-table th:first-child,
+    .consultor-meta-table td:first-child{
+      position:sticky;left:0;z-index:2;background:var(--bg-card);
+      box-shadow:1px 0 0 var(--border);
+    }
+    .consultor-meta-table thead th:first-child{z-index:3}
+
+    /* ---------- acompanhamento por porte: cabe apertando ----------
+       5 colunas em 414px. Faltavam 24 pixels; fonte e espacamento menores
+       resolvem sem precisar desmontar a tabela. */
+    .monthly-table{font-size:11px;table-layout:fixed;width:100%}
+    .monthly-table td{padding:7px 4px;white-space:normal;word-break:break-word}
+    /* word-break so nas celulas. No cabecalho ele partia "ACEITAS" em
+       "ACEITA S"; fonte menor resolve sem cortar palavra. */
+    .monthly-table th{padding:7px 3px;font-size:9px;letter-spacing:.02em;
+      white-space:normal;word-break:normal;hyphens:none}
+    .monthly-table th:first-child,.monthly-table td:first-child{text-align:left}
+    /* A barrinha do % nao cabe numa coluna de ~60px: ela empurrava o numero
+       para a linha de baixo e espremia a coluna Restante ate sumir. No
+       celular fica so o numero, que e o que se le mesmo. */
+    .monthly-table .bar-mini-track{display:none}
+    .monthly-table .bar-mini{gap:0;white-space:nowrap;justify-content:center}
+    .monthly-table th:nth-child(1),.monthly-table td:nth-child(1){width:28%}
+    .monthly-table th:nth-child(2),.monthly-table td:nth-child(2){width:15%}
+    .monthly-table th:nth-child(3),.monthly-table td:nth-child(3){width:19%}
+    .monthly-table th:nth-child(4),.monthly-table td:nth-child(4){width:18%}
+    .monthly-table th:nth-child(5),.monthly-table td:nth-child(5){width:20%}
+  }
+
+  /* ══════════════════════════════════════════════════════════════════
+     DRILL-DOWN VIRA CARTAO (<=720px)
+     9 colunas num visor de ~320px. Cada proposta passa a ser um cartao com
+     os campos em duas colunas, cada um rotulado. O rotulo sai do proprio
+     <thead> em tempo de execucao (rotularCelulasMobileBP), entao o template
+     que monta os <td> nao precisou ser tocado e coluna nova se rotula
+     sozinha.
+     ══════════════════════════════════════════════════════════════════ */
+  @media (max-width:720px){
+    .data-table-wrap{overflow:visible;max-height:none;border:0;border-radius:0}
+    .data-table,.data-table tbody{display:block;width:100%}
+    .data-table thead{display:none}
+    .data-table tbody tr{
+      display:grid;grid-template-columns:1fr 1fr;gap:9px 12px;
+      border:1px solid var(--border);border-radius:12px;background:var(--bg-card);
+      padding:13px 14px;margin-bottom:10px;
+    }
+    .data-table tbody td{
+      display:flex;flex-direction:column;gap:3px;align-items:flex-start;
+      border:0;padding:0;font-size:12.5px;line-height:1.3;white-space:normal;text-align:left;
+    }
+    .data-table tbody td::before{
+      content:attr(data-rot);font-size:9px;font-weight:800;letter-spacing:.09em;
+      text-transform:uppercase;color:var(--text-3);
+    }
+    .data-table tbody td:empty{display:none}
+    .data-table tbody td[data-rot="Cliente"],
+    .data-table tbody td[data-rot="Produto"]{grid-column:1 / -1}
+    .data-table tbody td[data-rot="Cliente"]{
+      font-size:13.5px;font-weight:700;padding-bottom:3px;
+      border-bottom:1px solid var(--border);margin-bottom:2px;
+    }
+    .data-table tbody td[colspan]{grid-column:1 / -1}
+    .data-table tbody td[colspan]::before{content:none}
+    .data-table tbody tr:has(td[colspan]){display:block;border:0;background:transparent;padding:0}
+    .pagination{flex-wrap:wrap;justify-content:center;gap:8px}
+  }
 </style>
 </head>
 <body>
@@ -1312,6 +1417,7 @@
         </div>
         <div class="chart-tag yellow">Plano</div>
       </div>
+      <div class="tbl-matriz" data-aviso="Arraste para o lado para ver todos os consultores →">
       <table class="consultor-meta-table">
         <thead>
           <tr>
@@ -1328,6 +1434,7 @@
           <tr><td colspan="13">Carregando metas...</td></tr>
         </tbody>
       </table>
+      </div>
     </div>
   </section>
 
@@ -3411,6 +3518,22 @@ function formatCNAEDrilldown(cnae){
 }
 
 /* ========= Tabela Drill-down ========= */
+/* ══════════════════════════════════════════════════════════════════════
+   APOIO DA VERSAO MOBILE (06/11/2026)
+   ══════════════════════════════════════════════════════════════════════ */
+function rotularCelulasMobileBP(){
+  const t = document.querySelector('.data-table');
+  if (!t) return;
+  const cab = [...t.querySelectorAll('thead th')]
+    .map(th => th.textContent.replace(/\s+/g, ' ').trim());
+  t.querySelectorAll('tbody tr').forEach(tr => {
+    [...tr.children].forEach((td, i) => {
+      if (td.hasAttribute('colspan')) return;
+      td.setAttribute('data-rot', cab[i] || '');
+    });
+  });
+}
+
 function renderDataTable(data){
   const sorted = [...data].sort((a,b)=>{
     const k = STATE.sortKey;
@@ -3452,6 +3575,12 @@ function renderDataTable(data){
   if(pageData.length===0){
     tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text-3);padding:48px">Nenhum registro encontrado com os filtros aplicados.</td></tr>';
   }
+
+  /* Rotula cada celula com o nome da sua coluna, lido do proprio <thead>.
+     Abaixo de 720px o CSS usa esse atributo para virar cartao. Fica aqui,
+     e nao no render geral, para cobrir tambem paginacao e ordenacao, que
+     redesenham a tabela sem passar por ele. */
+  rotularCelulasMobileBP();
 
   setTextSafe('paginationInfo', `Página ${STATE.page} de ${totalPages} · ${fmtNum(sorted.length)} registros`);
   const ctrls = document.getElementById('paginationControls');
