@@ -2333,14 +2333,10 @@ html, body {
         </div>
       </div>
       <div class="period-tag" id="period-tag">Carregando…</div>
-      <button type="button" class="btn-import-excel" id="btn-import-excel" title="Importar nova base Excel">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-          <polyline points="17 8 12 3 7 8"/>
-          <line x1="12" y1="3" x2="12" y2="15"/>
-        </svg>
-        <span>Importar Excel</span>
-      </button>
+      <!-- Botao "Importar Excel" retirado em 06/11/2026 a pedido. Os ouvintes
+           deste painel ja testavam a existencia do elemento, entao nada mais
+           precisou mudar. O motor da importacao continua: a carga automatica
+           do base.json passa pelo mesmo PAM.deExcel(). -->
       <input type="file" id="import-file-input" accept=".xlsx,.xls" style="display:none">
     </div>
 
@@ -7869,7 +7865,11 @@ function _initImportador() {
         window.location.reload();
       }
     });
-    if (btnImport) btnImport.parentElement.appendChild(restoreBtn);
+    /* Antes: btnImport.parentElement — o proprio cabecalho. O botao de
+       importar saiu em 06/11/2026, entao o ancoramos direto no cabecalho para
+       que a volta a base original continue existindo. */
+    var ancoraRestore = document.querySelector('.header-top');
+    if (ancoraRestore) ancoraRestore.appendChild(restoreBtn);
   }
 
 }  // fim _initImportador
