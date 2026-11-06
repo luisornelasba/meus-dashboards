@@ -2249,6 +2249,69 @@ html, body {
   .rk-lb-head, .rk-lb { grid-template-columns: 28px 1fr 118px; gap: 7px; }
   .rk-lb .vl { font-size: 11.5px; }
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   AS DUAS TABELAS QUE FALTARAM NO MOBILE (06/11/2026)
+   O painel ja era responsivo desde setembro; estas duas ficaram de fora
+   porque nao receberam .resumo-table. Nada do que ja funcionava e tocado.
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ---- exec-table: resumo mensal, cabe apertando ----
+   Celulas curtas (mes, contagem, moeda, quatro percentuais). Entra na mesma
+   receita das outras seis tabelas do painel — largura fixa por coluna — em
+   vez de criar um segundo padrao dentro do mesmo arquivo. */
+@media (max-width: 760px) {
+  #exec-table { table-layout: fixed; width: 100%; }
+  #exec-table th, #exec-table td {
+    white-space: normal; word-break: normal; hyphens: none;
+    padding: 7px 3px; font-size: 10.5px; text-align: center;
+  }
+  #exec-table th { font-size: 8.5px; letter-spacing: 0; line-height: 1.2; }
+  #exec-table th:nth-child(1), #exec-table td:nth-child(1) { width: 19%; text-align: left; }
+  #exec-table th:nth-child(2), #exec-table td:nth-child(2) { width: 13%; }
+  #exec-table th:nth-child(3), #exec-table td:nth-child(3) { width: 22%; }
+  #exec-table th:nth-child(4), #exec-table td:nth-child(4) { width: 12%; }
+  #exec-table th:nth-child(5), #exec-table td:nth-child(5) { width: 12%; }
+  #exec-table th:nth-child(6), #exec-table td:nth-child(6) { width: 11%; }
+  #exec-table th:nth-child(7), #exec-table td:nth-child(7) { width: 11%; }
+  /* a seta de ordenacao nao cabe num cabecalho de 8,5px */
+  #exec-table th.sortable::after { content: none; }
+}
+
+/* ---- detail-table: drill-down vira cartao ----
+   Nome de cliente, CNPJ, unidade e produto nao cabem em coluna de 40px.
+   Cada proposta passa a ser um cartao com os campos em duas colunas, o
+   rotulo lido do proprio <thead> em tempo de execucao. */
+@media (max-width: 720px) {
+  #detail-table, #detail-table tbody { display: block; width: 100%; }
+  #detail-table thead { display: none; }
+  #detail-table tbody tr {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 9px 12px;
+    border: 1px solid var(--borda, rgba(255,255,255,.12));
+    border-radius: 12px; padding: 12px 13px; margin-bottom: 10px;
+    background: var(--bg-card, rgba(255,255,255,.03));
+  }
+  #detail-table tbody td {
+    display: flex; flex-direction: column; gap: 3px; align-items: flex-start;
+    border: 0; padding: 0; font-size: 12.5px; line-height: 1.3;
+    white-space: normal; text-align: left !important;
+  }
+  #detail-table tbody td::before {
+    content: attr(data-rot); font-size: 9px; font-weight: 800;
+    letter-spacing: .09em; text-transform: uppercase; color: var(--text-muted, #8a98a8);
+  }
+  #detail-table tbody td:empty { display: none; }
+  #detail-table tbody td[data-rot="Cliente"],
+  #detail-table tbody td[data-rot="Produto Existente"],
+  #detail-table tbody td[data-rot="Entidade/Unidade"] { grid-column: 1 / -1; }
+  #detail-table tbody td[data-rot="Cliente"] {
+    font-size: 13.5px; font-weight: 700; padding-bottom: 3px;
+    border-bottom: 1px solid var(--borda, rgba(255,255,255,.12)); margin-bottom: 2px;
+  }
+  #detail-table tbody td[colspan] { grid-column: 1 / -1; }
+  #detail-table tbody td[colspan]::before { content: none; }
+  #detail-table tbody tr:has(td[colspan]) { display: block; border: 0; background: transparent; padding: 0; }
+}
 </style>
 </head>
 <body>
@@ -6585,6 +6648,26 @@ function ordenaDetalhe() {
     if (th.dataset.sort === detailSortState.key) th.classList.add(detailSortState.asc ? 'asc' : 'desc');
   });
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   APOIO DO MOBILE DO DRILL-DOWN (06/11/2026)
+   Escreve em cada <td> o nome da sua coluna, lido do proprio <thead>.
+   Abaixo de 720px o CSS usa esse atributo para virar cartao. Chamado logo
+   apos o corpo ser preenchido, entao cobre paginacao e ordenacao.
+   ══════════════════════════════════════════════════════════════════════ */
+function rotularDetalheMobilePAM(){
+  const t = document.getElementById('detail-table');
+  if (!t) return;
+  const cab = [...t.querySelectorAll('thead th')]
+    .map(th => th.textContent.replace(/\s+/g, ' ').replace(/[\u2191\u2193]/g, '').trim());
+  t.querySelectorAll('tbody tr').forEach(tr => {
+    [...tr.children].forEach((td, i) => {
+      if (td.hasAttribute('colspan')) return;
+      td.setAttribute('data-rot', cab[i] || '');
+    });
+  });
+}
+
 function desenhaDetalhe() {
   const tbody = document.getElementById('detail-tbody');
   const total = detailSorted.length;
@@ -6594,6 +6677,7 @@ function desenhaDetalhe() {
     tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:32px; color:var(--text-tertiary)">Nenhuma linha encontrada.</td></tr>';
     document.getElementById('detail-info-shown').textContent = '0';
     document.getElementById('detail-pagination').innerHTML = '';
+    rotularDetalheMobilePAM();
     return;
   }
   const totalPag = Math.max(1, Math.ceil(total / DETAIL_PAGE_SIZE));
@@ -6603,6 +6687,7 @@ function desenhaDetalhe() {
   const fatia = detailSorted.slice(start, end);
 
   document.getElementById('detail-info-shown').textContent = fmtNum(end - start);
+  setTimeout(rotularDetalheMobilePAM, 0);   // depois de o corpo ser preenchido
 
   tbody.innerHTML = fatia.map(r => {
     const stPill = r.statusIdx === 0 ? 'pill verde'
