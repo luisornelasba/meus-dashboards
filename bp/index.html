@@ -1407,7 +1407,7 @@
     <div class="chart-card">
       <div class="chart-header">
         <div>
-          <div class="chart-title">Meta Mensal por Consultor · Jan-Out</div>
+          <div class="chart-title">Meta Mensal por Consultor · Jan-Nov</div>
           <div class="chart-subtitle">Distribuição da meta restante por vendedor</div>
         </div>
         <div class="chart-tag yellow">Plano</div>
@@ -1701,12 +1701,12 @@ const COLORS = {
 
 /* ========= METAS OFICIAIS DO PROGRAMA =========
    Meta total: 156 CNPJs até o final de setembro de 2026
-   Distribuição mensal oficial Jan-Out/2026 conforme planejamento vigente */
+   Distribuição mensal oficial Jan-Nov/2026 conforme planejamento vigente */
 const META = {
   total: 156,           // CNPJs até set/2026
   mensal: 19,           // fallback legado para rotinas não-YTD
   mensalPlanejada: {    // metas oficiais por mês para cálculo YTD
-    // Alinhado em 15/10/2026 com a tabela "Meta Mensal por Consultor · Jan-Out".
+    // Alinhado em 16/11/2026 com a tabela "Meta Mensal por Consultor · Jan-Nov".
     // Os dois blocos precisam andar juntos: este alimenta o KPI Meta YTD, o Gap
     // e o gráfico de evolução; o outro, a tabela por consultor. A soma segue 156.
     1: 10,
@@ -1718,11 +1718,15 @@ const META = {
     7: 20,
     8: 24,   /* revisto em 16/11/2026 — era 27 */
     9: 17,   /* revisto em 16/11/2026 — era 19 */
-    10: 19,  /* revisto em 16/11/2026 — era 14 */
+    10: 17,  /* 16/11/2026 — igualado ao realizado de outubro */
+    11: 2,   /* 16/11/2026 — o que faltava para o plano fechar 156 */
   },
   // Janela do card "Meta YTD (Plano Mensal)" e do "Gap vs Meta YTD":
-  // Janeiro a Outubro/2026 — soma exata de 156 propostas.
-  horizonteMeses: 10,   // Outubro (mês 10)
+  // Janeiro a Novembro/2026 — soma exata de 156 propostas.
+  // Estendida em 16/11/2026: o card "Realizado · Aceitas" sempre contou até o
+  // fim do mês corrente, então parar o plano em outubro fazia o atingimento
+  // dividir 11 meses de realizado por 10 meses de meta.
+  horizonteMeses: 11,   // Novembro (mês 11)
   prazoMonth: 9,        // Setembro (mês 9)
   prazoYear: 2026,
   // Metas estratégicas por categoria
@@ -1734,7 +1738,7 @@ const META = {
   },
 };
 /* Helper: janela do plano usada nos cards Meta YTD e Gap.
-   Fixa em Janeiro a Outubro/2026 (10 meses), que é onde a soma do plano
+   Fixa em Janeiro a Novembro/2026 (11 meses), que é onde a soma do plano
    mensal fecha exatamente na meta oficial de 156 propostas. */
 function metaYTDMeses(){
   return META.horizonteMeses || META.prazoMonth;
@@ -2142,10 +2146,16 @@ function aggByMonth(data){
 }
 
 
-/* ========= Meta mensal oficial Jan-Set para gráficos e tabela ========= */
+/* ========= Meta mensal oficial do plano, para gráficos e tabela =========
+   Percorre o horizonte vigente (metaYTDMeses()) em vez de um número fixo.
+   Antes ia só até m=9, e novembro caía no valor de reserva META.mensal — o
+   que agora mostraria 19 no gráfico contra 2 na tabela. Seguindo o horizonte,
+   os dois não voltam a descolar quando o plano mudar de novo.
+   O nome da função ficou de fora desta correção por ser alteração cosmética. */
 function getMetaMensalConsultorJanSetTotals(){
   const out = {};
-  for(let m=1; m<=9; m++){
+  const ate = metaYTDMeses();
+  for(let m=1; m<=ate; m++){
     out[`2026-${String(m).padStart(2,'0')}`] = getMetaMensalPlanejada(m);
   }
   return out;
@@ -2602,7 +2612,7 @@ function renderConsultorStatus(data){
 }
 
 
-/* ========= Meta Mensal por Consultor · Jan-Out ========= */
+/* ========= Meta Mensal por Consultor · Jan-Nov ========= */
 /* Distribui o total planejado do mês entre os consultores mantendo as
    proporções do plano e fechando a soma exata no total (método do maior resto).
    Garante que a linha do consultor sempre feche com a coluna Total. */
@@ -2643,7 +2653,12 @@ function renderConsultorMeta(){
        mantendo a proporcao e fechando exato com a linha. */
     {key:'2026-08', mes:'Agosto/26', historico:false, total:24, claudia:4, dyego:4, ana:4, fernando:4, paula:4},
     {key:'2026-09', mes:'Setembro/26', historico:false, total:17, claudia:4, dyego:4, ana:3, fernando:4, paula:3},
-    {key:'2026-10', mes:'Outubro/26', historico:false, total:19, claudia:2, dyego:2, ana:3, fernando:2, paula:3},
+    /* 16/11/2026: Outubro igualado ao realizado do mês (era 19). Novembro
+       entrou com as 2 propostas que faltavam para o plano fechar 156, usando
+       as mesmas proporções de outubro — o Luis informou o total do mês, não a
+       divisão por consultor. Basta trocar os pesos abaixo para outra divisão. */
+    {key:'2026-10', mes:'Outubro/26', historico:false, total:17, claudia:2, dyego:2, ana:3, fernando:2, paula:3},
+    {key:'2026-11', mes:'Novembro/26', historico:false, total:2, claudia:2, dyego:2, ana:3, fernando:2, paula:3},
   ];
 
   const normalizeConsultor = (v) => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toUpperCase();
