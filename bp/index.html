@@ -1716,9 +1716,9 @@ const META = {
     5: 16,
     6: 5,
     7: 20,
-    8: 27,
-    9: 19,
-    10: 14,
+    8: 24,   /* revisto em 16/11/2026 — era 27 */
+    9: 17,   /* revisto em 16/11/2026 — era 19 */
+    10: 19,  /* revisto em 16/11/2026 — era 14 */
   },
   // Janela do card "Meta YTD (Plano Mensal)" e do "Gap vs Meta YTD":
   // Janeiro a Outubro/2026 — soma exata de 156 propostas.
@@ -2637,9 +2637,13 @@ function renderConsultorMeta(){
     {key:'2026-05', mes:'Maio/26', historico:true, total:16},
     {key:'2026-06', mes:'Junho/26', historico:true, total:5},
     {key:'2026-07', mes:'Julho/26', historico:false, total:20, claudia:4, dyego:12, ana:9, fernando:9, paula:8},
-    {key:'2026-08', mes:'Agosto/26', historico:false, total:27, claudia:4, dyego:4, ana:4, fernando:4, paula:4},
-    {key:'2026-09', mes:'Setembro/26', historico:false, total:19, claudia:4, dyego:4, ana:3, fernando:4, paula:3},
-    {key:'2026-10', mes:'Outubro/26', historico:false, total:14, claudia:2, dyego:2, ana:3, fernando:2, paula:3},
+    /* Totais de Ago, Set e Out revistos em 16/11/2026 a pedido do Luis
+       (eram 27, 19 e 14). A soma do plano segue 156. Os pesos por consultor
+       nao mudaram: distribuirMetaConsultor() reparte o novo total entre eles
+       mantendo a proporcao e fechando exato com a linha. */
+    {key:'2026-08', mes:'Agosto/26', historico:false, total:24, claudia:4, dyego:4, ana:4, fernando:4, paula:4},
+    {key:'2026-09', mes:'Setembro/26', historico:false, total:17, claudia:4, dyego:4, ana:3, fernando:4, paula:3},
+    {key:'2026-10', mes:'Outubro/26', historico:false, total:19, claudia:2, dyego:2, ana:3, fernando:2, paula:3},
   ];
 
   const normalizeConsultor = (v) => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toUpperCase();
