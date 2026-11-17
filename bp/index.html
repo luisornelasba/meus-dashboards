@@ -1398,7 +1398,7 @@
       <div class="chart-header">
         <div>
           <div class="chart-title">Marcos do Programa Brasil Mais Produtivo</div>
-          <div class="chart-subtitle">Metas oficiais de 60% (junho) e 100% (setembro)</div>
+          <div class="chart-subtitle">Metas oficiais de 60% (junho) e 100% (novembro)</div>
         </div>
         <div class="chart-tag green">Marcos</div>
       </div>
@@ -1441,7 +1441,7 @@
           <div class="chart-title">Metas Estratégicas por Categoria</div>
           <div class="chart-subtitle">Visão executiva compacta: realizado, meta, atingimento e gap por categoria estratégica</div>
         </div>
-        <div class="chart-tag emerald">META 156 · SET/26</div>
+        <div class="chart-tag emerald">META 156 · NOV/26</div>
       </div>
       <div class="strategy-grid" id="strategyGrid"></div>
       <div class="chart-insight"><span class="insight-dot"></span><span id="strategyInsight">Modelo executivo compacto: leitura de meta, realizado, percentual e gap por categoria em cards objetivos para diretoria.</span></div>
@@ -1700,7 +1700,7 @@ const COLORS = {
 };
 
 /* ========= METAS OFICIAIS DO PROGRAMA =========
-   Meta total: 156 CNPJs até o final de setembro de 2026
+   Meta total: 156 CNPJs até o final de novembro de 2026
    Distribuição mensal oficial Jan-Nov/2026 conforme planejamento vigente */
 const META = {
   total: 156,           // CNPJs até set/2026
@@ -1727,7 +1727,7 @@ const META = {
   // fim do mês corrente, então parar o plano em outubro fazia o atingimento
   // dividir 11 meses de realizado por 10 meses de meta.
   horizonteMeses: 11,   // Novembro (mês 11)
-  prazoMonth: 9,        // Setembro (mês 9)
+  prazoMonth: 11,       // Novembro (mês 11) — estendido em 17/11/2026
   prazoYear: 2026,
   // Metas estratégicas por categoria
   categorias: {
@@ -2743,7 +2743,7 @@ function renderConsultorMeta(){
 }
 
 /* ========= Marcos do Programa ========= */
-/* Marco junho (60% da meta total); Setembro (100% = 156) */
+/* Marco junho (60% da meta total); Novembro (100% = 156) */
 function renderMilestones(){
   // Considera todas as aceitas no ano (independente do filtro de data) — respeitando outros filtros
   const ytd = getYTDFixedRange();
@@ -2755,7 +2755,7 @@ function renderMilestones(){
 
   const milestones = [
     {label:'Marco Junho/26',target:'60% da meta total',value:Math.round(META.total * 0.60),color:COLORS.yellow},
-    {label:'Marco Setembro/26',target:'100% da meta total',value:META.total,color:COLORS.green},
+    {label:'Marco Novembro/26',target:'100% da meta total',value:META.total,color:COLORS.green},
   ];
   const grid = document.getElementById('milestoneGrid');
   grid.innerHTML = milestones.map(m=>{
@@ -2934,18 +2934,32 @@ function renderExecutiveInsights(data){
     if(r.Status==='EM DESENVOLVIMENTO') byConsultor[c].desenvolvimento++;
     if(r.Status==='ACEITA' && currentMonthKey && r.Data && r.Data.startsWith(currentMonthKey)) byConsultor[c].mesAtual++;
   }
-  // Tempo efetivo de atuação no processo de vendas (jan–ago/2026), informado pela área.
-  // A leitura executiva usa esse período para evitar comparação direta entre consultores
-  // com tempos de exposição diferentes no processo comercial.
-  const MESES_ATUACAO_CONSULTOR = {
-    'ANA CAROLINE': 5,
-    'CAROL': 5,
-    'CLAUDIA': 5,
-    'DYEGO': 5,
-    'FERNANDO': 4,
-    'PAULA': 2
+  /* Mês em que cada consultor entrou no programa, informado pela área em
+     17/11/2026 e conferido contra a base (a primeira proposta de cada um cai
+     exatamente nesse mês). A leitura executiva usa esse período para não
+     comparar quem está há 11 meses com quem está há 5.
+
+     Guardamos o MÊS DE ENTRADA, não a quantidade de meses. A versão anterior
+     gravava a quantidade ("5 meses") e envelhecia a cada virada de mês —
+     estava marcando 5 para quem já somava 11. Assim o número se recalcula
+     sozinho a cada rodada do robô de ETL. */
+  const INICIO_ATUACAO_CONSULTOR = {
+    'CLAUDIA':      '2026-01',
+    'DYEGO':        '2026-01',
+    'ANA CAROLINE': '2026-03',
+    'CAROL':        '2026-03',   // mesmo nome, como aparece em alguns recortes
+    'FERNANDO':     '2026-03',
+    'PAULA':        '2026-07',
   };
-  const mesesAtuacao = (nome) => MESES_ATUACAO_CONSULTOR[norm(nome)] || 1;
+  /* Meses decorridos do mês de entrada até o mês corrente, contando os dois. */
+  const mesesAtuacao = (nome) => {
+    const inicio = INICIO_ATUACAO_CONSULTOR[norm(nome)];
+    if(!inicio) return 1;
+    const hoje = getToday();
+    const [ano, mes] = inicio.split('-').map(Number);
+    const decorridos = (hoje.getFullYear() - ano) * 12 + (hoje.getMonth() + 1 - mes) + 1;
+    return Math.max(1, decorridos);
+  };
 
   const consultores = Object.entries(byConsultor).map(([nome,v])=>{
     const meses = mesesAtuacao(nome);
@@ -2957,6 +2971,22 @@ function renderExecutiveInsights(data){
       taxaRecusa:v.total ? (v.recusadas/v.total)*100 : 0
     };
   });
+  /* Texto do tempo de atuação, montado a partir do mesmo cálculo que ranqueia
+     os consultores — antes era escrito à mão e divergia do que o painel usava.
+     Agrupa quem tem o mesmo tempo e ignora quem não tem mês de entrada
+     declarado (consultores de anos anteriores, quando o filtro os inclui). */
+  const porTempoAtuacao = {};
+  consultores.forEach(c=>{
+    if(!INICIO_ATUACAO_CONSULTOR[norm(c.nome)]) return;
+    (porTempoAtuacao[c.mesesAtuacao] = porTempoAtuacao[c.mesesAtuacao] || []).push(c.nome);
+  });
+  const textoAtuacao = Object.keys(porTempoAtuacao).map(Number).sort((a,b)=>b-a)
+    .map(m=>{
+      const ns = porTempoAtuacao[m].slice().sort((a,b)=>a.localeCompare(b,'pt-BR'));
+      const lista = ns.length > 1 ? ns.slice(0,-1).join(', ') + ' e ' + ns[ns.length-1] : ns[0];
+      return `${lista} com ${m} ${m === 1 ? 'mês' : 'meses'}`;
+    }).join('; ');
+
   const lider = consultores.slice().sort((a,b)=>b.aceitasMes-a.aceitasMes || b.conversao-a.conversao || b.aceitas-a.aceitas)[0] || {nome:'-', aceitas:0, aceitasMes:0, mesesAtuacao:1, conversao:0, desenvolvimento:0};
   const consultoresElegiveisConversao = consultores.filter(c=>c.total >= VOLUME_MINIMO_CONVERSAO);
   const eficiente = consultoresElegiveisConversao.slice().sort((a,b)=>b.conversao-a.conversao || b.aceitasMes-a.aceitasMes || b.aceitas-a.aceitas)[0] || null;
@@ -2996,7 +3026,7 @@ function renderExecutiveInsights(data){
   const recusaClass = recusadas >= 5 || taxaRecusaGeral >= 10 ? 'ins-danger' : (recusadas > 0 ? 'ins-warn' : 'ins-ok');
   const catClass = categoriaCritica.pct < 30 ? 'ins-danger' : 'ins-warn';
   const metaYtdTexto = `Meta YTD: <strong>${fmtInt(metaYTDValor)}</strong> até o mês corrente`; 
-  const metaFinalTexto = `Meta Final: <strong>${fmtInt(META_FINAL)}</strong> até Setembro/2026`;
+  const metaFinalTexto = `Meta Final: <strong>${fmtInt(META_FINAL)}</strong> até Novembro/2026`;
   const textoMelhorConversao = eficiente
     ? `<strong>${escapeHtml(eficiente.nome)}</strong> apresenta a melhor conversão elegível, com <strong>${fmtPct(eficiente.conversao)}</strong> sobre <strong>${plural(eficiente.total,'proposta analisada','propostas analisadas')}</strong>. A comparação considera também seu tempo efetivo de <strong>${fmtInt(eficiente.mesesAtuacao)} ${eficiente.mesesAtuacao===1?'mês':'meses'}</strong> no processo, equivalente a <strong>${eficiente.aceitasMes.toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})}</strong> aceita(s) por mês de atuação. Para evitar distorções por amostra pequena, a regra de conversão considera apenas consultores com pelo menos <strong>${fmtInt(VOLUME_MINIMO_CONVERSAO)}</strong> propostas no período filtrado.`
     : `Sem volume mínimo suficiente para apontar melhor conversão com segurança estatística. A análise considera o tempo efetivo de atuação de cada consultor e, para conversão, exige pelo menos <strong>${fmtInt(VOLUME_MINIMO_CONVERSAO)}</strong> propostas no período filtrado.`;
@@ -3037,9 +3067,9 @@ function renderExecutiveInsights(data){
   summary.innerHTML = `
     ${textoRiscoResumo}
     <br><br>
-    Atualmente, são <strong>${plural(aceitas,'proposta aceita','propostas aceitas')}</strong> em um universo de <strong>${fmtInt(total)}</strong>, com conversão geral de <strong>${fmtPct(conversao)}</strong>. O KPI superior deve ser lido pela ótica da <strong>Meta YTD</strong>, com <strong>${fmtPct(pctMetaYTD)}</strong> de atingimento sobre <strong>${fmtInt(metaYTDValor)}</strong> propostas acumuladas até o mês corrente. Já esta análise estratégica considera a <strong>Meta Final</strong> de <strong>${fmtInt(META_FINAL)}</strong> propostas aceitas até Setembro/2026, com <strong>${fmtPct(pctMetaFinal)}</strong> realizado.
+    Atualmente, são <strong>${plural(aceitas,'proposta aceita','propostas aceitas')}</strong> em um universo de <strong>${fmtInt(total)}</strong>, com conversão geral de <strong>${fmtPct(conversao)}</strong>. O KPI superior deve ser lido pela ótica da <strong>Meta YTD</strong>, com <strong>${fmtPct(pctMetaYTD)}</strong> de atingimento sobre <strong>${fmtInt(metaYTDValor)}</strong> propostas acumuladas até o mês corrente. Já esta análise estratégica considera a <strong>Meta Final</strong> de <strong>${fmtInt(META_FINAL)}</strong> propostas aceitas até Novembro/2026, com <strong>${fmtPct(pctMetaFinal)}</strong> realizado.
     <br><br>
-    Na leitura por consultores, a comparação foi ajustada pelo tempo efetivo de atuação no processo de vendas: <strong>Carol, Claudia e Dyego com 5 meses; Fernando com 4 meses; e Paula com 2 meses</strong>. Por esse critério, <strong>${escapeHtml(lider.nome)}</strong> apresenta o maior ritmo médio, com <strong>${lider.aceitasMes.toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})} proposta(s) aceita(s) por mês de atuação</strong>; no acumulado, registra <strong>${plural(lider.aceitas,'proposta aceita','propostas aceitas')}</strong>. ${eficiente ? `A melhor conversão elegível está com <strong>${escapeHtml(eficiente.nome)}</strong> (<strong>${fmtPct(eficiente.conversao)}</strong>), considerando o respectivo tempo de atuação e volume mínimo de <strong>${fmtInt(VOLUME_MINIMO_CONVERSAO)}</strong> propostas analisadas.` : `Não há volume mínimo suficiente para indicar melhor conversão com segurança estatística.`}
+    Na leitura por consultores, a comparação foi ajustada pelo tempo efetivo de atuação no processo de vendas: <strong>${escapeHtml(textoAtuacao) || 'tempo de atuação não informado'}</strong>. Por esse critério, <strong>${escapeHtml(lider.nome)}</strong> apresenta o maior ritmo médio, com <strong>${lider.aceitasMes.toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})} proposta(s) aceita(s) por mês de atuação</strong>; no acumulado, registra <strong>${plural(lider.aceitas,'proposta aceita','propostas aceitas')}</strong>. ${eficiente ? `A melhor conversão elegível está com <strong>${escapeHtml(eficiente.nome)}</strong> (<strong>${fmtPct(eficiente.conversao)}</strong>), considerando o respectivo tempo de atuação e volume mínimo de <strong>${fmtInt(VOLUME_MINIMO_CONVERSAO)}</strong> propostas analisadas.` : `Não há volume mínimo suficiente para indicar melhor conversão com segurança estatística.`}
     <br><br>
     A categoria <strong>“${escapeHtml(categoriaCritica.nome)}”</strong> apresenta o maior gap absoluto, com <strong>${plural(categoriaCritica.gap,'proposta faltante','propostas faltantes')}</strong> para a meta definida. O painel também registra <strong>${plural(recusadas,'proposta recusada','propostas recusadas')}</strong>, com taxa geral de <strong>${fmtPct(taxaRecusaGeral)}</strong>, ponto que exige revisão comercial e melhor qualificação das oportunidades.
     <br><br>
