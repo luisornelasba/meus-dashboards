@@ -207,6 +207,11 @@
   .cliente-action-btn:hover{background:var(--bg-card);color:var(--graphite);border-color:var(--border-strong)}
   .cliente-count{font-family:'JetBrains Mono',monospace;font-weight:600}
 
+  /* Rodape do filtro CNAE: dois botoes agora. Preso ao #cnaeDropdown para
+     nao alterar o filtro Cliente, que segue com um botao so. */
+  #cnaeDropdown .cliente-footer{flex-wrap:wrap;gap:8px}
+  .cnae-footer-acoes{display:flex;gap:6px;margin-left:auto}
+
   /* KPI Grid */
   .kpi-grid{
     display:grid;grid-template-columns:repeat(5,1fr);
@@ -1220,7 +1225,10 @@
         <div class="cliente-list" id="cnaeList"></div>
         <div class="cliente-footer">
           <span class="cliente-count" id="cnaeCount">0 disponíveis</span>
-          <button class="cliente-action-btn" id="cnaeClearBtn" type="button">Limpar</button>
+          <div class="cnae-footer-acoes">
+            <button class="cliente-action-btn" id="cnaeAllBtn" type="button">Selecionar tudo</button>
+            <button class="cliente-action-btn" id="cnaeClearBtn" type="button">Limpar</button>
+          </div>
         </div>
       </div>
     </div>
@@ -2787,15 +2795,18 @@ function renderMilestones(){
    em mais de uma categoria quando se enquadra em mais de um critério. Exemplo:
    uma empresa porte DEMAIS com CNAE 4110700 e produto Eficiência Energética
    conta nas TRÊS categorias (Médias + Construção + Eficiência).
-   "Outros setores" é o complemento: empresas que NÃO se encaixam em nenhuma
-   das outras 3 categorias.
-
    Regras (independentes):
    • Médias empresas:        Porte == 'DEMAIS'
    • Construção civil:       CNAE começa com 23, 41, 42 ou 43 (ex.: 4110700, 4221901, 4311801)
    • Eficiência energética:  Produto == 'NOVO B P EFICIENCIA ENERGETICA'
-   • Outros setores:         NÃO atende nenhum dos 3 critérios acima
-   Conta CNPJs únicos com status ACEITA. */
+   • Outros setores:         Produto == Manufatura Enxuta E CNAE FORA de 23/41/42/43
+   Conta CNPJs únicos com status ACEITA.
+
+   Sobre "Outros setores" (critério revisto em 18/11/2026, informado pelo Luis):
+   antes era o complemento das outras três, e por isso era a única categoria que
+   dependia delas. Agora é um critério próprio — os CNAEs que NÃO são de
+   construção, dentro do produto Manufatura Enxuta —, o que deixa as quatro
+   categorias independentes de verdade, como este bloco sempre descreveu. */
 function isMediaEmpresa(r){ return r.Porte === 'DEMAIS'; }
 function isConstrucaoCivil(r){
   // CNAE pode vir como number, string com ou sem zeros à esquerda.
@@ -2813,7 +2824,10 @@ function isEficienciaEnergetica(r){
   return r.Produto === 'NOVO B P EFICIENCIA ENERGETICA';
 }
 function isOutrosSetores(r){
-  return !isMediaEmpresa(r) && !isConstrucaoCivil(r) && !isEficienciaEnergetica(r);
+  /* "Outros setores" = produto Manufatura Enxuta, nos CNAEs que NÃO são de
+     construção civil. É o avesso do critério de Construção, dentro do produto
+     principal do programa. Dá 102 CNPJs aceitos para uma meta de 104. */
+  return r.Produto === 'NOVO B P MANUFATURA ENXUTA' && !isConstrucaoCivil(r);
 }
 
 function renderStrategyCards(){
@@ -4502,7 +4516,13 @@ function renderCnaeList(){
       </div>`;
     }).join('');
     list.querySelectorAll('.cliente-option').forEach(opt=>{
-      opt.onclick = ()=>{
+      opt.onclick = (e)=>{
+        /* Sem isto o dropdown fecha a cada item escolhido: a lista inteira e
+           reescrita logo abaixo, o elemento clicado deixa de existir, e o
+           fechador por clique-fora no document nao o encontra mais dentro do
+           dropdown. Segurando o clique aqui, o multi-select funciona sem
+           precisar reabrir na setinha. */
+        e.stopPropagation();
         const val = opt.dataset.val
           .replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"');
         if(!Array.isArray(STATE.filters.cnae)) STATE.filters.cnae = [];
@@ -4541,8 +4561,25 @@ function bindCnaeDropdown(){
     };
   }
   if(clear){
-    clear.onclick = ()=>{
+    clear.onclick = (e)=>{
+      e.stopPropagation();
       STATE.filters.cnae = [];
+      STATE.page = 1;
+      renderCnaeDropdown();
+      render();
+    };
+  }
+  /* "Selecionar tudo": marca o que estiver listado no momento. Com busca
+     ativa, marca o resultado da busca; sem busca, marca todos os CNAEs. */
+  const selAll = document.getElementById('cnaeAllBtn');
+  if(selAll){
+    selAll.onclick = (e)=>{
+      e.stopPropagation();
+      const busca = (CNAE_DROPDOWN.searchTerm || '').toLowerCase();
+      const todos = CNAE_DROPDOWN.allOptions.length ? CNAE_DROPDOWN.allOptions : getCnaeOptions();
+      STATE.filters.cnae = busca
+        ? todos.filter(c => c.toLowerCase().indexOf(busca) !== -1)
+        : [...todos];
       STATE.page = 1;
       renderCnaeDropdown();
       render();
