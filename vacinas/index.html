@@ -711,8 +711,239 @@
     .table-footer, .pagination{flex-wrap:wrap;justify-content:center;gap:8px;}
   }
 </style>
+<!-- ═══ ESTILO DA NAVEGACAO LATERAL (18/11/2026) ═══ -->
+<style id="proto-estilo">
+/* ═══════════════════════════════════════════════════════════════════════
+   MODELO A — V35 · branco e limpo, menu lateral de ícones
+   Esta folha é SOMADA à original: ela sobrepõe o
+   visual e não remove nada, então toda a lógica, os gráficos, os filtros e
+   as regras do painel continuam exatamente como são hoje.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+:root{
+  /* A marca continua a mesma; o que muda é o peso de cada cor na tela.
+     O verde institucional deixa de ser fundo e passa a ser acento. */
+  --a-tinta:        #0F1A1C;
+  --a-tinta-2:      #5A6B68;
+  --a-tinta-3:      #8E9B99;
+  --a-borda:        #E8EDEB;
+  --a-borda-forte:  #D7E0DD;
+  --a-superficie:   #FFFFFF;
+  --a-fundo:        #F6F8F8;
+  --a-acento:       #1E7A47;
+  --a-acento-claro: #E8F6EE;
+  --a-lateral:      248px;
+  --a-lateral-min:  76px;
+  --a-sombra:       0 1px 2px rgba(15,26,28,.04), 0 4px 16px rgba(15,26,28,.05);
+  --a-sombra-alta:  0 8px 28px rgba(15,26,28,.09);
+}
+
+/* ---------- página ---------- */
+body{
+  background: var(--a-fundo) !important;
+  color: var(--a-tinta);
+}
+.container{
+  max-width: none !important;
+  margin-left: var(--a-lateral) !important;
+  padding: 0 34px 56px !important;
+  transition: margin-left .26s cubic-bezier(.4,0,.2,1);
+}
+body.proto-recolhido .container{ margin-left: var(--a-lateral-min) !important; }
+
+/* ---------- menu lateral ---------- */
+.proto-nav{
+  position: fixed; inset: 0 auto 0 0; width: var(--a-lateral); z-index: 120;
+  background: var(--a-superficie); border-right: 1px solid var(--a-borda);
+  display: flex; flex-direction: column;
+  transition: width .26s cubic-bezier(.4,0,.2,1);
+}
+body.proto-recolhido .proto-nav{ width: var(--a-lateral-min); }
+
+.proto-marca{
+  display: flex; align-items: center; gap: 11px;
+  padding: 20px 18px 18px; border-bottom: 1px solid var(--a-borda);
+  min-height: 74px;
+}
+.proto-marca-sigla{
+  flex: 0 0 38px; height: 38px; border-radius: 11px;
+  background: linear-gradient(135deg, #1E7A47, #3EDC74);
+  color: #fff; font-weight: 800; font-size: 13px; letter-spacing: .5px;
+  display: grid; place-items: center;
+}
+.proto-marca-tx{ min-width: 0; transition: opacity .16s ease; }
+.proto-marca-tx b{ display: block; font-size: 13px; font-weight: 700; color: var(--a-tinta); letter-spacing: -.01em; }
+.proto-marca-tx span{ display: block; font-size: 10.5px; color: var(--a-tinta-3); margin-top: 1px; }
+body.proto-recolhido .proto-marca-tx{ opacity: 0; pointer-events: none; }
+
+.proto-grupo{
+  font-size: 9.5px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--a-tinta-3); padding: 18px 20px 7px; white-space: nowrap;
+}
+body.proto-recolhido .proto-grupo{ opacity: 0; }
+
+.proto-lista{ flex: 1; overflow-y: auto; padding: 0 12px 16px; }
+.proto-item{
+  display: flex; align-items: center; gap: 12px;
+  padding: 9px 11px; margin-bottom: 2px; border-radius: 10px;
+  color: var(--a-tinta-2); text-decoration: none;
+  font-size: 13px; font-weight: 500; white-space: nowrap;
+  transition: background .15s ease, color .15s ease;
+}
+.proto-item:hover{ background: #F2F6F4; color: var(--a-tinta); }
+.proto-item.ativo{ background: var(--a-acento-claro); color: var(--a-acento); font-weight: 650; }
+.proto-ic{ flex: 0 0 19px; height: 19px; display: grid; place-items: center; }
+.proto-ic svg{ width: 18px; height: 18px; }
+.proto-tx{ overflow: hidden; text-overflow: ellipsis; transition: opacity .16s ease; }
+body.proto-recolhido .proto-tx{ opacity: 0; width: 0; }
+body.proto-recolhido .proto-item{ justify-content: center; padding: 10px 0; }
+
+.proto-rodape{ padding: 12px; border-top: 1px solid var(--a-borda); }
+.proto-btn{
+  width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
+  background: transparent; border: 1px solid var(--a-borda-forte); border-radius: 9px;
+  padding: 8px; color: var(--a-tinta-2); font-size: 12px; font-weight: 600;
+  cursor: pointer; font-family: inherit; transition: background .15s ease;
+}
+.proto-btn:hover{ background: #F2F6F4; }
+.proto-btn svg{ width: 15px; height: 15px; transition: transform .26s ease; }
+body.proto-recolhido .proto-btn svg{ transform: rotate(180deg); }
+body.proto-recolhido .proto-btn span{ display: none; }
+
+/* ---------- barra do topo ---------- */
+.header{
+  position: sticky; top: 0; z-index: 90;
+  background: rgba(255,255,255,.88) !important;
+  backdrop-filter: saturate(150%) blur(12px);
+  -webkit-backdrop-filter: saturate(150%) blur(12px);
+  margin: 0 -34px 22px !important;
+  padding: 14px 34px !important;
+  border-bottom: 1px solid var(--a-borda) !important;
+  align-items: center !important;
+}
+.header h1{ font-size: 19px !important; letter-spacing: -.02em; }
+.header .eyebrow{ font-size: 10.5px !important; }
+.header .subtitle{ font-size: 11.5px !important; color: var(--a-tinta-3) !important; }
+.logo-wrap img{ height: 34px !important; }
+
+/* ---------- filtros ---------- */
+.filters{
+  border-radius: 14px !important; border: 1px solid var(--a-borda) !important;
+  box-shadow: var(--a-sombra) !important; top: 78px !important;
+  padding: 16px 20px !important;
+}
+
+/* ---------- indicadores ---------- */
+.kpi-grid{ gap: 14px !important; }
+.kpi{
+  border-radius: 14px !important; border: 1px solid var(--a-borda) !important;
+  box-shadow: var(--a-sombra) !important; padding: 18px 18px 16px !important;
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease !important;
+}
+.kpi:hover{
+  transform: translateY(-2px);
+  box-shadow: var(--a-sombra-alta) !important;
+  border-color: var(--a-borda-forte) !important;
+}
+/* Tamanho e peso valem para TODOS os cartões... */
+.kpi-label{
+  font-size: 10px !important; letter-spacing: .085em !important;
+  text-transform: uppercase; font-weight: 700 !important;
+}
+.kpi-value{
+  font-size: 32px !important; font-weight: 800 !important;
+  letter-spacing: -.035em !important; line-height: 1.08 !important;
+}
+.kpi-meta{ font-size: 11px !important; }
+
+/* ...mas a COR só vale para os cartões claros. O painel tem um cartão de
+   destaque com fundo escuro (.kpi.dark — "Total de Propostas" e o ano em
+   foco), e pintar o número de escuro nele deixaria texto escuro sobre fundo
+   escuro. O destaque continua branco, como no painel atual. */
+.kpi:not(.dark) .kpi-label{ color: var(--a-tinta-3) !important; }
+.kpi:not(.dark) .kpi-value{ color: var(--a-tinta) !important; }
+.kpi:not(.dark) .kpi-meta { color: var(--a-tinta-2) !important; }
+.kpi.dark{ border-color: transparent !important; }
+.kpi.dark .kpi-label{ color: rgba(255,255,255,.72) !important; }
+
+/* ---------- cartões ---------- */
+.card{
+  border-radius: 14px !important; border: 1px solid var(--a-borda) !important;
+  box-shadow: var(--a-sombra) !important; padding: 20px !important;
+  transition: box-shadow .18s ease, border-color .18s ease !important;
+}
+.card:hover{ box-shadow: var(--a-sombra-alta) !important; border-color: var(--a-borda-forte) !important; }
+.card-title{ font-size: 13.5px !important; color: var(--a-tinta) !important; font-weight: 650 !important; }
+.charts-grid{ gap: 14px !important; }
+
+/* ---------- tabelas ---------- */
+.card table thead th{
+  text-transform: uppercase; font-size: 9.5px !important;
+  letter-spacing: .07em; color: var(--a-tinta-3) !important;
+}
+
+/* ---------- rodapé ---------- */
+.footer{ border-top: 1px solid var(--a-borda) !important; color: var(--a-tinta-3) !important; }
+
+/* ---------- gaveta no celular ---------- */
+.proto-menu-btn{
+  display: none; position: fixed; left: 14px; top: 13px; z-index: 130;
+  width: 40px; height: 40px; border-radius: 11px;
+  background: var(--a-superficie); border: 1px solid var(--a-borda-forte);
+  box-shadow: var(--a-sombra); cursor: pointer;
+  align-items: center; justify-content: center; padding: 0;
+}
+.proto-menu-btn svg{ width: 19px; height: 19px; stroke: var(--a-tinta); }
+
+@media (max-width: 1080px){
+  .proto-nav{ transform: translateX(-100%); transition: transform .26s cubic-bezier(.4,0,.2,1); width: var(--a-lateral); }
+  body.proto-aberto .proto-nav{ transform: translateX(0); box-shadow: 0 0 0 100vw rgba(15,26,28,.35); }
+  .container{ margin-left: 0 !important; padding: 0 20px 48px !important; }
+  body.proto-recolhido .container{ margin-left: 0 !important; }
+  .proto-menu-btn{ display: flex; }
+  .header{ margin: 0 -20px 18px !important; padding: 12px 20px 12px 64px !important; }
+  .filters{ top: 70px !important; }
+  }
+@media (max-width: 720px){
+  .container{ padding: 0 14px 40px !important; }
+  .header{ margin: 0 -14px 16px !important; padding: 11px 14px 11px 60px !important; }
+  .kpi-value{ font-size: 27px !important; }
+  .card{ padding: 15px !important; }
+}
+
+</style>
 </head>
 <body>
+
+<!-- ═══ NAVEGACAO LATERAL (Modelo A, validado em 18/11/2026) ═══
+     Bloco acrescentado por cima do painel. Nao substitui nada do que
+     ja existia: markup, script e regras seguem os mesmos. -->
+<button class="proto-menu-btn" id="protoMenuBtn" type="button" aria-label="Abrir menu">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+    <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+  </svg>
+</button>
+
+<nav class="proto-nav" id="protoNav" aria-label="Navegação do painel">
+  <div class="proto-marca">
+    <div class="proto-marca-sigla">SESI</div>
+    <div class="proto-marca-tx">
+      <b>Vacinação 2026</b>
+      <span>Painel Executivo</span>
+    </div>
+  </div>
+  <div class="proto-grupo">Seções</div>
+  <div class="proto-lista" id="protoNavLista"></div>
+  <div class="proto-rodape">
+    <button class="proto-btn" id="protoRecolher" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+      <span>Recolher</span>
+    </button>
+  </div>
+</nav>
+
 <div class="container">
 
   <!-- Header -->
@@ -3964,5 +4195,159 @@ function bindEvents(){
     </div>
   </div>
 </div>
+<!-- ═══ SCRIPT DA NAVEGACAO LATERAL (18/11/2026) ═══ -->
+<script>
+/* ═══════════════════════════════════════════════════════════════════════
+   NAVEGAÇÃO LATERAL. Roda depois do script original e não toca em nada
+   dele: só lê as seções que já existem, dá um id a cada uma e monta o
+   menu por cima.
+   ═══════════════════════════════════════════════════════════════════════ */
+(function(){
+  'use strict';
+
+  /* As seções na ordem em que aparecem na página. O rótulo é o nome que vai
+     para o menu; o ícone é um traçado SVG simples, para não depender de
+     biblioteca externa nenhuma. */
+  var ICONES = {
+    filtros:  'M22 3H2l8 9.46V19l4 2v-8.54L22 3z',
+    kpi:      'M3 3v18h18M7 16V9m5 7V5m5 11v-4',
+    anos:     'M3 17l6-6 4 4 8-8M21 7h-5m5 0v5',
+    mes:      'M8 2v4m8-4v4M3 10h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z',
+    equipe:   'M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zm14 10v-2a4 4 0 00-3-3.87',
+    clientes: 'M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z',
+    devol:    'M9 14L4 9l5-5M4 9h11a5 5 0 015 5v5',
+    mapa:     'M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0zm-9 3a3 3 0 100-6 3 3 0 000 6z',
+    proj:     'M3 3v18h18M7 14l4-4 3 3 5-6',
+    tabela:   'M3 3h18v18H3zM3 9h18M3 15h18M9 3v18'
+  };
+
+  function svg(d){
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" '
+         + 'stroke-linecap="round" stroke-linejoin="round"><path d="' + d + '"/></svg>';
+  }
+
+  /* Descobre as seções pelo que já existe no documento. Nada aqui depende da
+     ordem exata: se uma seção não for encontrada, ela simplesmente não entra
+     no menu, e o resto continua funcionando. */
+  function mapear(){
+    var cont = document.querySelector('.container');
+    if(!cont) return [];
+    var secoes = [].slice.call(cont.children).filter(function(e){
+      return e.tagName === 'SECTION';
+    });
+    var nomes = [
+      ['Filtros',        'filtros'],
+      ['Indicadores',    'kpi'],
+      ['Evolução anual', 'anos'],
+      ['Evolução mensal','mes'],
+      ['Equipe',         'equipe'],
+      ['Clientes',       'clientes'],
+      ['Devoluções',     'devol'],
+      ['Mapa',           'mapa'],
+      ['Projeção',       'proj'],
+      ['Tabela',         'tabela']
+    ];
+    var out = [];
+    secoes.forEach(function(sec, i){
+      var n = nomes[i];
+      if(!n) return;
+      if(!sec.id) sec.id = 'proto-sec-' + i;
+      out.push({ el: sec, id: sec.id, rotulo: n[0], icone: ICONES[n[1]] });
+    });
+    return out;
+  }
+
+  function montar(){
+    var secoes = mapear();
+    var lista = document.getElementById('protoNavLista');
+    if(!lista || !secoes.length) return;
+
+    lista.innerHTML = secoes.map(function(s){
+      return '<a class="proto-item" href="#' + s.id + '" data-alvo="' + s.id + '">'
+           + '<span class="proto-ic">' + svg(s.icone) + '</span>'
+           + '<span class="proto-tx">' + s.rotulo + '</span></a>';
+    }).join('');
+
+    var itens = [].slice.call(lista.querySelectorAll('.proto-item'));
+
+    itens.forEach(function(a){
+      a.addEventListener('click', function(ev){
+        ev.preventDefault();
+        var alvo = document.getElementById(a.dataset.alvo);
+        if(!alvo) return;
+        var topo = alvo.getBoundingClientRect().top + window.scrollY - 86;
+        window.scrollTo({ top: Math.max(0, topo), behavior: 'smooth' });
+        /* no celular o menu é uma gaveta: fecha depois de escolher */
+        document.body.classList.remove('proto-aberto');
+      });
+    });
+
+    /* Marca no menu a seção que está na tela.
+
+       A primeira tentativa usou IntersectionObserver pegando a primeira seção
+       visível, e deu errado: a seção de filtros é position:sticky, fica colada
+       no topo e NUNCA sai da tela, então ela vencia sempre e o menu ficava
+       preso em "Filtros" por mais que se rolasse.
+
+       Agora a conta é direta: a seção ativa é a última cujo topo já passou
+       pela linha de corte. Isso é imune a sticky, porque olha a posição real
+       de cada seção, não se ela está visível. */
+    var LINHA = 140;   // px abaixo do topo da janela
+    var pedido = null;
+
+    function marcar(){
+      pedido = null;
+      var atual = secoes[0];
+      for(var i = 0; i < secoes.length; i++){
+        var topo = secoes[i].el.getBoundingClientRect().top;
+        if(topo - LINHA <= 0) atual = secoes[i];
+        else break;
+      }
+      /* no fim da página, a última seção manda — senão as curtas nunca acendem */
+      if(window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 80){
+        atual = secoes[secoes.length - 1];
+      }
+      itens.forEach(function(a){
+        a.classList.toggle('ativo', a.dataset.alvo === atual.id);
+      });
+    }
+
+    function agendar(){
+      if(pedido === null) pedido = window.requestAnimationFrame(marcar);
+    }
+
+    window.addEventListener('scroll', agendar, { passive: true });
+    window.addEventListener('resize', agendar);
+    marcar();
+
+    /* Recolher / expandir (Modelo A) e abrir a gaveta (celular) */
+    var botaoRecolher = document.getElementById('protoRecolher');
+    if(botaoRecolher){
+      botaoRecolher.addEventListener('click', function(){
+        document.body.classList.toggle('proto-recolhido');
+      });
+    }
+    var botaoMenu = document.getElementById('protoMenuBtn');
+    if(botaoMenu){
+      botaoMenu.addEventListener('click', function(ev){
+        ev.stopPropagation();
+        document.body.classList.toggle('proto-aberto');
+      });
+      document.addEventListener('click', function(ev){
+        if(!document.body.classList.contains('proto-aberto')) return;
+        var nav = document.getElementById('protoNav');
+        if(nav && !nav.contains(ev.target)) document.body.classList.remove('proto-aberto');
+      });
+    }
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', function(){ setTimeout(montar, 80); });
+  } else {
+    setTimeout(montar, 80);
+  }
+})();
+
+</script>
 </body>
 </html>
