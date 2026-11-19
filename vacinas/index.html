@@ -4349,5 +4349,162 @@ function bindEvents(){
 })();
 
 </script>
+<!-- ═══ MENU EM GRUPOS + TÍTULOS DE SEÇÃO (19/11/2026) ═══
+     1) Menu lateral: itens agrupados, cada grupo abre e fecha.
+     2) Área do painel: um título antes de cada grupo de seções.
+     Só mexe em apresentação. Não altera cálculo, filtro nem dado. -->
+<style>
+.proto-grupo{ display:none !important; }
+.mxg{ margin-top:8px; }
+.mxg:first-child{ margin-top:4px; }
+.mxg-cab{
+  width:100%; display:flex; align-items:center; gap:8px;
+  background:#F2F6F4; border:0; border-radius:9px; padding:8px 10px;
+  font-family:inherit; font-size:11.5px; font-weight:650; line-height:1.2; color:var(--a-tinta);
+  cursor:pointer; text-align:left; white-space:nowrap; transition:background .15s ease;
+}
+.mxg-cab:hover{ background:#E8F0EC; }
+.mxg-cab svg{ width:14px; height:14px; flex:0 0 14px; transition:transform .2s ease; }
+.mxg.fechado .mxg-cab svg{ transform:rotate(-90deg); }
+.mxg-cab .mxg-nome{ flex:1; overflow:hidden; text-overflow:ellipsis; }
+.mxg-cab .mxg-qtd{ font-size:10.5px; font-weight:500; color:var(--a-tinta-3); }
+.mxg-corpo{ padding:3px 0 0 8px; }
+.mxg.fechado .mxg-corpo{ display:none; }
+body.proto-recolhido .mxg-cab{ height:1px; padding:0; margin:10px 8px; background:var(--a-borda); font-size:0; pointer-events:none; }
+body.proto-recolhido .mxg-cab svg,body.proto-recolhido .mxg-cab span{ display:none; }
+body.proto-recolhido .mxg-corpo{ display:block !important; padding-left:0; }
+
+.mxs-titulo{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin:36px 0 16px; }
+.mxs-titulo.primeiro{ margin-top:6px; }
+.mxs-ic{
+  width:42px; height:42px; flex:0 0 42px; border-radius:12px;
+  background:var(--a-acento-claro); color:var(--a-acento); display:grid; place-items:center;
+}
+.mxs-ic svg{ width:21px; height:21px; }
+.mxs-tx{ min-width:0; }
+.mxs-tx h2{ margin:0; font-size:19px; font-weight:750; letter-spacing:-.015em; color:var(--a-tinta); line-height:1.2; }
+.mxs-tx p{ margin:3px 0 0; font-size:12.5px; color:var(--a-tinta-2); }
+.mxs-chips{ margin-left:auto; display:flex; flex-wrap:wrap; gap:6px; }
+.mxs-chips button{
+  font-family:inherit; font-size:11.5px; font-weight:500; color:var(--a-tinta-2);
+  background:var(--a-superficie); border:1px solid var(--a-borda); border-radius:999px;
+  padding:4px 11px; cursor:pointer; transition:background .15s ease, color .15s ease;
+}
+.mxs-chips button:hover{ background:var(--a-acento-claro); color:var(--a-acento); border-color:transparent; }
+@media (max-width:720px){
+  .mxs-titulo{ margin:28px 0 12px; gap:10px; }
+  .mxs-ic{ width:36px; height:36px; flex-basis:36px; border-radius:10px; }
+  .mxs-tx h2{ font-size:17px; }
+  .mxs-chips{ margin-left:0; width:100%; }
+}
+</style>
+<script>
+(function(){
+  'use strict';
+  var SVG = function(d){ return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + '</svg>'; };
+  var IC = {
+    panorama: '<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>',
+    evolucao: '<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>',
+    clientes: '<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>',
+    risco:    '<path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+    decisao:  '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+    seta:     '<polyline points="6 9 12 15 18 9"/>'
+  };
+  /* itens = posição no menu (0 = Filtros ... 9 = Tabela)
+     titulo = antes de qual item o título entra na área do painel */
+  var GRUPOS = [
+    { nome:'Panorama',                 ic:'panorama', itens:[0,1], titulo:1, desc:'Os indicadores da campanha no recorte escolhido' },
+    { nome:'Evolução da campanha',     ic:'evolucao', itens:[2,3], titulo:2, desc:'Como as doses evoluíram entre anos e mês a mês' },
+    { nome:'Clientes e proprietários', ic:'clientes', itens:[4,5], titulo:4, desc:'Quem vendeu e quem comprou' },
+    { nome:'Risco e território',       ic:'risco',    itens:[6,7], titulo:6, desc:'Onde estão as devoluções e onde estão as empresas' },
+    { nome:'Decisão',                  ic:'decisao',  itens:[8,9], titulo:8, desc:'Quanto oferecer a cada cliente e o detalhe de cada proposta' }
+  ];
+  var CHAVE = 'vacinas-menu-grupos-fechados';
+
+  /* Altura do que fica preso no topo ao rolar: cabeçalho + barra de filtros.
+     Sem descontar a barra de filtros, o destino do clique para escondido atrás dela. */
+  function folgaTopo(){
+    var folga = 86, f = document.getElementById('secFiltros');
+    if (f && getComputedStyle(f).position === 'sticky'){
+      var cs = getComputedStyle(f);
+      folga = Math.max(folga, (parseFloat(cs.top) || 0) + f.getBoundingClientRect().height + 14);
+    }
+    return folga;
+  }
+  function rolarAte(el){
+    var topo = el.getBoundingClientRect().top + window.scrollY - folgaTopo();
+    window.scrollTo({ top: Math.max(0, topo), behavior: 'smooth' });
+  }
+  function lerFechados(){ try { return JSON.parse(localStorage.getItem(CHAVE) || '[]'); } catch(e){ return []; } }
+  function gravarFechados(v){ try { localStorage.setItem(CHAVE, JSON.stringify(v)); } catch(e){} }
+
+  function aplicar(){
+    var lista = document.getElementById('protoNavLista');
+    if (!lista) return true;
+    var itens = [].slice.call(lista.querySelectorAll('.proto-item'));
+    if (itens.length < 10) return false;
+    if (lista.getAttribute('data-grupos')) return true;
+    lista.setAttribute('data-grupos', '1');
+    var fechados = lerFechados();
+
+    /* todos os itens do menu param abaixo da barra de filtros (o 1º de cada grupo para no título) */
+    itens.forEach(function(a){
+      a.addEventListener('click', function(){
+        if (a.getAttribute('data-mxs-titulo')) return;
+        var alvo = document.getElementById(a.getAttribute('data-alvo'));
+        if (alvo && a.getAttribute('data-alvo') !== 'secFiltros') rolarAte(alvo);
+      });
+    });
+
+    GRUPOS.forEach(function(g){
+      var meus = g.itens.map(function(i){ return itens[i]; }).filter(Boolean);
+      if (!meus.length) return;
+
+      /* 1) menu: grupo que abre e fecha */
+      var bloco = document.createElement('div');
+      bloco.className = 'mxg' + (fechados.indexOf(g.nome) > -1 ? ' fechado' : '');
+      bloco.innerHTML = '<button type="button" class="mxg-cab" aria-expanded="' + (fechados.indexOf(g.nome) > -1 ? 'false' : 'true') + '">'
+        + SVG(IC.seta) + '<span class="mxg-nome">' + g.nome + '</span><span class="mxg-qtd">' + meus.length + '</span></button>'
+        + '<div class="mxg-corpo"></div>';
+      var corpo = bloco.querySelector('.mxg-corpo');
+      lista.insertBefore(bloco, meus[0]);
+      meus.forEach(function(a){ corpo.appendChild(a); });
+      bloco.querySelector('.mxg-cab').addEventListener('click', function(){
+        var f = bloco.classList.toggle('fechado');
+        this.setAttribute('aria-expanded', f ? 'false' : 'true');
+        var lst = lerFechados().filter(function(n){ return n !== g.nome; });
+        if (f) lst.push(g.nome);
+        gravarFechados(lst);
+      });
+
+      /* 2) painel: título antes do grupo de seções */
+      var ref = itens[g.titulo], alvo = ref && document.getElementById(ref.getAttribute('data-alvo'));
+      if (!alvo || !alvo.parentNode) return;
+      var t = document.createElement('div');
+      t.className = 'mxs-titulo' + (g.titulo === 1 ? ' primeiro' : '');
+      t.innerHTML = '<span class="mxs-ic">' + SVG(IC[g.ic]) + '</span>'
+        + '<div class="mxs-tx"><h2>' + g.nome + '</h2><p>' + g.desc + '</p></div>'
+        + '<div class="mxs-chips">' + meus.map(function(a, k){
+            var nome = (a.querySelector('.proto-tx') || a).textContent.trim();
+            return '<button type="button" data-k="' + k + '">' + nome + '</button>';
+          }).join('') + '</div>';
+      alvo.parentNode.insertBefore(t, alvo);
+      t.querySelectorAll('.mxs-chips button').forEach(function(b){
+        b.addEventListener('click', function(){ meus[+b.getAttribute('data-k')].click(); });
+      });
+
+      /* o primeiro item do grupo leva até o título, não só até o gráfico */
+      ref.setAttribute('data-mxs-titulo', '1');
+      ref.addEventListener('click', function(){ rolarAte(t); });
+    });
+    return true;
+  }
+
+  var tentativas = 0;
+  (function esperar(){ if (!aplicar() && tentativas++ < 60) setTimeout(esperar, 100); })();
+})();
+</script>
+<!-- ═══ FIM MENU EM GRUPOS + TÍTULOS DE SEÇÃO ═══ -->
+
 </body>
 </html>
