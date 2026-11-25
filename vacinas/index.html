@@ -1324,21 +1324,21 @@ body.proto-recolhido .proto-btn span{ display: none; }
     <div class="card-header">
       <div>
         <div class="card-title">Projeção de Doses por Cliente — Análise de Devoluções</div>
-        <div class="card-subtitle" id="projSubFixo">Considera apenas propostas <strong class="rotulo-status">Aceitas</strong> no recorte de filtros ativo · Contratado = doses aplicadas + doses devolvidas</div>
+        <div class="card-subtitle">Considera apenas propostas <strong class="rotulo-status">Aceitas</strong> no recorte de filtros ativo · Contratado = doses aplicadas + doses devolvidas</div>
       </div>
       <span class="card-badge orange" id="projBadge">0 clientes</span>
     </div>
 
     <div class="metrics-strip">
       <div class="metric-box">
-        <div class="metric-label" id="mContratadoRot">Contratado no recorte</div>
+        <div class="metric-label">Contratado no recorte</div>
         <div class="metric-value" id="mContratado">0</div>
         <div class="metric-hint">doses negociadas</div>
       </div>
       <div class="metric-box accent">
         <div class="metric-label">Devolvido</div>
         <div class="metric-value" id="mDevolvido">0</div>
-        <div class="metric-hint"><span id="mDevPct">0%</span></div>   <!-- 25/11/2026: "do contratado" saia repetido; o texto vem do script -->
+        <div class="metric-hint"><span id="mDevPct">0%</span> do contratado</div>
       </div>
       <div class="metric-box good">
         <div class="metric-label">Aplicado (real)</div>
@@ -4412,31 +4412,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 /* 25/11/2026: toda vez que a Projeção é redesenhada, o 4º escopo acompanha. */
 const _renderProjectionOrig = renderProjection;
-
-/* ═══════════════════════════════════════════════════════════════════════
-   PROJECAO COM BASE FIXA (25/11/2026)
-   O card "Projecao de Doses por Cliente" deixa de seguir os filtros: usa
-   sempre a ultima campanha encerrada (a anterior a campanha em curso — em
-   25/11/2026, a 2026). Os graficos de Devolucoes, que tambem nascem desta
-   conta, continuam seguindo os filtros, como antes.
-   ═══════════════════════════════════════════════════════════════════════ */
-function anoBaseProjecao(){
-  const atual = (typeof anoDaCampanha === 'function') ? anoDaCampanha(new Date().toISOString()) : new Date().getFullYear();
-  return atual - 1;
-}
-function baseFixaProjecao(){
-  const ano = anoBaseProjecao();
-  return RAW_DATA.filter(r => r.data && ((typeof anoDaCampanha === 'function') ? anoDaCampanha(r.data) : Number(String(r.data).slice(0,4))) === ano);
-}
-renderProjection = function(filtered){
-  _renderProjectionOrig(baseFixaProjecao());
-  renderDevCharts(buildProjection(filtered));   /* Devolucoes seguem o filtro */
-  const rotC = document.getElementById('mContratadoRot');
-  if (rotC) rotC.textContent = 'Contratado na campanha ' + anoBaseProjecao();
-  const sub = document.getElementById('projSubFixo');
-  if (sub) sub.innerHTML = 'Base fixa: <strong>Campanha ' + anoBaseProjecao() + '</strong> (última campanha encerrada) · não segue os filtros do painel · somente propostas <strong>Aceitas</strong> · Contratado = doses aplicadas + doses devolvidas';
-  renderProjHist();
-};
+renderProjection = function(filtered){ _renderProjectionOrig(filtered); renderProjHist(); };
 
 function renderAll(){
   const filtered = getFiltered();
