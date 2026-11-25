@@ -969,6 +969,51 @@ body.proto-recolhido .proto-btn span{ display: none; }
 .m27-vazio button{margin-top:10px;font:inherit;font-size:12.5px;font-weight:600;border:0;border-radius:10px;padding:8px 14px;background:#062B2D;color:#fff;cursor:pointer}
 @media(prefers-reduced-motion:no-preference){.m27-mini b,.m27-tubo .seg{transition:width .8s ease}}
 </style>
+
+<!-- ═══ HISTORICO DE CNPJs 2023–2026 — ESTILO (25/11/2026) ═══ -->
+<style>
+.ph-nota{font-size:12px;color:#5A6B68;line-height:1.5;margin:4px 0 12px}
+.ph-tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}
+@media(max-width:900px){.ph-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.ph-tile{border:1px solid #E3EAE8;border-radius:14px;padding:12px 14px;border-top:4px solid var(--c,#D5DFDC);cursor:pointer;background:#fff;text-align:left;font:inherit;color:inherit;transition:background .15s}
+.ph-tile:hover{background:#F7FAF9}.ph-tile.on{background:#F1F8F4;box-shadow:inset 0 0 0 1px var(--c)}
+.ph-tile small{display:block;font-size:11px;color:#5A6B68;font-weight:600}
+.ph-tile b{display:block;font-size:24px;font-weight:800;letter-spacing:-.02em;margin:2px 0}
+.ph-tile span{font-size:11.5px;color:#8E9B99}
+.ph-proj{border:1px solid #E3EAE8;border-radius:14px;padding:14px 16px;margin-bottom:14px}
+.ph-proj .t{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:12.5px;color:#5A6B68}
+.ph-proj .t b{color:#0F1A1C}
+.ph-barra{position:relative;height:24px;border-radius:999px;background:#EDF2F0;box-shadow:inset 0 1px 3px rgba(6,43,45,.12);margin-top:22px}
+.ph-barra i{position:absolute;top:3px;bottom:3px;left:0;border-radius:999px;background:linear-gradient(180deg,#3EDC74,#1E7A47)}
+.ph-barra .mk{position:absolute;top:-6px;bottom:-6px;width:2px;background:#062B2D}
+.ph-barra .mk span{position:absolute;top:-17px;left:50%;transform:translateX(-50%);font-size:10.5px;font-weight:700;white-space:nowrap;color:#062B2D}
+.ph-leg{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:10px;font-size:12px;color:#5A6B68}
+.ph-leg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.ph-leg b{color:#0F1A1C}
+.ph-anos{display:flex;gap:4px}
+.ph-ano{width:32px;height:22px;border-radius:6px;display:grid;place-items:center;font-size:10.5px;font-weight:700;background:#F1F4F3;color:#B5C3C0}
+.ph-ano.f{background:#1E7A47;color:#fff}.ph-ano.r{background:#FCEBEB;color:#B32B30}.ph-ano.fr{background:linear-gradient(135deg,#1E7A47 50%,#F3B2B2 50%);color:#fff}
+.ph-pill{display:inline-block;border-radius:999px;padding:3px 9px;font-size:11px;font-weight:700;white-space:nowrap}
+.ph-ativo{background:#E8F6EE;color:#1E7A47}.ph-nunca{background:#E3F4F6;color:#0B6E79}
+.ph-rec{display:block;font-size:10px;font-weight:700;color:#1E7A47;margin-top:3px}
+.ph-pj b{font-size:13.5px}.ph-pj small{display:block;font-size:10.5px;color:#8E9B99;white-space:nowrap}
+#projHistTable td{vertical-align:middle}
+#projHistTable th,#projHistTable td{padding:9px 10px}
+#projHistTable td:nth-child(n+4){white-space:nowrap}
+.ph-cli{display:block;min-width:190px;max-width:300px}
+.ph-cnpj{display:block;font-size:11.5px;color:#8E9B99;white-space:nowrap;margin-top:2px}
+.ph-nw{white-space:nowrap}
+@media (max-width:720px){
+  #projHistTable,#projHistTable tbody{display:block;width:100%}
+  #projHistTable thead{display:none}
+  #projHistTable tbody tr{display:grid;grid-template-columns:1fr 1fr;gap:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--card);padding:13px 14px;margin-bottom:10px}
+  #projHistTable tbody td{display:flex;flex-direction:column;gap:3px;align-items:flex-start;border:0;padding:0;font-size:12.5px;line-height:1.3;white-space:normal}
+  #projHistTable tbody td::before{content:attr(data-rot);font-size:9px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--text-soft)}
+  #projHistTable tbody td[data-rot="Cliente"],#projHistTable tbody td[data-rot="Histórico 2023–2026"],#projHistTable tbody td[colspan]{grid-column:1 / -1}
+  #projHistTable tbody td[data-rot="Cliente"]{font-size:13.5px;padding-bottom:3px;border-bottom:1px solid var(--border);margin-bottom:2px}
+  .ph-cli{min-width:0;max-width:none}
+}
+</style>
 </head>
 <body>
 
@@ -1312,6 +1357,7 @@ body.proto-recolhido .proto-btn span{ display: none; }
         <button class="btn-scope active" data-scope="dev">Somente com devolução</button>
         <button class="btn-scope" data-scope="crit">Devolução ≥ 25%</button>
         <button class="btn-scope" data-scope="all">Todos os clientes</button>
+        <button class="btn-scope" data-scope="hist" title="Todo CNPJ que negociou vacina de 2023 a 2026">Histórico de CNPJs 2023–2026</button>
         <select id="projMargem" class="margem-select" title="Margem de segurança aplicada à sugestão do próximo ano">
           <option value="0">Margem 0%</option>
           <option value="5">Margem 5%</option>
@@ -1357,6 +1403,37 @@ body.proto-recolhido .proto-btn span{ display: none; }
       <div class="pagination-controls" id="projPagination"></div>
     </div>
 
+
+    <!-- ═══ HISTORICO DE CNPJs 2023–2026 (25/11/2026) — 4º escopo da Projeção ═══ -->
+    <div id="projHist" hidden>
+      <div class="ph-nota">Todo CNPJ que já negociou vacina de 2023 a 2026 (propostas <b>Aceitas, Concluídas e Recusadas</b>), uma linha por CNPJ, cada proposta contada uma vez pelo ID. Não segue os filtros de período. Projeção para a campanha <span id="phAno">2027</span>.</div>
+      <div class="ph-tiles" id="phTiles"></div>
+      <div class="ph-proj" id="phProj"></div>
+      <div class="table-wrapper">
+        <table id="projHistTable">
+          <thead><tr>
+            <th class="sortable" data-hkey="cli">Cliente</th>
+            <th class="sortable" data-hkey="own">Consultor</th>
+            <th>Histórico 2023–2026</th>
+            <th class="sortable" data-hkey="np">Propostas</th>
+            <th class="sortable" data-hkey="fT">Doses fechadas</th>
+            <th class="sortable" data-hkey="devp">Devolução</th>
+            <th class="sortable" data-hkey="sit">Situação</th>
+            <th class="sortable" data-hkey="pj">Projeção</th>
+          </tr></thead>
+          <tbody id="projHistBody"></tbody>
+        </table>
+      </div>
+      <div class="pagination">
+        <div><span id="phShowing">0</span> de <span id="phTotal">0</span> CNPJs</div>
+        <div class="pagination-controls" id="phPagination"></div>
+      </div>
+      <div class="ph-nota" style="margin-top:12px">
+        <b>Ativo</b> = CNPJ com proposta Aceita ou Concluída entre 2023 e 2026: projeção = doses fechadas no último ano em que fechou × (1 + margem).
+        <b>Nunca fechou</b> = só propostas Recusadas: potencial = doses da última proposta recusada, sem margem, fora do total provável.
+        Pílulas: verde = fechou, rosa = recusou, verde e rosa = as duas coisas no ano, cinza = sem proposta. <b>Recorrente</b> = fechou em 2 anos ou mais.
+      </div>
+    </div>
     <div class="methodology">
       <h4>Como ler esta tabela</h4>
       <ul>
@@ -3665,7 +3742,7 @@ function exportToExcel(){
 
 function exportProjection(){
   const rows = window._projExportRows || [];
-  if (rows.length === 0){ showToast('error', 'Nada a exportar', 'A projeção não retornou clientes neste recorte.', 4000); return; }
+  if (rows.length === 0 && state.projScope !== 'hist'){ showToast('error', 'Nada a exportar', 'A projeção não retornou clientes neste recorte.', 4000); return; }
 
   const data = rows.map(r => ({
     'Cliente': r.cliente,
@@ -3705,16 +3782,35 @@ function exportProjection(){
     {'Indicador':'% devolução','Valor': `${totC>0?(totD/totC*100).toFixed(2):'0'}%`},
     {'Indicador':'Doses aplicadas','Valor': totU},
     {'Indicador':`Sugestão próximo ano (margem ${state.projMargem}%)`,'Valor': totS},
-    {'Indicador':'Escopo','Valor': state.projScope === 'dev' ? 'Somente com devolução' : state.projScope === 'crit' ? 'Devolução ≥ 25%' : 'Todos os clientes'},
+    {'Indicador':'Escopo','Valor': state.projScope === 'dev' ? 'Somente com devolução' : state.projScope === 'crit' ? 'Devolução ≥ 25%' : state.projScope === 'hist' ? 'Histórico de CNPJs 2023–2026' : 'Todos os clientes'},
     {'Indicador':'Data de Exportação','Valor': new Date().toLocaleString('pt-BR')},
   ];
   const ws2 = XLSX.utils.json_to_sheet(resumo);
   ws2['!cols'] = [{wch:42},{wch:26}];
   XLSX.utils.book_append_sheet(wb, ws2, 'Resumo');
 
+  /* 25/11/2026: aba com o Histórico de CNPJs 2023–2026 (4º escopo). */
+  try {
+    const margemH = Number(state.projMargem) || 0;
+    const hist = buildHistCnpj().map(r => {
+      const pj = r.sit === 'nunca' ? r.base : Math.ceil(r.base * (1 + margemH / 100));
+      const o = { 'Cliente': r.cli, 'CNPJ': r.cnpj, 'Consultor (último)': r.own };
+      HIST_ANOS.forEach(y => { const a = r.anos[y]; o['Status ' + y] = a.nf && a.nr ? 'Fechou e recusou' : a.nf ? 'Fechou' : a.nr ? 'Recusou' : ''; });
+      HIST_ANOS.forEach(y => { o['Doses fechadas ' + y] = r.anos[y].f; });
+      return Object.assign(o, { 'Propostas': r.np, 'Fechadas (Aceita/Concluída)': r.nF, 'Recusadas': r.nR,
+        'Doses fechadas 2023–2026': r.fT, '% Devolução': Number(r.devp.toFixed(2)),
+        'Situação': r.sit === 'ativo' ? 'Ativo' : 'Nunca fechou', 'Recorrente': r.rec ? 'SIM' : 'NÃO',
+        [`Projeção (margem ${margemH}%)`]: pj,
+        'Base da projeção': r.sit === 'ativo' ? `Doses fechadas em ${r.by} + ${margemH}%` : `Última proposta recusada (${r.by}), sem margem` });
+    }).sort((a, b) => b[`Projeção (margem ${margemH}%)`] - a[`Projeção (margem ${margemH}%)`]);
+    const ws3 = XLSX.utils.json_to_sheet(hist);
+    ws3['!cols'] = [{wch:52},{wch:18},{wch:18},{wch:16},{wch:16},{wch:16},{wch:16},{wch:12},{wch:12},{wch:12},{wch:12},{wch:10},{wch:14},{wch:10},{wch:14},{wch:12},{wch:14},{wch:10},{wch:16},{wch:40}];
+    XLSX.utils.book_append_sheet(wb, ws3, 'Histórico CNPJs 2023-2026');
+  } catch (e) { console.warn('Histórico de CNPJs não exportado', e); }
+
   const fname = `Projecao_Doses_Cliente_${stamp()}.xlsx`;
   XLSX.writeFile(wb, fname);
-  showToast('success', 'Projeção exportada', `Arquivo "${fname}" gerado com ${rows.length} clientes.`, 4000);
+  showToast('success', 'Projeção exportada', `Arquivo "${fname}" gerado com ${state.projScope === 'hist' ? (window._projHistRows || []).length + ' CNPJs (aba Histórico)' : rows.length + ' clientes'}.`, 4000);
 }
 
 // ===========================================================================
@@ -4179,6 +4275,144 @@ function renderMetas2027(filtered){
     + '<div class="m27-nota">Meta do grupo = % da meta da campanha. Traço fino em cada barra = cota de referência (meta do grupo ÷ nº de consultores); não há meta individual.'
     + (foraDoses > 0 ? ' · ' + fI(foraDoses) + ' doses do recorte são de consultores fora dos grupos e não entram nas metas.' : '') + '</div>';
 }
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   HISTORICO DE CNPJs 2023–2026 (25/11/2026) — 4º escopo da Projeção
+   Todo CNPJ que negociou vacina de 2023 a 2026 (Aceita, Concluida ou
+   Recusada), uma linha por CNPJ (filiais separadas), cada proposta contada
+   uma vez pelo ID. Le a base inteira: nao segue os filtros de periodo.
+   Ativo = teve proposta Aceita ou Concluida -> projecao = doses fechadas no
+   ultimo ano em que fechou x (1 + margem). Nunca fechou = so Recusadas ->
+   potencial = doses da ultima recusada, sem margem.
+   ═══════════════════════════════════════════════════════════════════════ */
+const HIST_ANOS = ['2023', '2024', '2025', '2026'];
+const HIST_STATUS = ['Aceita', 'Concluída', 'Recusada'];
+const histState = { filtro: 'todos', sort: { key: 'pj', dir: -1 }, page: 1 };
+
+function buildHistCnpj(){
+  const props = {};
+  RAW_DATA.forEach(r => {
+    const y = String(r.data || '').slice(0, 4);
+    if (!HIST_ANOS.includes(y) || !HIST_STATUS.includes(r.status) || !r.id_proposta) return;
+    const p = props[r.id_proposta] || (props[r.id_proposta] = {
+      cnpj: r.cnpj || ('SEM CNPJ · ' + (r.cliente || '')), cli: r.cliente || '—', own: r.proprietario || '',
+      st: r.status, y, d: String(r.data).slice(0, 10), vac: 0, dev: 0 });
+    if (isDevolucao(r)) p.dev += (r.doses || 0); else p.vac += (r.doses || 0);
+  });
+  const porCnpj = {};
+  Object.values(props).forEach(p => { (porCnpj[p.cnpj] = porCnpj[p.cnpj] || []).push(p); });
+  return Object.entries(porCnpj).map(([cnpj, ps]) => {
+    ps.sort((a, b) => a.d.localeCompare(b.d));
+    const anos = {};
+    HIST_ANOS.forEach(y => {
+      const py = ps.filter(p => p.y === y);
+      const fe = py.filter(p => p.st !== 'Recusada'), re = py.filter(p => p.st === 'Recusada');
+      anos[y] = { f: fe.reduce((s, p) => s + p.vac, 0), dev: fe.reduce((s, p) => s + p.dev, 0), nf: fe.length,
+                  nr: re.length, rq: re.reduce((s, p) => s + p.vac, 0) };
+    });
+    const anosFech = HIST_ANOS.filter(y => anos[y].nf);
+    const ult = ps[ps.length - 1];
+    let sit, base, by;
+    if (anosFech.length){ sit = 'ativo'; by = anosFech[anosFech.length - 1]; base = anos[by].f; }
+    else { const lr = ps.filter(p => p.st === 'Recusada').pop(); sit = 'nunca'; by = lr.y; base = lr.vac; }
+    const fT = HIST_ANOS.reduce((s, y) => s + anos[y].f, 0), dev = HIST_ANOS.reduce((s, y) => s + anos[y].dev, 0);
+    return { cnpj, cli: ult.cli, own: ult.own, anos, sit, base, by, np: ps.length,
+      nF: ps.filter(p => p.st !== 'Recusada').length, nR: ps.filter(p => p.st === 'Recusada').length,
+      rec: anosFech.length >= 2, fT, dev, devp: (fT + dev) ? dev / (fT + dev) * 100 : 0 };
+  });
+}
+
+function renderProjHist(){
+  const box = document.getElementById('projHist');
+  if (!box) return;
+  const card = box.closest('.card') || box.parentNode;
+  const emHist = state.projScope === 'hist';
+  box.hidden = !emHist;
+  /* No 4º escopo, a faixa de métricas, a tabela e a paginação de sempre ficam ocultas. */
+  const mStrip = card.querySelector('.metrics-strip');
+  const tWrap = document.getElementById('projTable') && document.getElementById('projTable').closest('.table-wrapper');
+  const tPag = tWrap && tWrap.nextElementSibling && tWrap.nextElementSibling.classList.contains('pagination') ? tWrap.nextElementSibling : null;
+  [mStrip, tWrap, tPag].forEach(el => { if (el) el.style.display = emHist ? 'none' : ''; });
+  if (!emHist) return;
+
+  const margem = Number(state.projMargem) || 0;
+  const fI = n => fmtInt.format(Math.round(n));
+  const fP = n => n.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%';
+  const fC = c => /^\d{14}$/.test(c) ? c.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5') : c;
+  const D = buildHistCnpj();
+  D.forEach(r => { r.pj = r.sit === 'nunca' ? r.base : Math.ceil(r.base * (1 + margem / 100)); });
+  window._projHistRows = D;
+
+  const anoProj = (typeof anoDaCampanha === 'function') ? anoDaCampanha(new Date().toISOString()) : new Date().getFullYear() + 1;
+  const meta = metaDoAno(anoProj);
+  document.getElementById('phAno').textContent = anoProj;
+  const at = D.filter(r => r.sit === 'ativo'), nu = D.filter(r => r.sit === 'nunca');
+  const soma = a => a.reduce((s, r) => s + r.pj, 0);
+  const pA = soma(at), pN = soma(nu);
+
+  const tiles = [
+    ['todos', 'CNPJs com histórico', D.length, at.length + ' ativos · ' + nu.length + ' nunca fecharam', '#062B2D'],
+    ['ativo', 'Ativos', at.length, fI(pA) + ' doses projetadas', '#1E7A47'],
+    ['nunca', 'Nunca fecharam', nu.length, fI(pN) + ' doses de potencial', '#0B6E79'],
+    ['rec', 'Recorrentes', D.filter(r => r.rec).length, 'fecharam em 2 anos ou mais', '#3EDC74'] ];
+  const tBox = document.getElementById('phTiles');
+  tBox.innerHTML = tiles.map(t => '<button type="button" class="ph-tile' + (histState.filtro === t[0] ? ' on' : '') + '" data-f="' + t[0] + '" style="--c:' + t[4] + '"><small>' + t[1] + '</small><b>' + fI(t[2]) + '</b><span>' + t[3] + '</span></button>').join('');
+  tBox.querySelectorAll('.ph-tile').forEach(b => b.addEventListener('click', () => { histState.filtro = b.dataset.f; histState.page = 1; renderProjHist(); }));
+
+  const pBox = document.getElementById('phProj');
+  if (meta){
+    const esc = Math.max(meta, pA) * 1.08, X = v => v / esc * 100;
+    pBox.innerHTML = '<div class="t"><span>Projeção ' + anoProj + ' dos ativos com margem de ' + margem + '% contra a meta de <b>' + fI(meta) + '</b> doses</span><span><b>' + fI(pA) + '</b> doses · ' + fP(pA / meta * 100) + ' da meta</span></div>'
+      + '<div class="ph-barra"><i style="width:' + X(pA) + '%"></i><div class="mk" style="left:' + X(meta) + '%"><span>Meta ' + fI(meta) + '</span></div></div>'
+      + '<div class="ph-leg"><span><i style="background:#1E7A47"></i>Ativos · <b>' + fI(pA) + '</b></span><span><i style="background:#0B6E79"></i>Potencial de quem nunca fechou (fora da barra) · <b>' + fI(pN) + '</b></span></div>';
+  } else {
+    pBox.innerHTML = '<div class="t"><span>Projeção dos ativos com margem de ' + margem + '%: <b>' + fI(pA) + '</b> doses · potencial de quem nunca fechou: <b>' + fI(pN) + '</b></span></div>';
+  }
+
+  let rows = D.filter(r => histState.filtro === 'todos' || (histState.filtro === 'rec' ? r.rec : r.sit === histState.filtro));
+  const q = String(state.projSearch || '').trim().toLowerCase(), qd = q.replace(/\D/g, '');
+  if (q) rows = rows.filter(r => r.cli.toLowerCase().includes(q) || (r.own || '').toLowerCase().includes(q) || (qd && r.cnpj.includes(qd)));
+  const { key, dir } = histState.sort;
+  rows.sort((a, b) => (typeof a[key] === 'string' ? a[key].localeCompare(b[key]) : a[key] - b[key]) * dir || b.pj - a.pj);
+
+  const ps = projPageSize(), tp = Math.max(1, Math.ceil(rows.length / ps));
+  histState.page = Math.min(histState.page, tp);
+  const pg = rows.slice((histState.page - 1) * ps, histState.page * ps);
+  document.getElementById('projBadge').textContent = fI(rows.length) + ' CNPJs';
+  document.getElementById('projHistBody').innerHTML = pg.length ? pg.map(r => {
+    const anos = HIST_ANOS.map(y => { const a = r.anos[y]; const c = a.nf && a.nr ? 'fr' : a.nf ? 'f' : a.nr ? 'r' : '';
+      const t = (a.nf || a.nr) ? y + ': ' + (a.nf ? fI(a.f) + ' doses fechadas' : '') + (a.nf && a.nr ? ' · ' : '') + (a.nr ? a.nr + ' recusada(s), ' + fI(a.rq) + ' doses propostas' : '') : y + ': sem proposta';
+      return '<span class="ph-ano ' + c + '" title="' + t + '">' + y.slice(2) + '</span>'; }).join('');
+    const base = r.sit === 'ativo' ? r.by + ': ' + fI(r.base) + ' + ' + margem + '%' : 'recusada ' + r.by + ': ' + fI(r.base);
+    return '<tr><td><strong class="ph-cli">' + escapeHtml(r.cli) + '</strong><span class="ph-cnpj">' + fC(r.cnpj) + '</span></td><td class="ph-nw">' + escapeHtml(r.own) + '</td>'
+      + '<td><div class="ph-anos">' + anos + '</div></td>'
+      + '<td title="' + r.nF + ' fechada(s) · ' + r.nR + ' recusada(s)">' + r.np + ' <span style="color:#8E9B99">(' + r.nF + '✓ ' + r.nR + '✗)</span></td>'
+      + '<td>' + fI(r.fT) + '</td><td>' + (r.dev ? fP(r.devp) : '—') + '</td>'
+      + '<td><span class="ph-pill ' + (r.sit === 'ativo' ? 'ph-ativo">Ativo' : 'ph-nunca">Nunca fechou') + '</span>' + (r.rec ? '<span class="ph-rec">RECORRENTE</span>' : '') + '</td>'
+      + '<td class="ph-pj"><b>' + fI(r.pj) + '</b><small>' + base + '</small></td></tr>';
+  }).join('') : '<tr><td colspan="8" class="empty-state">Nenhum CNPJ encontrado.</td></tr>';
+  rotularCelulasMobile(document.getElementById('projHistTable'));
+  document.getElementById('phShowing').textContent = fI(pg.length);
+  document.getElementById('phTotal').textContent = fI(rows.length);
+  const pBtn = document.getElementById('phPagination');
+  pBtn.innerHTML = tp > 1 ? '<button class="page-btn" data-p="' + (histState.page - 1) + '"' + (histState.page === 1 ? ' disabled' : '') + '>‹</button>'
+    + '<span style="font-size:12px;padding:0 8px">' + histState.page + ' / ' + tp + '</span>'
+    + '<button class="page-btn" data-p="' + (histState.page + 1) + '"' + (histState.page === tp ? ' disabled' : '') + '>›</button>' : '';
+  pBtn.querySelectorAll('button').forEach(b => b.addEventListener('click', () => { histState.page = +b.dataset.p; renderProjHist(); }));
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('#projHistTable th.sortable').forEach(th => th.addEventListener('click', () => {
+    const k = th.dataset.hkey;
+    histState.sort = { key: k, dir: histState.sort.key === k ? -histState.sort.dir : (['cli', 'own', 'sit', 'cnpj'].includes(k) ? 1 : -1) };
+    histState.page = 1; renderProjHist();
+  }));
+});
+
+/* 25/11/2026: toda vez que a Projeção é redesenhada, o 4º escopo acompanha. */
+const _renderProjectionOrig = renderProjection;
+renderProjection = function(filtered){ _renderProjectionOrig(filtered); renderProjHist(); };
 
 function renderAll(){
   const filtered = getFiltered();
