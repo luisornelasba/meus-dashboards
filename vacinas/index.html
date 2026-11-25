@@ -1354,10 +1354,10 @@ body.proto-recolhido .proto-btn span{ display: none; }
 
     <div class="table-controls">
       <div class="scope-row">
-        <button class="btn-scope active" data-scope="dev">Somente com devolução</button>
+        <button class="btn-scope" data-scope="dev">Somente com devolução</button>
         <button class="btn-scope" data-scope="crit">Devolução ≥ 25%</button>
         <button class="btn-scope" data-scope="all">Todos os clientes</button>
-        <button class="btn-scope" data-scope="hist" title="Todo CNPJ que negociou vacina de 2023 a 2026">Histórico de CNPJs 2023–2026</button>
+        <button class="btn-scope active" data-scope="hist" title="Todo CNPJ que negociou vacina de 2023 a 2026">Histórico de CNPJs 2023–2026</button>
         <select id="projMargem" class="margem-select" title="Margem de segurança aplicada à sugestão do próximo ano">
           <option value="0">Margem 0%</option>
           <option value="5">Margem 5%</option>
@@ -2105,7 +2105,7 @@ const state = {
   cnpjQuery: '', clientQuery: '', search: '', page: 1,
   sort: { key: 'data', dir: 'desc' },
   // projeção
-  projScope: 'dev', projSearch: '', projPage: 1, projMargem: 0,
+  projScope: 'hist',   /* 25/11/2026: o card abre na aba Histórico de CNPJs 2023–2026 */ projSearch: '', projPage: 1, projMargem: 0,
   projSort: { key: 'devolvido', dir: 'desc' },
 };
 
